@@ -16,3 +16,4 @@ dependencies:
     - ipython
     - notebook
     - ipykernel
+    - pandas
