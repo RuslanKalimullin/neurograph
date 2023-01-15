@@ -17,3 +17,6 @@ dependencies:
     - notebook
     - ipykernel
     - pandas
+    - networkx==3.0
+    - matplotlib
+    - pytest
