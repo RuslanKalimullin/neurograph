@@ -11,12 +11,13 @@ dependencies:
   - python=3.10
   - cpuonly
   - pytorch
-  - pyg
+  - pyg=2.2.0
   - pip:
+    - BrainGB
     - ipython
     - notebook
     - ipykernel
     - pandas
     - networkx==3.0
     - matplotlib
-    - pytest
+    - pytest==7.2.1
