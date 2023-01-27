@@ -7,17 +7,26 @@ channels:
   - pyg
 
 dependencies:
-  - pip=22.3.1
+  - pip
   - python=3.10
   - cpuonly
   - pytorch
-  - pyg=2.0.3
   - pip:
-    - ipython
-    - notebook
+    - mypy~=0.991
+    - numpy~=1.22.2
+    - nni~=2.4
+    - PyYAML~=5.4.1
+    - scikit-learn~=1.0.2
+    - networkx~=2.6.2
+    - scipy~=1.7.3
+    - tensorly~=0.6.0
+    - pandas~=1.4.1
+    - libsvm~=3.23.0.4
+    - matplotlib~=3.4.3
+    - tqdm~=4.62.3
+    - torch-geometric~=2.0.3
+    - h5py~=3.6
     - jupyterlab
     - ipykernel
-    - pandas
-    - networkx==2.6.2
-    - matplotlib
-    - pytest==7.2.1
+    - notebook
+    - pytest
