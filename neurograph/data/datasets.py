@@ -24,19 +24,19 @@ class CobreDataset(InMemoryDataset):
         self.target = None
 
         super().__init__(root)
-        self.data, self.slices = torch.load(self.processed_paths[0])
+        #self.data, self.slices = torch.load(self.processed_paths[0])
 
-    def process(self):
-        # load data list
-        data_list = []  # TODO
-
-        data, slices = self.collate(data_list)
-        torch.save((data, slices), self.processed_paths[0])
+#    def process(self):
+#        # load data list
+#        data_list = []  # TODO
+#
+#        data, slices = self.collate(data_list)
+#        torch.save((data, slices), self.processed_paths[0])
 
     def load_data(self):
         target = self.load_target
 
-    def load_target(self):
+    def load_target(self) -> tuple[pd.DataFrame, dict[str, int], dict[int, str]]:
         """ Process csv file with targets """
 
         target = pd.read_csv(osp.join(self.raw_dir, self.target_file))
@@ -52,13 +52,12 @@ class CobreDataset(InMemoryDataset):
         target = target[target.target != 'Schizoaffective'].copy()
 
         # label encoding
-        label2id = {i: x for i, x in enumerate(target.target.unique())}
-        idx2label = {x: i for i, x in label2id.items()}
+        label2idx: dict[str, int] = {x: i for i, x in enumerate(target.target.unique())}
+        idx2label: dict[int, str] = {i: x for x, i in label2idx.items()}
 
-        target.target = target.target.map(target_idx2label)
+        target.target = target.target.map(label2idx)
 
-        return target, label2id, idx2label
-
+        return target, label2idx, idx2label
 
     def load_cm(self, thr: Optional[float] = None):
         """ Load connectivity matrices """
@@ -71,7 +70,6 @@ class CobreDataset(InMemoryDataset):
     @property
     def processed_file_names(self):
         return [f'{self.atlas}_data.pt']
-
 
     def _validate(self):
         if self.atlas not in self.available_atlases:
