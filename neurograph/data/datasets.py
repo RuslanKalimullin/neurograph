@@ -6,7 +6,7 @@ import pandas as pd
 import torch
 from torch_geometric.data import Data, InMemoryDataset
 
-from .utils import load_cm
+from .utils import load_cms, prepare_one_graph
 
 
 class CobreDataset(InMemoryDataset):
@@ -15,8 +15,13 @@ class CobreDataset(InMemoryDataset):
     target_file = 'cobre_morphometry_and_target.csv'
     splits_file = 'cobre_splits.json'
 
-    def __init__(self, root: Optional[str], atlas: str = 'aal'):
+    def __init__(self, root: Optional[str], atlas: str = 'aal', thr = None, k = None):
+        # TODO: thr, k, add thr to processed file names
+        # TODO: throw warning if both thr and k are not None
+
         self.atlas = atlas
+        self.thr = thr
+        self.k = k
         self._validate()
 
         # init fields
@@ -24,19 +29,43 @@ class CobreDataset(InMemoryDataset):
         self.target = None
 
         super().__init__(root)
+
         #self.data, self.slices = torch.load(self.processed_paths[0])
 
-#    def process(self):
-#        # load data list
-#        data_list = []  # TODO
-#
-#        data, slices = self.collate(data_list)
-#        torch.save((data, slices), self.processed_paths[0])
+    @property
+    def processed_file_names(self):
+        return [f'{self.atlas}_data.pt']
 
-    def load_data(self):
-        target = self.load_target
+    @property
+    def cm_path(self):
+        return osp.join(self.raw_dir, self.atlas)
 
-    def load_target(self) -> tuple[pd.DataFrame, dict[str, int], dict[int, str]]:
+    def process(self):
+        # load data list
+        data_list = self.load_datalist()
+
+        data, slices = self.collate(data_list)
+        torch.save((data, slices), self.processed_paths[0])
+
+    def load_datalist(self) -> list[Data]:
+        targets, label2idx, idx2label = self.load_targets()
+
+        # subj_id -> CM, etc.
+        cms, ts, roi_map = load_cms(osp.join(self.raw_dir, self.cm_path))
+
+        # prepare data list from cms and targets
+        datalist = []
+        for subj_id, cm in cms.items():
+            try:
+                # try to process a graph
+                datalist.append(prepare_one_graph(cm, subj_id, targets))
+            except KeyError:
+                # ignore if subj_id is not in targets
+                pass
+
+        return datalist
+
+    def load_targets(self) -> tuple[pd.DataFrame, dict[str, int], dict[int, str]]:
         """ Process csv file with targets """
 
         target = pd.read_csv(osp.join(self.raw_dir, self.target_file))
@@ -59,17 +88,13 @@ class CobreDataset(InMemoryDataset):
 
         return target, label2idx, idx2label
 
-    def load_cm(self, thr: Optional[float] = None):
+    def load_cms(self):
         """ Load connectivity matrices """
         pass
 
     def load_splits(self):
         with open(self.raw_dir / self.splits_file) as f:
             return json.load(f)
-
-    @property
-    def processed_file_names(self):
-        return [f'{self.atlas}_data.pt']
 
     def _validate(self):
         if self.atlas not in self.available_atlases:

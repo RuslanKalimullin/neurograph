@@ -20,3 +20,6 @@ pip install -e .
 
 ## data
 By default, neurograph expects that your datasets are stored in `datasets` folder e.g. `datasets/cobre_fmri`.
+
+## acronyms
+* CM = connectivity matrix

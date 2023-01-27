@@ -1,44 +1,11 @@
 from functools import wraps
-from typing import Union
+from typing import Optional
 from pathlib import Path
 
 import pandas as pd
 import numpy as np
 import torch
 from torch_geometric.data import Data
-
-
-def load_cm(
-    path: str | Path,
-) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray], dict[int, str]]:
-
-    """ Load connectivity matrices, fMRI time series
-        and mapping node idx -> ROI name
-    """
-
-    path = Path(path)
-
-    data = {}
-    embed = {}
-
-    # ROI names, extacted from CM
-    regions: dict[int, str] = {}
-
-    for p in path.glob('*.csv'):
-
-        name = p.stem.split('_')[0].replace('sub-', '')
-
-        x = pd.read_csv(p).drop('Unnamed: 0', axis=1)
-
-        values = x.values.astype(np.float32)
-        if p.stem.endswith('_embed'):
-            embed[name] = values
-        else:
-            data[name] = values
-            if not regions:
-                regions = {i: c for i, c in enumerate(x.columns)}
-
-    return data, embed, regions
 
 
 def square_check(f):
@@ -49,10 +16,42 @@ def square_check(f):
         m = args[0]
         assert isinstance(m, np.ndarray), 'input matrix must be np.ndarray!'
         assert m.ndim == 2, 'input matrix must be 2d array!'
-        assert m.shape[0] == cm.shape[1], 'input matrix must be square!'
+        assert m.shape[0] == m.shape[1], 'input matrix must be square!'
 
         return f(*args, **kwargs)
     return wrapper
+
+
+def load_cms(
+    path: str | Path,
+) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray], dict[int, str]]:
+
+    """ Load connectivity matrices, fMRI time series
+        and mapping node idx -> ROI name.
+
+        Maps sibj_id to CM and ts
+    """
+
+    path = Path(path)
+
+    data = {}
+    ts = {}
+    # ROI names, extacted from CMs
+    roi_map: dict[int, str] = {}
+
+    for p in path.glob('*.csv'):
+        name = p.stem.split('_')[0].replace('sub-', '')
+        x = pd.read_csv(p).drop('Unnamed: 0', axis=1)
+
+        values = x.values.astype(np.float32)
+        if p.stem.endswith('_embed'):
+            ts[name] = values
+        else:
+            data[name] = values
+            if not roi_map:
+                roi_map = {i: c for i, c in enumerate(x.columns)}
+
+    return data, ts, roi_map
 
 
 @square_check
@@ -60,7 +59,13 @@ def prepare_one_graph(
     cm: np.ndarray,
     subj_id: str,
     targets: pd.DataFrame,
+    thr: Optional[float] = None,
 ) -> Data:
+
+    """ Combine CM, subj_id and target to a pyg.Data instance
+
+        targets must be indexed by subj_id
+    """
 
     # fully connected graph
     n = cm.shape[0]
