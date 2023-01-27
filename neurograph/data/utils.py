@@ -56,7 +56,7 @@ def square_check(f):
 
 
 @square_check
-def prepare_pyg_data(
+def prepare_one_graph(
     cm: np.ndarray,
     subj_id: str,
     targets: pd.DataFrame,

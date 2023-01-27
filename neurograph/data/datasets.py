@@ -1,28 +1,12 @@
+import os.path as osp
 import json
 from typing import Optional
 
+import pandas as pd
 import torch
 from torch_geometric.data import Data, InMemoryDataset
 
 from .utils import load_cm
-
-
-class ListDataset(InMemoryDataset):
-    """ Basic dataset for ad-hoc experiments """
-    def __init__(self, root, data_list: list[Data]):
-        # first store `data_list` as attr
-        self.data_list = data_list
-        super().__init__(root=root)
-        self.data, self.slices = torch.load(self.processed_paths[0])
-
-    @property
-    def processed_file_names(self):
-        return ['data.pt']
-
-    def process(self):
-        # https://pytorch-geometric.readthedocs.io/en/latest/tutorial/create_dataset.html
-        data, slices = self.collate(self.data_list)
-        torch.save((data, slices), self.processed_paths[0])
 
 
 class CobreDataset(InMemoryDataset):
@@ -54,7 +38,27 @@ class CobreDataset(InMemoryDataset):
 
     def load_target(self):
         """ Process csv file with targets """
-        pass
+
+        target = pd.read_csv(osp.join(self.raw_dir, self.target_file))
+        target = target[['ID', 'target']].copy()
+
+        # check that there are no different labels assigned to the same ID
+        max_labels_per_id = target.groupby('ID').target.nunique().max()
+        assert max_labels_per_id == 1, 'Diffrent targets assigned to the same ID!'
+
+        target.drop_duplicates(inplace=True)
+        target.set_index('ID', inplace=True)
+        # drop schizoaffective
+        target = target[target.target != 'Schizoaffective'].copy()
+
+        # label encoding
+        label2id = {i: x for i, x in enumerate(target.target.unique())}
+        idx2label = {x: i for i, x in label2id.items()}
+
+        target.target = target.target.map(target_idx2label)
+
+        return target, label2id, idx2label
+
 
     def load_cm(self, thr: Optional[float] = None):
         """ Load connectivity matrices """
@@ -72,3 +76,21 @@ class CobreDataset(InMemoryDataset):
     def _validate(self):
         if self.atlas not in self.available_atlases:
             raise ValueError('Unknown atlas')
+
+
+class ListDataset(InMemoryDataset):
+    """ Basic dataset for ad-hoc experiments """
+    def __init__(self, root, data_list: list[Data]):
+        # first store `data_list` as attr
+        self.data_list = data_list
+        super().__init__(root=root)
+        self.data, self.slices = torch.load(self.processed_paths[0])
+
+    @property
+    def processed_file_names(self):
+        return ['data.pt']
+
+    def process(self):
+        # https://pytorch-geometric.readthedocs.io/en/latest/tutorial/create_dataset.html
+        data, slices = self.collate(self.data_list)
+        torch.save((data, slices), self.processed_paths[0])
