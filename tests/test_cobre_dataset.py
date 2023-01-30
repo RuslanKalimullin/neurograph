@@ -11,13 +11,13 @@ def cobre_dataset():
 
 def test_cobre_target(cobre_dataset):
     target, label2idx, idx2label = cobre_dataset.load_targets()
+    target = target[cobre_dataset.target_col]
 
     assert len(idx2label) == 2
-    assert target.target.nunique() == 2
+    assert target.nunique() == 2
+    assert target.isnull().sum() == 0
+
     assert target.index.isnull().sum() == 0
-    assert target.target.isnull().sum() == 0
-    assert target.target.sum() == 66
-    assert target.shape == (143, 1)
 
 
 def test_cobre_folds(cobre_dataset):

@@ -1,3 +1,4 @@
+from shutil import rmtree
 import os.path as osp
 import json
 from typing import Optional
@@ -15,8 +16,10 @@ from .utils import load_cms, prepare_one_graph
 class CobreDataset(InMemoryDataset):
 
     available_atlases = {'aal', 'msdl'}
-    target_file = 'cobre_morphometry_and_target.csv'
     splits_file = 'cobre_splits.json'
+    target_file = 'meta_data.tsv'
+    subj_id_col = 'Subjectid'
+    target_col = 'Dx'
 
     def __init__(
         self,
@@ -24,10 +27,12 @@ class CobreDataset(InMemoryDataset):
         atlas: str = 'aal',
         thr = None,
         k = None,
+        no_cache=False,
     ):
         # TODO: thr, k, add thr to processed file names
         # TODO: throw warning if both thr and k are not None
 
+        self.root = root
         self.atlas = atlas
         self.thr = thr
         self.k = k
@@ -36,6 +41,9 @@ class CobreDataset(InMemoryDataset):
         # init fields
         self.splits = None
         self.target = None
+
+        if no_cache:
+            rmtree(self.processed_dir, ignore_errors=True)
 
         # here `process` is called
         super().__init__(root)
@@ -108,25 +116,27 @@ class CobreDataset(InMemoryDataset):
         return datalist, subj_ids
 
     def load_targets(self) -> tuple[pd.DataFrame, dict[str, int], dict[int, str]]:
-        """ Process csv file with targets """
+        """ Process tsv file with targets """
 
-        target = pd.read_csv(osp.join(self.raw_dir, self.target_file))
-        target = target[['ID', 'target']].copy()
+        target = pd.read_csv(osp.join(self.raw_dir, self.target_file), sep='\t')
+        target = target[[self.subj_id_col, self.target_col]]
 
         # check that there are no different labels assigned to the same ID
-        max_labels_per_id = target.groupby('ID').target.nunique().max()
-        assert max_labels_per_id == 1, 'Diffrent targets assigned to the same ID!'
+        max_labels_per_id = target.groupby(self.subj_id_col)[self.target_col].nunique().max()
+        assert max_labels_per_id == 1, 'Diffrent targets assigned to the same id!'
 
-        target.drop_duplicates(inplace=True)
-        target.set_index('ID', inplace=True)
-        # drop schizoaffective
-        target = target[target.target != 'Schizoaffective'].copy()
+        # remove duplicates by subj_id
+        target.drop_duplicates(subset=[self.subj_id_col], inplace=True)
+        # set subj_id as index
+        target.set_index(self.subj_id_col, inplace=True)
+
+        # leave only Schizo and Control
+        target = target[target[self.target_col].isin(('No_Known_Disorder', 'Schizophrenia_Strict'))].copy()
 
         # label encoding
-        label2idx: dict[str, int] = {x: i for i, x in enumerate(target.target.unique())}
+        label2idx: dict[str, int] = {x: i for i, x in enumerate(target[self.target_col].unique())}
         idx2label: dict[int, str] = {i: x for x, i in label2idx.items()}
-
-        target.target = target.target.map(label2idx)
+        target[self.target_col] = target[self.target_col].map(label2idx)
 
         return target, label2idx, idx2label
 
