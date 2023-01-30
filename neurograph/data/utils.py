@@ -5,6 +5,7 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 import torch
+from sklearn.model_selection import train_test_split, StratifiedKFold
 from torch_geometric.data import Data
 
 
@@ -131,3 +132,26 @@ def apply_thr(cm: np.ndarray, thr: float):
     edge_weights = torch.FloatTensor(cm[idx])
 
     return edge_index, edge_weights
+
+
+def generate_splits(subj_ids: list | np.ndarray, y: np.ndarray, seed: int = 1380):
+    # split into train/test
+    subj_ids = np.array(subj_ids)
+    idx = np.arange(len(subj_ids))
+    train_idx, test_idx = train_test_split(idx, test_size=0.2, stratify=y, shuffle=True, random_state=seed)
+
+    train, y_train = subj_ids[train_idx], y[train_idx]
+    test, y_test = subj_ids[test_idx], y[test_idx]
+
+    # split train into cv folds
+    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=seed)
+    folds: dict[str, list] = {}
+    for i, (train_fold, valid_fold) in enumerate(cv.split(train, y_train)):
+        folds['train'].append({
+            'train': list(train[train_fold]),
+            'valid': list(train[valid_fold]),
+        })
+    folds['test'] = list(test)
+
+    return folds
+

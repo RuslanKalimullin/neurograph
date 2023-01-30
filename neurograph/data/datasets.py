@@ -12,7 +12,6 @@ from neurograph.config import DATA_PATH
 from .utils import load_cms, prepare_one_graph
 
 
-
 class CobreDataset(InMemoryDataset):
 
     available_atlases = {'aal', 'msdl'}
@@ -50,6 +49,8 @@ class CobreDataset(InMemoryDataset):
 
         self.data, self.slices = torch.load(self.processed_paths[0])
 
+        self.target_df = pd.read_csv(self.processed_paths[3])
+
         with open(self.processed_paths[1]) as f_ids:
             self.subj_ids = [l.rstrip() for l in f_ids.readlines()]
 
@@ -59,7 +60,7 @@ class CobreDataset(InMemoryDataset):
 
     @property
     def processed_file_names(self):
-        return [f'{self.atlas}_data.pt', 'subj_ids.txt', 'folds.json']
+        return [f'{self.atlas}_data.pt', 'subj_ids.txt', 'folds.json', 'targets.csv']
 
     @property
     def cm_path(self):
@@ -67,7 +68,8 @@ class CobreDataset(InMemoryDataset):
 
     def process(self):
         # load data list
-        data_list, subj_ids = self.load_datalist()
+        data_list, subj_ids, y = self.load_datalist()
+        y.to_csv(self.processed_paths[3])
 
         # collate DataList and save to disk
         data, slices = self.collate(data_list)
@@ -95,7 +97,7 @@ class CobreDataset(InMemoryDataset):
         with open(self.processed_paths[2], 'w') as f_folds:
             json.dump(folds, f_folds)
 
-    def load_datalist(self) -> tuple[list[Data], list[str]]:
+    def load_datalist(self) -> tuple[list[Data], list[str], pd.DataFrame]:
         targets, label2idx, idx2label = self.load_targets()
 
         # subj_id -> CM, etc.
@@ -112,8 +114,8 @@ class CobreDataset(InMemoryDataset):
             except KeyError:
                 # ignore if subj_id is not in targets
                 pass
-
-        return datalist, subj_ids
+        y = targets.loc[subj_ids].copy()
+        return datalist, subj_ids, y
 
     def load_targets(self) -> tuple[pd.DataFrame, dict[str, int], dict[int, str]]:
         """ Process tsv file with targets """
