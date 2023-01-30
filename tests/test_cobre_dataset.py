@@ -1,4 +1,5 @@
 import pytest
+from functools import reduce
 from neurograph import config
 from neurograph.data.datasets import CobreDataset
 
@@ -19,6 +20,23 @@ def test_cobre_target(cobre_dataset):
     assert target.shape == (143, 1)
 
 
-def test_cobre_datalist(cobre_dataset):
-    datalist = cobre_dataset.load_datalist()
-    import pdb; pdb.set_trace()
+def test_cobre_folds(cobre_dataset):
+    folds = cobre_dataset.folds
+
+    all_train = set()  # everything that we run cross-val on
+    all_valids = []
+    for i, fold in enumerate(folds['train']):
+        train, valid = fold['train'], fold['valid']
+        tset, vset = set(train), set(valid)
+
+        assert len(tset) == len(train), f'Fold {i}: non unique idx in train'
+        assert len(vset) == len(vset), f'Fold {i}: non unique idx in valid'
+
+        assert tset & vset == set(), f'Fold {i}: intersection between train/valid'
+        all_valids.append(vset)
+
+        all_train |= tset
+        all_train |= vset
+
+    assert reduce(set.intersection, all_valids) == set(), 'Non empty intersection between valids'
+    assert set(folds['test']) & all_train == set(), 'Intersection between test and train'
