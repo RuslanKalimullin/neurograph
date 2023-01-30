@@ -60,7 +60,12 @@ class CobreDataset(InMemoryDataset):
 
     @property
     def processed_file_names(self):
-        return [f'{self.atlas}_data.pt', 'subj_ids.txt', 'folds.json', 'targets.csv']
+        return [
+            f'{self.atlas}_data.pt',
+            f'{self.atlas}_subj_ids.txt',
+            f'{self.atlas}_folds.json',
+            f'{self.atlas}_targets.csv',
+        ]
 
     @property
     def cm_path(self):
