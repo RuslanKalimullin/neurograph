@@ -26,13 +26,23 @@ class CobreDataset(InMemoryDataset):
         atlas: str = 'aal',
         thr = None,
         k = None,
-        no_cache=False,
+        no_cache = False,
     ):
-        # TODO: thr, k, add thr to processed file names
-        # TODO: throw warning if both thr and k are not None
+        """
+        Args:
+            root (str, optional): root dir where dataset should be saved
+            atlas (str): atlas name
+            thr (float, optional): threshold used for pruning edges #TODO
+            k (int, optional): Number of neighbors used to compute a threshold for pruning
+                When k is used, thr must be None!
+            no_cache (bool): if True, delete processed files and run processing from scratch
+        """
+
+        # TODO: thr add thr to processed file names
 
         self.root = root
         self.atlas = atlas
+
         self.thr = thr
         self.k = k
         self._validate()
@@ -174,6 +184,10 @@ class CobreDataset(InMemoryDataset):
     def _validate(self):
         if self.atlas not in self.available_atlases:
             raise ValueError('Unknown atlas')
+        if self.k is not None and self.thr is not None:
+            raise ValueError('Both `k` and `thr` are not None! Choose one!')
+        if self.k is not None and k <= 0:
+            raise ValueError('`k` must be > 0')
 
 
 class ListDataset(InMemoryDataset):
