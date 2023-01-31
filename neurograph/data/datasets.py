@@ -118,6 +118,9 @@ class CobreDataset(InMemoryDataset):
         # subj_id -> CM, etc.
         cms, ts, roi_map = load_cms(osp.join(self.raw_dir, self.cm_path))
 
+        # apply thr, or compute thr from k
+        # TODO
+
         # prepare data list from cms and targets
         datalist = []
         subj_ids = []

@@ -40,3 +40,27 @@ def test_cobre_folds(cobre_dataset):
 
     assert reduce(set.intersection, all_valids) == set(), 'Non empty intersection between valids'
     assert set(folds['test']) & all_train == set(), 'Intersection between test and train'
+
+
+def test_cobre_loaders(cobre_dataset):
+    def get_subj_from_loader(loader):
+        ids = []
+        for x in loader:
+            ids.extend(x.subj_id)
+        set_ids = set(ids)
+        assert len(set_ids) == len(ids)
+        return set_ids
+
+    all_valids = []
+    for split in cobre_dataset.get_cv_loaders():
+        # get loaders
+        train, valid = split['train'], split['valid']
+        t_ids = get_subj_from_loader(train)
+        v_ids = get_subj_from_loader(valid)
+
+        assert t_ids & v_ids == set()
+        assert train.dataset != valid.dataset
+
+        all_valids.append(v_ids)
+
+    assert reduce(set.intersection, all_valids) == set(), 'Non empty intersection between valids'
