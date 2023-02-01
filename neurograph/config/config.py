@@ -9,23 +9,12 @@ import neurograph
 from neurograph.data import available_datasets
 
 
-def validate(field: Any, options: set):
-    msg = f'{field} is not supported! Available options: [{",".join(options)}]'
-    if field not in options:
-        raise ValueError(msg)
-
-
 @dataclass
 class DatasetConfig:
     name: str = 'cobre'
     experiment_type: str = 'fmri'
     atlas: str = 'aal'
     data_path: Path = Path(neurograph.__file__).resolve().parent.parent / 'datasets'
-
-    def __post_init__(self):
-        validate(self.name, available_datasets)
-        if not self.data_path.exists():
-            data_path.mkdir()
 
 
 @dataclass
@@ -55,14 +44,3 @@ class Config:
 # register default config as `base_config`
 cs = ConfigStore.instance()
 cs.store(name='base_config', node=Config)
-
-
-# TODO move to train
-@hydra.main(version_base=None, config_path='.', config_name="config")
-def train(cfg: Config):
-    print(OmegaConf.to_yaml(cfg))
-    print(cfg.dataset.data_path)
-
-
-if __name__ == '__main__':
-    train()

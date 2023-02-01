@@ -11,7 +11,13 @@ from torch_geometric.loader import DataLoader
 from .utils import load_cms, prepare_one_graph
 
 
-class CobreDataset(InMemoryDataset):
+class NeuroDataset(InMemoryDataset):
+    name: str
+    available_atlases: set[str]
+    available_experiments: set[str]
+
+
+class CobreDataset(NeuroDataset):
 
     name = 'cobre'
     available_atlases = {'aal', 'msdl'}

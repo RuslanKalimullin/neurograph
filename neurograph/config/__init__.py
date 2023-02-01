@@ -1,8 +1,9 @@
 from hydra import compose, initialize
+from omegaconf import OmegaConf
 from .config import Config
 
 
 def get_config(name: str = 'config') -> Config:
     with initialize(version_base=None, config_path="."):
-        cfg = compose(name)
+        cfg: Config = OmegaConf.structured(compose(name))
     return cfg

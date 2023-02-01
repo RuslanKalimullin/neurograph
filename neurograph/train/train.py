@@ -1,9 +1,7 @@
-import argparse
 import torch
 import logging
-from neurograph.data.datasets import CobreDataset
 
-
+# TODO
 def train_split(
     model,
     train_loader,
@@ -65,6 +63,7 @@ def train_split(
     return accs.mean(), aucs.mean(), macros.mean()
 
 
+# TODO
 @torch.no_grad()
 def evaluate(model, device, loader, thr=0.5,):
     # compute metrics on valid data
@@ -91,12 +90,3 @@ def evaluate(model, device, loader, thr=0.5,):
     train_macro = metrics.f1_score(trues, preds, average='macro', labels=[0, 1])
 
     return train_micro, train_auc, train_macro
-
-
-def train(args: argparse.Namespace):
-    ''' run end-to-end training '''
-
-    # load dataset
-    assert args.dataset_name in {'COBRE'}
-
-

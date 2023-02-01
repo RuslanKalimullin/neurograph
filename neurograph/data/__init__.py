@@ -1,10 +1,12 @@
 import inspect
-from torch_geometric.data import InMemoryDataset
+from typing import Type
+
 import neurograph.data.datasets as datasets
 
-available_datasets = {
-    obj.name for (name, obj) in inspect.getmembers(datasets)
+available_datasets: dict[str, Type[datasets.NeuroDataset]] = {
+    obj.name: obj for (name, obj) in inspect.getmembers(datasets)
     if inspect.isclass(obj)
-    if issubclass(obj, InMemoryDataset)
+    if issubclass(obj, datasets.NeuroDataset)
     if hasattr(obj, 'name')
+    if obj.name
 }
