@@ -1,12 +1,12 @@
 import pytest
 from functools import reduce
-from neurograph import config
+from neurograph.config import get_config
 from neurograph.data.datasets import CobreDataset
 
 
 @pytest.fixture(scope='session')
 def cobre_dataset():
-    return CobreDataset(root=config.DATA_PATH / 'cobre_fmri')
+    return CobreDataset(root=get_config().dataset.data_path)
 
 
 def test_cobre_target(cobre_dataset):

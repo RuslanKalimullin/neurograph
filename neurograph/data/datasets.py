@@ -8,13 +8,14 @@ import torch
 from torch_geometric.data import Data, InMemoryDataset
 from torch_geometric.loader import DataLoader
 
-from neurograph.config import DATA_PATH
 from .utils import load_cms, prepare_one_graph
 
 
 class CobreDataset(InMemoryDataset):
 
+    name = 'cobre'
     available_atlases = {'aal', 'msdl'}
+    available_experiments = {'fmri', 'dti'}
     splits_file = 'cobre_splits.json'
     target_file = 'meta_data.tsv'
     subj_id_col = 'Subjectid'
@@ -22,8 +23,9 @@ class CobreDataset(InMemoryDataset):
 
     def __init__(
         self,
-        root: Optional[str] = str(DATA_PATH / 'cobre_fmri'),
+        root: str,
         atlas: str = 'aal',
+        experiment_type: str = 'fmri',
         thr = None,
         k = None,
         no_cache = False,
@@ -39,23 +41,25 @@ class CobreDataset(InMemoryDataset):
         """
 
         # TODO: thr add thr to processed file names
-
-        self.root = root
         self.atlas = atlas
-
+        self.experiment_type = experiment_type
         self.thr = thr
         self.k = k
+
         self._validate()
 
-        # init fields
-        self.splits = None
-        self.target = None
+        # root: experiment specific files (CMs)
+        self.root = osp.join(root, self.name, experiment_type)
+        # global_dir: dir with meta info and cv_splits
+        self.global_dir = osp.join(root, self.name)
 
         if no_cache:
             rmtree(self.processed_dir, ignore_errors=True)
 
+        #import pdb; pdb.set_trace()
+
         # here `process` is called
-        super().__init__(root)
+        super().__init__(self.root)
 
         self.data, self.slices = torch.load(self.processed_paths[0])
 
@@ -71,10 +75,10 @@ class CobreDataset(InMemoryDataset):
     @property
     def processed_file_names(self):
         return [
-            f'{self.atlas}_data.pt',
-            f'{self.atlas}_subj_ids.txt',
-            f'{self.atlas}_folds.json',
-            f'{self.atlas}_targets.csv',
+            f'{self.atlas}_{self.experiment_type}_data.pt',
+            f'{self.atlas}_{self.experiment_type}_subj_ids.txt',
+            f'{self.atlas}_{self.experiment_type}_folds.json',
+            f'{self.atlas}_{self.experiment_type}_targets.csv',
         ]
 
     @property
@@ -116,7 +120,7 @@ class CobreDataset(InMemoryDataset):
         targets, label2idx, idx2label = self.load_targets()
 
         # subj_id -> CM, etc.
-        cms, ts, roi_map = load_cms(osp.join(self.raw_dir, self.cm_path))
+        cms, ts, roi_map = load_cms(self.cm_path)
 
         # apply thr, or compute thr from k
         # TODO
@@ -138,7 +142,7 @@ class CobreDataset(InMemoryDataset):
     def load_targets(self) -> tuple[pd.DataFrame, dict[str, int], dict[int, str]]:
         """ Process tsv file with targets """
 
-        target = pd.read_csv(osp.join(self.raw_dir, self.target_file), sep='\t')
+        target = pd.read_csv(osp.join(self.global_dir, self.target_file), sep='\t')
         target = target[[self.subj_id_col, self.target_col]]
 
         # check that there are no different labels assigned to the same ID
@@ -161,7 +165,7 @@ class CobreDataset(InMemoryDataset):
         return target, label2idx, idx2label
 
     def load_folds(self):
-        with open(osp.join(self.raw_dir, self.splits_file)) as f:
+        with open(osp.join(self.global_dir, self.splits_file)) as f:
             _folds = json.load(f)
 
         folds = {}
@@ -187,6 +191,8 @@ class CobreDataset(InMemoryDataset):
     def _validate(self):
         if self.atlas not in self.available_atlases:
             raise ValueError('Unknown atlas')
+        if self.experiment_type not in self.available_experiments:
+            raise ValueError(f'Unknown experiment type: {self.experiment_type}')
         if self.k is not None and self.thr is not None:
             raise ValueError('Both `k` and `thr` are not None! Choose one!')
         if self.k is not None and k <= 0:

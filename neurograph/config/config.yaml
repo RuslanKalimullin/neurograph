@@ -1,0 +1,10 @@
+# see config.py for the defaults
+
+defaults:  # the last wins
+    - base_config
+    - _self_
+
+dataset:
+    data_path: ???
+train: {}
+model: {}
