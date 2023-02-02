@@ -1,6 +1,6 @@
 from hydra import compose, initialize
 from omegaconf import OmegaConf
-from .config import Config
+from .config import Config, MLPConfig, MLPlayer, DatasetConfig, ModelConfig, TrainConfig, LogConfig
 
 
 def get_config(name: str = 'config') -> Config:
