@@ -133,12 +133,12 @@ class MPGATConv(GATConv):
 def build_gat_block(
     input_dim: int,
     hidden_dim: int,
-    use_abs_weight,
     proj_dim: Optional[int] = None,
     mp_type: str = 'edge_node_concate',
     num_heads: int = 1,
     dropout: float = 0.0,
     use_batchnorm: bool = True,
+    use_abs_weight: bool = True,
 ):
     proj_dim = hidden_dim if proj_dim is None else proj_dim
     return pygSequential(
@@ -234,7 +234,7 @@ class GAT(torch.nn.Module):
             self.prepool = nn.Sequential(
                 nn.Linear(model_cfg.prepool_dim, model_cfg.final_node_dim),
                 nn.LeakyReLU(negative_slope=0.2),
-                nn.BatchNorm1d(model_cfg.final_node_dim) if True else nn.Identity(),
+                nn.BatchNorm1d(model_cfg.final_node_dim) if use_batchnorm else nn.Identity(),
             )
 
             fcn_dim = model_cfg.final_node_dim * num_nodes
