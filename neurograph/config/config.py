@@ -1,6 +1,6 @@
 import hydra
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Sequence
 from omegaconf import DictConfig, OmegaConf
 from hydra.core.config_store import ConfigStore
 from dataclasses import dataclass, field
@@ -27,15 +27,21 @@ class MLPlayer:
 
 @dataclass
 class MLPConfig:
-    # layers define only hidden dimensions, so
-    # if you need one layer NN, leave layers empty
+    # layers define only hidden dimensions, so final MLP will have n+1 layer.
+    # So, if you want to create a 1-layer network, just leave layers empty
 
     # in and out sizes are optional and usually depend on upstream model and the task
+    # for now, they are ignored
     in_size: Optional[int] = None
     out_size: Optional[int] = None
+
+    # act func for the last layer. None -> no activation function
     act_func: Optional[str] = None
     act_func_params: Optional[dict] = None
-    layers: list[MLPlayer] = field(default_factory=list)
+    layers: tuple[MLPlayer] = (
+        MLPlayer(out_size=256, act_func='LeakyReLU', act_func_params=dict(negative_slope=0.2)),
+        MLPlayer(out_size=32, act_func='LeakyReLU', act_func_params=dict(negative_slope=0.2)),
+    )
 
 
 @dataclass
@@ -55,8 +61,6 @@ class ModelConfig:
     use_abs_weight: bool = True
     dropout: float = 0.1
     use_batchnorm: bool = True
-    loss: str = 'BCEWithLogitsLoss'
-    loss_args: Optional[dict[str, Any]] = None
 
 
 @dataclass
@@ -66,6 +70,9 @@ class TrainConfig:
     lr: float = 1e-3
     weight_decay: Optional[float] = None
     optim_args: Optional[dict[str, Any]] = None
+
+    loss: str = 'BCEWithLogitsLoss'
+    loss_args: Optional[dict[str, Any]] = None
 
 
 @dataclass
