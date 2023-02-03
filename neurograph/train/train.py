@@ -15,8 +15,15 @@ from neurograph.models.available_modules import available_optimizers, available_
 
 
 def train(ds: NeuroDataset, cfg: Config):
-    # metrics  # TODO put into dataclass
+    # metrics  # TODO put into dataclass or dict
     accs, aucs, macros, valid_losses = [], [], [], []
+
+    test_curves = {
+        'acc': [],
+        'auc': [],
+        'f1_macro': [],
+        'loss': [],
+    }
 
     test_loader = ds.get_test_loader(cfg.train.valid_batch_size)
 
@@ -55,11 +62,15 @@ def train(ds: NeuroDataset, cfg: Config):
 
         # eval on test  # TODO
         test_acc, test_auc, test_macro, test_loss = evaluate(model, test_loader, loss_f, cfg)
+        test_curves['acc'].append(test_acc)
+        test_curves['auc'].append(test_auc)
+        test_curves['f1_macro'].append(test_macro)
+        test_curves['loss'].append(test_loss)
 
         logging.info(f'(Last Epoch) | test_loss={test_loss},  test_acc={(test_acc * 100):.2f}, '
                          f'test_macro={(test_macro * 100):.2f}, test_auc={(test_auc * 100):.2f}')
 
-        # store metrics for the current fold
+        # store valid metrics for the current fold
         accs.append(val_acc)
         aucs.append(val_auc)
         macros.append(val_macro)
@@ -72,7 +83,12 @@ def train(ds: NeuroDataset, cfg: Config):
         'f1_macro': compute_stats(macros),
         'loss': compute_stats(valid_losses),
     }
+    test_metrics = {name: compute_stats(curve) for name, curve in test_curves.items()}
+
     logging.info(f'Valid metrics over folds: {json.dumps(valid_metrics, indent=2)}')
+    logging.info(f'Test metrics over folds: {json.dumps(test_metrics, indent=2)}')
+
+    return {'valid': valid_metrics, 'test': test_metrics}
 
 
 def train_one_split(

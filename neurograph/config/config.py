@@ -49,7 +49,7 @@ class MLPConfig:
 class ModelConfig:
     name: str = 'GAT'
     n_classes: int = 1  # must match with loss
-    mp_type: str = 'edge_node_concate'
+    mp_type: str = 'node_concate'
     pooling: str = 'concat'
     num_layers: int = 1
     num_heads: int = 1

@@ -1,4 +1,9 @@
 # see config.py for the defaults
+hydra:
+    job:
+        chdir: True
+    run:
+        dir: outputs/${hydra.job.name}/${now:%Y-%m-%d_%H-%M-%S}
 
 defaults:  # the last wins
     - base_config
@@ -7,4 +12,3 @@ defaults:  # the last wins
 dataset: {}
 train: {}
 model: {}
-

@@ -1,4 +1,7 @@
+import os
+import json
 import logging
+import os.path as osp
 from typing import Any, Mapping
 import hydra
 import dataclasses
@@ -42,6 +45,8 @@ def load_dataset(cfg: Config) -> NeuroDataset:
         atlas=ds_cfg.atlas,
         experiment_type=ds_cfg.experiment_type,
     )
+
+
 @hydra.main(version_base=None, config_path='../config', config_name="config")
 def main(cfg: Config):
     #cfg = dataclass_from_dict(Config, OmegaConf.to_container(cfg))
@@ -52,8 +57,14 @@ def main(cfg: Config):
     ds = load_dataset(cfg)
 
     print(OmegaConf.to_yaml(cfg))
-
     metrics = train(ds, cfg)
 
+    print(os.getcwd())
+
+    # save metrics and config
+    with open(osp.join(os.getcwd(), 'metrics.json'), 'w') as f_metrics:
+        json.dump(metrics, f_metrics)
+
+    OmegaConf.save(cfg, osp.join(os.getcwd(), 'config.yaml'))
 
 main()
