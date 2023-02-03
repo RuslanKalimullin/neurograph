@@ -167,12 +167,12 @@ def concat_pool(x: torch.Tensor, num_nodes: int) -> torch.Tensor:
     return x.reshape(x.size(0) // num_nodes, -1)
 
 
-class GAT(torch.nn.Module):
+class GAT(nn.Module):
     def __init__(
         self,
+        # determined by dataset
         input_dim: int,
         num_nodes: int,
-        num_classes: int,
         model_cfg: ModelConfig,
     ):
         """
@@ -189,6 +189,7 @@ class GAT(torch.nn.Module):
         self.num_nodes = num_nodes
         self.pooling = model_cfg.pooling
 
+        num_classes = model_cfg.n_classes
         hidden_dim = model_cfg.hidden_dim
         num_heads = model_cfg.num_heads
         num_layers = model_cfg.num_layers
@@ -254,19 +255,8 @@ class GAT(torch.nn.Module):
         # add last layer and prepool projection
         self.convs.append(conv)
 
-        # TODO: use mlp_config
         self.fcn = BasicMLP(in_size=fcn_dim, out_size=num_classes, config=model_cfg.mlp_config)
-       # self.fcn = nn.Sequential(
-       #     nn.Linear(fcn_dim,  256),
-       #     nn.LeakyReLU(negative_slope=0.2),
 
-       #     nn.Linear(256, 32),
-       #     nn.LeakyReLU(negative_slope=0.2),
-
-       #     nn.Linear(32, num_classes)
-       # )
-
-    #def forward(self, x, edge_index, edge_attr, batch):
     def forward(self, data):
 
         x, edge_index, edge_attr, batch = data.x, data.edge_index, data.edge_attr, data.batch

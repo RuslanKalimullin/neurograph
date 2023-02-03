@@ -12,8 +12,9 @@ from neurograph.data import available_datasets
 @dataclass
 class DatasetConfig:
     name: str = 'cobre'
-    experiment_type: str = 'fmri'
+    experiment_type: str = 'fmri' # TODO: support list for multimodal experiments
     atlas: str = 'aal'
+    #init_node_embed: str = ''  # TODO
     data_path: Path = Path(neurograph.__file__).resolve().parent.parent / 'datasets'
 
 
@@ -38,7 +39,7 @@ class MLPConfig:
     # act func for the last layer. None -> no activation function
     act_func: Optional[str] = None
     act_func_params: Optional[dict] = None
-    layers: tuple[MLPlayer] = (
+    layers: tuple[MLPlayer, ...] = (
         MLPlayer(out_size=256, act_func='LeakyReLU', act_func_params=dict(negative_slope=0.2)),
         MLPlayer(out_size=32, act_func='LeakyReLU', act_func_params=dict(negative_slope=0.2)),
     )
@@ -46,10 +47,8 @@ class MLPConfig:
 
 @dataclass
 class ModelConfig:
-    mlp_config: MLPConfig = field(default_factory=MLPConfig)
-
-    init_node_embed: str = ''  # TODO
     name: str = 'GAT'
+    n_classes: int = 1  # must match with loss
     mp_type: str = 'edge_node_concate'
     pooling: str = 'concat'
     num_layers: int = 1
@@ -62,23 +61,34 @@ class ModelConfig:
     dropout: float = 0.1
     use_batchnorm: bool = True
 
+    mlp_config: MLPConfig = field(default_factory=MLPConfig)
+
 
 @dataclass
 class TrainConfig:
-    epochs: int = 20
+    epochs: int = 1
+    batch_size: int = 8
+    valid_batch_size: Optional[int] = None
     optim: str = 'Adam'
-    lr: float = 1e-3
-    weight_decay: Optional[float] = None
-    optim_args: Optional[dict[str, Any]] = None
+    optim_args: Optional[dict[str, Any]] = field(
+        default_factory=lambda: {
+            'lr': 1e-3,
+            'weight_decay': 1e-4,
+        }
+    )
+    device: str = 'cpu'
 
     loss: str = 'BCEWithLogitsLoss'
     loss_args: Optional[dict[str, Any]] = None
+
+    # if BCE is used
+    prob_thr: float = 0.5
 
 
 @dataclass
 class LogConfig:
     # how often print training metrics
-    test_step: int = 5
+    test_step: int = 1
 
 
 @dataclass

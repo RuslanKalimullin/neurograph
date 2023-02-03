@@ -1,7 +1,7 @@
 from shutil import rmtree
 import os.path as osp
 import json
-from typing import Optional
+from typing import Generator, Optional
 
 import pandas as pd
 import torch
@@ -15,6 +15,15 @@ class NeuroDataset(InMemoryDataset):
     name: str
     available_atlases: set[str]
     available_experiments: set[str]
+    n_features: int
+    num_nodes: int
+
+    def get_cv_loaders(
+        self,
+        batch_size=8,
+        valid_batch_size=None,
+    ) -> Generator[dict[str, DataLoader], None, None]:
+        raise NotImplementedError
 
 
 class CobreDataset(NeuroDataset):
@@ -62,8 +71,6 @@ class CobreDataset(NeuroDataset):
         if no_cache:
             rmtree(self.processed_dir, ignore_errors=True)
 
-        #import pdb; pdb.set_trace()
-
         # here `process` is called
         super().__init__(self.root)
 
@@ -77,6 +84,11 @@ class CobreDataset(NeuroDataset):
         # load fixed stratified partition to 5 folds and test
         with open(self.processed_paths[2]) as f_folds:
             self.folds = json.load(f_folds)
+
+        self.n_features = self.data.x.shape[1]
+        num_nodes = self.slices['x'].diff().unique()
+        assert len(num_nodes) == 1, 'assert different number of nodes in graphs!'
+        self.num_nodes = num_nodes.item()
 
     @property
     def processed_file_names(self):
@@ -94,6 +106,9 @@ class CobreDataset(NeuroDataset):
     def process(self):
         # load data list
         data_list, subj_ids, y = self.load_datalist()
+
+        self.num_nodes = data_list[0].num_nodes
+
         y.to_csv(self.processed_paths[3])
 
         # collate DataList and save to disk
@@ -193,6 +208,11 @@ class CobreDataset(NeuroDataset):
                 'train': DataLoader(self[train_idx], batch_size=batch_size, shuffle=True),
                 'valid': DataLoader(self[valid_idx], batch_size=valid_batch_size, shuffle=False),
             }
+
+    def get_test_loader(self, batch_size: int):
+        # TODO: test it
+        test_idx = self.folds['test']
+        return DataLoader(self[test_idx], batch_size=batch_size, shuffle=False)
 
     def _validate(self):
         if self.atlas not in self.available_atlases:
