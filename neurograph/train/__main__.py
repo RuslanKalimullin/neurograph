@@ -48,6 +48,8 @@ def main(cfg: Config):
     # load dataset
     ds = load_dataset(cfg)
 
+    print(OmegaConf.to_yaml(cfg))
+
     metrics = train(ds, cfg)
 
 

@@ -39,10 +39,10 @@ class MLPConfig:
     # act func for the last layer. None -> no activation function
     act_func: Optional[str] = None
     act_func_params: Optional[dict] = None
-    layers: tuple[MLPlayer, ...] = (
+    layers: list[MLPlayer] = field(default_factory=lambda : [
         MLPlayer(out_size=256, act_func='LeakyReLU', act_func_params=dict(negative_slope=0.2)),
         MLPlayer(out_size=32, act_func='LeakyReLU', act_func_params=dict(negative_slope=0.2)),
-    )
+    ])
 
 
 @dataclass
