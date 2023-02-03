@@ -40,8 +40,8 @@ class MLPConfig:
     act_func: Optional[str] = None
     act_func_params: Optional[dict] = None
     layers: list[MLPlayer] = field(default_factory=lambda : [
-        MLPlayer(out_size=256, act_func='LeakyReLU', act_func_params=dict(negative_slope=0.2)),
-        MLPlayer(out_size=32, act_func='LeakyReLU', act_func_params=dict(negative_slope=0.2)),
+        MLPlayer(out_size=256, dropout=0.5, act_func='LeakyReLU', act_func_params=dict(negative_slope=0.2)),
+        MLPlayer(out_size=32, adropout=0.5, ct_func='LeakyReLU', act_func_params=dict(negative_slope=0.2)),
     ])
 
 
