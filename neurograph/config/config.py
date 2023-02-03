@@ -54,11 +54,11 @@ class ModelConfig:
     num_layers: int = 1
     num_heads: int = 1
     hidden_dim: int = 8  # TODO: support list
-    prepool_dim: int = 8  # input dim for prepool layer
+    prepool_dim: int = 64  # input dim for prepool layer
     final_node_dim: int = 4  # final node_dim after prepool
     #activation: str = 'ReLU'
     use_abs_weight: bool = True
-    dropout: float = 0.1
+    dropout: float = 0.3
     use_batchnorm: bool = True
 
     mlp_config: MLPConfig = field(default_factory=MLPConfig)
@@ -79,7 +79,9 @@ class TrainConfig:
     device: str = 'cpu'
 
     loss: str = 'BCEWithLogitsLoss'
-    loss_args: Optional[dict[str, Any]] = None
+    loss_args: Optional[dict[str, Any]] = field(
+        default_factory=lambda: {'reduction': 'sum'}
+    )
 
     # if BCE is used
     prob_thr: float = 0.5
