@@ -17,6 +17,7 @@ class NeuroDataset(InMemoryDataset):
     available_experiments: set[str]
     n_features: int
     num_nodes: int
+    init_node_features: str = 'conn_profile'
 
     def get_cv_loaders(
         self,
@@ -44,6 +45,7 @@ class CobreDataset(NeuroDataset):
         root: str,
         atlas: str = 'aal',
         experiment_type: str = 'fmri',
+        init_node_features: str = 'conn_profile',
         thr = None,
         k = None,
         no_cache = False,
@@ -61,6 +63,7 @@ class CobreDataset(NeuroDataset):
         # TODO: thr add thr to processed file names
         self.atlas = atlas
         self.experiment_type = experiment_type
+        self.init_node_features = init_node_features
         self.thr = thr
         self.k = k
 

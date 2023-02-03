@@ -64,3 +64,9 @@ def test_cobre_loaders(cobre_dataset):
         all_valids.append(v_ids)
 
     assert reduce(set.intersection, all_valids) == set(), 'Non empty intersection between valids'
+
+def test_cobre_test_loader(cobre_dataset):
+    loader = cobre_dataset.get_test_loader(8)
+
+    for b in loader:
+        print(b)

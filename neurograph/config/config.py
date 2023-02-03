@@ -14,7 +14,7 @@ class DatasetConfig:
     name: str = 'cobre'
     experiment_type: str = 'fmri' # TODO: support list for multimodal experiments
     atlas: str = 'aal'
-    #init_node_embed: str = ''  # TODO
+    #init_node_features: str = 'conn_profile'  # TODO
     data_path: Path = Path(neurograph.__file__).resolve().parent.parent / 'datasets'
 
 

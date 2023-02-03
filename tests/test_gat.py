@@ -24,21 +24,14 @@ def random_batch(b=3, n=17, f=13):
     return Batch.from_data_list([random_graph(n, f) for _ in range(b)])
 
 
-def create_default_gat(n, f, c):
-    return GAT(input_dim=f, num_nodes=n, num_classes=c, model_cfg=get_config().model)
+def create_default_gat(n, f):
+    return GAT(input_dim=f, num_nodes=n, model_cfg=get_config().model)
 
 
-def test_gat_c1(b=3, n=37, f=13, c=1):
+def test_gat_c1(b=3, n=37, f=13):
+    cfg = get_config()
     batch = random_batch(b=b, n=n, f=f)
-    m = create_default_gat(n, f, c)
+    m = create_default_gat(n, f)
     o = m(batch)
-    assert o.shape == (b, c)
-    assert o.isnan().sum() == 0
-
-
-def test_gat_c2(b=3, n=37, f=13, c=2):
-    batch = random_batch(b=b, n=n, f=f)
-    m = create_default_gat(n, f, c)
-    o = m(batch)
-    assert o.shape == (b, c)
+    assert o.shape == (b, cfg.model.n_classes)
     assert o.isnan().sum() == 0
