@@ -39,7 +39,7 @@ class MPGATConv(GATConv):
         dropout: float = 0.0,
         bias: bool = True,
         gat_mp_type: str = 'attention_weighted',
-        abs_weights=True,
+        use_abs_weight=True,
     ):
         ''' custom GATConv layer with custom message passaging procedure '''
 
@@ -48,7 +48,7 @@ class MPGATConv(GATConv):
         self.gat_mp_type = gat_mp_type
         input_dim = out_channels
 
-        self.abs_weights = abs_weights
+        self.abs_weights = use_abs_weight
         self.dropout = dropout
 
         if gat_mp_type == "edge_node_concate":
@@ -151,6 +151,7 @@ def build_gat_block(
                     heads=num_heads,
                     dropout=dropout,
                     gat_mp_type=mp_type,
+                    use_abs_weight=use_abs_weight,
                 ),
                 'x, edge_index, edge_attr -> x'
             ),
