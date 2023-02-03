@@ -96,6 +96,7 @@ class LogConfig:
 @dataclass
 class Config:
     ''' Config schema w/ default values (see dataclasses above) '''
+    seed: int = 1380
     dataset: DatasetConfig = field(default_factory=DatasetConfig)
     model: ModelConfig = field(default_factory=ModelConfig)
     train: TrainConfig = field(default_factory=TrainConfig)

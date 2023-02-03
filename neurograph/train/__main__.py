@@ -3,6 +3,7 @@ from typing import Any, Mapping
 import hydra
 import dataclasses
 from omegaconf import OmegaConf
+from torch_geometric import seed_everything
 
 from neurograph.config import Config
 from neurograph.data import available_datasets
@@ -44,6 +45,8 @@ def load_dataset(cfg: Config) -> NeuroDataset:
 @hydra.main(version_base=None, config_path='../config', config_name="config")
 def main(cfg: Config):
     #cfg = dataclass_from_dict(Config, OmegaConf.to_container(cfg))
+
+    seed_everything(cfg.seed)
 
     # load dataset
     ds = load_dataset(cfg)
