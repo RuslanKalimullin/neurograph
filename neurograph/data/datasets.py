@@ -25,6 +25,9 @@ class NeuroDataset(InMemoryDataset):
     ) -> Generator[dict[str, DataLoader], None, None]:
         raise NotImplementedError
 
+    def get_test_loader(self, batch_size: int) -> DataLoader:
+        raise NotImplementedError
+
 
 class CobreDataset(NeuroDataset):
 
@@ -209,7 +212,7 @@ class CobreDataset(NeuroDataset):
                 'valid': DataLoader(self[valid_idx], batch_size=valid_batch_size, shuffle=False),
             }
 
-    def get_test_loader(self, batch_size: int):
+    def get_test_loader(self, batch_size: int) -> DataLoader:
         # TODO: test it
         test_idx = self.folds['test']
         return DataLoader(self[test_idx], batch_size=batch_size, shuffle=False)

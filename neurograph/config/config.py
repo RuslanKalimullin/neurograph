@@ -68,7 +68,7 @@ class ModelConfig:
 class TrainConfig:
     epochs: int = 1
     batch_size: int = 8
-    valid_batch_size: Optional[int] = None
+    valid_batch_size: Optional[int] = 8
     optim: str = 'Adam'
     optim_args: Optional[dict[str, Any]] = field(
         default_factory=lambda: {

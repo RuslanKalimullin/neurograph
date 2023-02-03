@@ -18,8 +18,10 @@ def train(ds: NeuroDataset, cfg: Config):
     # metrics  # TODO put into dataclass
     accs, aucs, macros, valid_losses = [], [], [], []
 
+    test_loader = ds.get_test_loader(cfg.train.valid_batch_size)
+
     # run training for each fold
-    for fold_i, loaders_dict in enumerate(ds.get_cv_loaders()):
+    for fold_i, loaders_dict in enumerate(ds.get_cv_loaders(cfg.train.batch_size, cfg.train.valid_batch_size)):
         logging.info(f'Fold {fold_i}')
 
         train_loader = loaders_dict['train']
@@ -51,23 +53,26 @@ def train(ds: NeuroDataset, cfg: Config):
         logging.info(f'(Last Epoch) | valid_loss={valid_loss},  val_acc={(val_acc * 100):.2f}, '
                      f'val_macro={(val_macro * 100):.2f}, val_auc={(val_auc * 100):.2f}')
 
+        # eval on test  # TODO
+        test_acc, test_auc, test_macro, test_loss = evaluate(model, test_loader, loss_f, cfg)
+
+        logging.info(f'(Last Epoch) | test_loss={test_loss},  test_acc={(test_acc * 100):.2f}, '
+                         f'test_macro={(test_macro * 100):.2f}, test_auc={(test_auc * 100):.2f}')
+
         # store metrics for the current fold
         accs.append(val_acc)
         aucs.append(val_auc)
         macros.append(val_macro)
         valid_losses.append(valid_loss)
 
-        del model
-
-    # eval on test  # TODO
     # report valid metrics for all folds
-    metrics = {
+    valid_metrics = {
         'acc': compute_stats(accs),
         'auc': compute_stats(aucs),
         'f1_macro': compute_stats(macros),
         'loss': compute_stats(valid_losses),
     }
-    logging.info(f'Valid metrics over folds: {json.dumps(metrics, indent=2)}')
+    logging.info(f'Valid metrics over folds: {json.dumps(valid_metrics, indent=2)}')
 
 
 def train_one_split(
