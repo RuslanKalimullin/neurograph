@@ -6,17 +6,5 @@ defaults:  # the last wins
 
 dataset: {}
 train: {}
-model: 
-    mlp_config:
-        layers:
-        - out_size: 256 
-          act_func: LeakyReLU
-          act_func_params:
-            negative_slope: 0.2
-          dropout: null
-        - out_size: 32 
-          act_func: LeakyReLU
-          act_func_params:
-            negative_slope: 0.2
-          dropout: null
+model: {}
 
