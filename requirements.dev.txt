@@ -1,5 +1,0 @@
-jupyterlab
-ipykernel
-notebook
-pytest
-mypy~=0.991

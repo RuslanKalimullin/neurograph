@@ -12,9 +12,6 @@ In order to install all dependencies via pip in some virtual env, run:
 ./install_pyg_via_pip.sh
 pip install -U -r requirements.txt
 
-# ipykernel, pytest, mypy etc.
-pip install -U -r requirements.dev.txt
-
 # install neurograph into env
 pip install -e .
 
