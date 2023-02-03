@@ -3,6 +3,8 @@
 
 ## install
 
+python=3.10
+
 ### pip
 In order to install all dependencies via pip in some virtual env, run:
 
