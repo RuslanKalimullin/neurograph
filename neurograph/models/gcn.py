@@ -121,12 +121,13 @@ class MPGCNConv(GCNConv):
 def build_gcn_block(
     input_dim: int,
     hidden_dim: int,
+
     proj_dim: Optional[int] = None,
     use_batchnorm: bool = True,
 
+    mp_type: str = 'node_concate',
     edge_emb_dim: int = 256,
     bucket_sz: float = 0.05,
-    mp_type: str = 'node_concate',
     dropout: float = 0.0,
     use_abs_weight: bool = True,
 ):
@@ -138,10 +139,10 @@ def build_gcn_block(
                 MPGCNConv(
                     input_dim,
                     hidden_dim,
-                    edge_emb_dim=edge_emb_dim,
                     mp_type=mp_type,
-                    dropout=dropout,
+                    edge_emb_dim=edge_emb_dim,
                     bucket_sz=bucket_sz,
+                    dropout=dropout,
                     use_abs_weight=use_abs_weight,
                 ),
                 'x, edge_index, edge_attr -> x'
@@ -182,9 +183,9 @@ class GCN(torch.nn.Module):
 
         gcn_input_dim = input_dim
         common_args: dict[str, Any] = dict(
+            mp_type=mp_type,
             edge_emb_dim = edge_emb_dim,
             bucket_sz=bucket_sz,
-            mp_type=mp_type,
             dropout=dropout,
             use_abs_weight=use_abs_weight,
         )
@@ -211,7 +212,7 @@ class GCN(torch.nn.Module):
                 use_batchnorm=False,
                 **common_args,
             )
-            # add extra projection and batchnorm
+            # add extra projection and batchnorm (prepool)
             self.prepool = nn.Sequential(
                 nn.Linear(model_cfg.prepool_dim, model_cfg.final_node_dim),
                 nn.LeakyReLU(negative_slope=0.2),
@@ -230,7 +231,7 @@ class GCN(torch.nn.Module):
             )
             fcn_dim = model_cfg.final_node_dim
 
-        # add last layer
+        # add last conv layer
         self.convs.append(conv)
 
         self.fcn = BasicMLP(in_size=fcn_dim, out_size=num_classes, config=model_cfg.mlp_config)

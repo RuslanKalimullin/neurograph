@@ -47,7 +47,7 @@ class MLPConfig:
 
 @dataclass
 class ModelConfig:
-    name: str = 'GAT'
+    name: str = 'GCN'
     n_classes: int = 1  # must match with loss
     mp_type: str = 'node_concate'
     pooling: str = 'concat'
@@ -61,9 +61,8 @@ class ModelConfig:
     # gat spefic args
     num_heads: int = 1
     # gcn spefic args
-    edge_emb_dim: int = 256
+    edge_emb_dim: int = 4
     bucket_sz: float = 0.05
-
 
     mlp_config: MLPConfig = field(default_factory=MLPConfig)
 

@@ -10,7 +10,7 @@ import torch.nn as nn
 
 from neurograph.config import Config, ModelConfig
 from neurograph.data.datasets import NeuroDataset
-from neurograph.models import GAT
+from neurograph.models import GAT, GCN
 from neurograph.models.available_modules import available_optimizers, available_losses
 
 
@@ -24,6 +24,7 @@ def train(ds: NeuroDataset, cfg: Config):
         'f1_macro': [],
         'loss': [],
     }
+    logging.info(create_model(ds, cfg.model))
 
     test_loader = ds.get_test_loader(cfg.train.valid_batch_size)
 
@@ -205,6 +206,8 @@ def evaluate(model, loader, loss_f, cfg: Config):
 def create_model(dataset: NeuroDataset, model_cfg: ModelConfig):
     if model_cfg.name == 'GAT':
         ModelKlass = GAT
+    elif model_cfg.name == 'GCN':
+        ModelKlass = GCN
     else:
         raise ValueError('Unknown model')
     return ModelKlass(
