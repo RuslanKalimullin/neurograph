@@ -15,6 +15,7 @@ import torch_geometric
 
 from neurograph.config import Config, ModelConfig
 from neurograph.models.mlp import BasicMLP
+from neurograph.models.utils import concat_pool
 
 
 class MPGATConv(GATConv):
@@ -36,24 +37,25 @@ class MPGATConv(GATConv):
         # not used
         concat: bool = True,
         negative_slope: float = 0.2,
+        # TODO: use dropout
         dropout: float = 0.0,
         bias: bool = True,
-        gat_mp_type: str = 'attention_weighted',
-        use_abs_weight=True,
+        mp_type: str = 'attention_weighted',
+        use_abs_weight: bool = True,
     ):
         ''' custom GATConv layer with custom message passaging procedure '''
 
         super().__init__(in_channels, out_channels, heads)
 
-        self.gat_mp_type = gat_mp_type
+        self.mp_type = mp_type
         input_dim = out_channels
 
         self.abs_weights = use_abs_weight
         self.dropout = dropout
 
-        if gat_mp_type == "edge_node_concate":
+        if mp_type == "edge_node_concate":
             input_dim = out_channels * 2 + 1
-        elif gat_mp_type == "node_concate":
+        elif mp_type == "node_concate":
             input_dim = out_channels * 2
 
         # edge_lin is mandatory
@@ -87,20 +89,20 @@ class MPGATConv(GATConv):
             edge_weights = torch.abs(edge_weights)
 
         # compute messages (for each edge)
-        if self.gat_mp_type == "attention_weighted":
+        if self.mp_type == "attention_weighted":
             # (1) att: s^(l+1) = s^l * alpha
             msg = x_j * attention_score
             return msg
-        elif self.gat_mp_type == "attention_edge_weighted":
+        elif self.mp_type == "attention_edge_weighted":
             # (2) e-att: s^(l+1) = s^l * alpha * e
             msg = x_j * attention_score * edge_weights
             return msg
-        elif self.gat_mp_type == "sum_attention_edge":
+        elif self.mp_type == "sum_attention_edge":
             # (3) m-att-1: s^(l+1) = s^l * (alpha + e),
             # this one may not make sense cause it doesn't use attention score to control all
             msg = x_j * (attention_score + edge_weights)
             return msg
-        elif self.gat_mp_type == "edge_node_concate":
+        elif self.mp_type == "edge_node_concate":
             # (4) m-att-2: s^(l+1) = linear(concat(s^l, e) * alpha)
             msg = torch.cat(
                 [
@@ -114,7 +116,7 @@ class MPGATConv(GATConv):
             )
             msg = self.edge_lin(msg)
             return msg
-        elif self.gat_mp_type == "node_concate":
+        elif self.mp_type == "node_concate":
             # (4) m-att-2: s^(l+1) = linear(concat(s^l, e) * alpha)
             msg = torch.cat([x_i, x_j * attention_score], dim=-1)
             msg = self.edge_lin(msg)
@@ -127,7 +129,7 @@ class MPGATConv(GATConv):
         #     msg = sum_node_edge * attention_score
         #     return msg
         else:
-            raise ValueError(f'Invalid message passing variant {self.gat_mp_type}')
+            raise ValueError(f'Invalid message passing variant {self.mp_type}')
 
 
 def build_gat_block(
@@ -150,7 +152,7 @@ def build_gat_block(
                     hidden_dim,
                     heads=num_heads,
                     dropout=dropout,
-                    gat_mp_type=mp_type,
+                    mp_type=mp_type,
                     use_abs_weight=use_abs_weight,
                 ),
                 'x, edge_index, edge_attr -> x'
@@ -161,11 +163,6 @@ def build_gat_block(
             nn.BatchNorm1d(proj_dim) if use_batchnorm else nn.Identity(),
         ]
     )
-
-
-def concat_pool(x: torch.Tensor, num_nodes: int) -> torch.Tensor:
-    # NB: x must be a batch of xs
-    return x.reshape(x.size(0) // num_nodes, -1)
 
 
 class GAT(nn.Module):
@@ -192,13 +189,13 @@ class GAT(nn.Module):
 
         num_classes = model_cfg.n_classes
         hidden_dim = model_cfg.hidden_dim
-        num_heads = model_cfg.num_heads
         num_layers = model_cfg.num_layers
         use_batchnorm = model_cfg.use_batchnorm
         use_abs_weight = model_cfg.use_abs_weight
         mp_type = model_cfg.mp_type
         dropout = model_cfg.dropout
-        # edge_emb_dim = args.edge_emb_dim # not used
+
+        num_heads = model_cfg.num_heads
 
         # pack a bunch of convs into a ModuleList
         gat_input_dim = input_dim

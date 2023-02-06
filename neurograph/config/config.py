@@ -52,14 +52,18 @@ class ModelConfig:
     mp_type: str = 'node_concate'
     pooling: str = 'concat'
     num_layers: int = 1
-    num_heads: int = 1
     hidden_dim: int = 8  # TODO: support list
     prepool_dim: int = 64  # input dim for prepool layer
-    final_node_dim: int = 4  # final node_dim after prepool
-    #activation: str = 'ReLU'
+    final_node_dim: int = 8  # final node_dim after prepool
     use_abs_weight: bool = True
     dropout: float = 0.3
     use_batchnorm: bool = True
+    # gat spefic args
+    num_heads: int = 1
+    # gcn spefic args
+    edge_emb_dim: int = 256
+    bucket_sz: float = 0.05
+
 
     mlp_config: MLPConfig = field(default_factory=MLPConfig)
 
@@ -68,7 +72,7 @@ class ModelConfig:
 class TrainConfig:
     epochs: int = 1
     batch_size: int = 8
-    valid_batch_size: Optional[int] = 8
+    valid_batch_size: int = 8
     optim: str = 'Adam'
     optim_args: Optional[dict[str, Any]] = field(
         default_factory=lambda: {

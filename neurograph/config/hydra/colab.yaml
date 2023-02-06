@@ -1,0 +1,6 @@
+hydra:
+    job:
+        chdir: True
+    run:
+        dir: /gdrive/MyDrive/skoltech/results/brain_gb_exps/${hydra.job.name}/${now:%Y-%m-%d_%H-%M-%S}
+

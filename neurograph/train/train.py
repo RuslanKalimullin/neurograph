@@ -18,7 +18,7 @@ def train(ds: NeuroDataset, cfg: Config):
     # metrics  # TODO put into dataclass or dict
     accs, aucs, macros, valid_losses = [], [], [], []
 
-    test_curves = {
+    test_curves: dict[str, list[float]] = {
         'acc': [],
         'auc': [],
         'f1_macro': [],
@@ -203,11 +203,6 @@ def evaluate(model, loader, loss_f, cfg: Config):
 
 
 def create_model(dataset: NeuroDataset, model_cfg: ModelConfig):
-    #local_models = {
-    #    name: obj for (name, obj) in inspect.getmembers(models)
-    #    if inspect.isclass(obj)
-    #    if issubclass(obj, nn.Module)
-    #}
     if model_cfg.name == 'GAT':
         ModelKlass = GAT
     else:
@@ -217,10 +212,6 @@ def create_model(dataset: NeuroDataset, model_cfg: ModelConfig):
         num_nodes=dataset.num_nodes,
         model_cfg=model_cfg,
     )
-
-
-def build_model_and_loss(cfg: Config):
-    pass
 
 
 def process_bce_preds():
