@@ -45,6 +45,7 @@ class MPGCNConv(GCNConv):
             in_channels=in_channels,
             out_channels=out_channels,
             aggr='add',
+            normalize=False,
         )
 
         self.mp_type = mp_type

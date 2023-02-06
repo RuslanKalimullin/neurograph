@@ -37,3 +37,4 @@ Results will be in `outputs/<hydra.job.name>/<timestamp>` dir
 ## acronyms
 * PyG = pytorch_geometric
 * CM = connectivity matrix
+* MP = message passing
