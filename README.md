@@ -38,3 +38,5 @@ Results will be in `outputs/<hydra.job.name>/<timestamp>` dir
 * PyG = pytorch_geometric
 * CM = connectivity matrix
 * MP = message passing
+
+* subset = train, valid or test part of a whole dataset or of one fold in cross-validation
