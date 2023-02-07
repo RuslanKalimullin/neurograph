@@ -19,11 +19,11 @@ from neurograph.models.available_modules import available_optimizers, available_
 
 
 def get_log_msg(prefix, fold_i, epoch_i, metrics) -> str:
-    return (
-        'Fold={fold_i:02d}, '
-        'Epoch={epoch_i:03d}, ' if epoch_i else ''
-        ' | '.join(f'{prefix}/{name}={val}' for name, val in metrics.items())
-    )
+    return ''.join([
+        f'Fold={fold_i:02d}, ',
+        f'Epoch={epoch_i:03d}, ' if epoch_i is not None else '',
+        ' | '.join(f'{prefix}/{name}={val:.3f}' for name, val in metrics.items()),
+    ])
 
 
 def train(ds: NeuroDataset, cfg: Config):
@@ -118,7 +118,7 @@ def train_one_split(
         # log to wandb
         wandb.log({
             f'train/fold_{fold_i}': train_epoch_metrics,
-            'valid/fold_{fold_i}': valid_epoch_metrics,
+            f'valid/fold_{fold_i}': valid_epoch_metrics,
         })
 
     # last epoch valid metrics
