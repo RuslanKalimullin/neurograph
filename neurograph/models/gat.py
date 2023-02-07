@@ -45,7 +45,7 @@ class MPGATConv(GATConv):
     ):
         ''' custom GATConv layer with custom message passaging procedure '''
 
-        super().__init__(in_channels, out_channels, heads)
+        super().__init__(in_channels, out_channels, heads, add_self_loops=False)
 
         self.mp_type = mp_type
         input_dim = out_channels
