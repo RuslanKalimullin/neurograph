@@ -94,6 +94,7 @@ class TrainConfig:
 class LogConfig:
     # how often print training metrics
     test_step: int = 1
+    wandb_project: str = 'mri_gnn'
 
 
 @dataclass

@@ -3,8 +3,10 @@ import json
 import logging
 import os.path as osp
 from typing import Any, Mapping
+
+import git
 import hydra
-import dataclasses
+import wandb
 from omegaconf import OmegaConf
 from torch_geometric import seed_everything
 
@@ -12,29 +14,6 @@ from neurograph.config import Config
 from neurograph.data import available_datasets
 from neurograph.data.datasets import NeuroDataset
 from neurograph.train.train import train
-
-
-#def dataclass_from_dict(cls: type, src: Mapping[str, Any]) -> Any:
-#    # map each field to its type (class)
-#    field_types_lookup = {
-#        field.name: field.type
-#        for field in dataclasses.fields(cls)
-#    }
-#
-#    constructor_inputs = {}
-#    for field_name, value in src.items():
-#        try:
-#            constructor_inputs[field_name] = dataclass_from_dict(field_types_lookup[field_name], value)
-#        except TypeError as e:
-#            # type error from fields() call in recursive call
-#            # indicates that field is not a dataclass, this is how we are
-#            # breaking the recursion. If not a dataclass - no need for loading
-#            constructor_inputs[field_name] = value
-#        #except KeyError:
-#        #    # similar, field not defined on dataclass, pass as plain field value
-#        #    constructor_inputs[field_name] = value
-#
-#    return cls(**constructor_inputs)
 
 
 def load_dataset(cfg: Config) -> NeuroDataset:
@@ -49,17 +28,20 @@ def load_dataset(cfg: Config) -> NeuroDataset:
 
 @hydra.main(version_base=None, config_path='../config', config_name="config")
 def main(cfg: Config):
-    #cfg = dataclass_from_dict(Config, OmegaConf.to_container(cfg))
-
     seed_everything(cfg.seed)
 
-    # load dataset
+    cfg_dict = OmegaConf.to_container(cfg)
+    wandb.init(
+        project=cfg.log.wandb_project,
+        config=cfg_dict,  # type: ignore
+    )
+
     ds = load_dataset(cfg)
 
-    print(OmegaConf.to_yaml(cfg))
+    logging.info(f'Config: \n{OmegaConf.to_yaml(cfg)}')
     metrics = train(ds, cfg)
 
-    print(os.getcwd())
+    logging.info(f'Results saved in: {os.getcwd()}')
 
     # save metrics and config
     with open(osp.join(os.getcwd(), 'metrics.json'), 'w') as f_metrics:
