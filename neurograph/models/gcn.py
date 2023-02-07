@@ -156,7 +156,7 @@ def build_gcn_block(
     )
 
 
-class GCN(torch.nn.Module):
+class bgbGCN(torch.nn.Module):
     def __init__(
         self,
         # determined by dataset

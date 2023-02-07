@@ -165,7 +165,7 @@ def build_gat_block(
     )
 
 
-class GAT(nn.Module):
+class bgbGAT(nn.Module):
     def __init__(
         self,
         # determined by dataset

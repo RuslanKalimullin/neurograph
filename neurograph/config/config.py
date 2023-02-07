@@ -47,7 +47,7 @@ class MLPConfig:
 
 @dataclass
 class ModelConfig:
-    name: str = 'GCN'
+    name: str = 'bgbGCN'
     n_classes: int = 1  # must match with loss
     mp_type: str = 'node_concate'
     pooling: str = 'concat'

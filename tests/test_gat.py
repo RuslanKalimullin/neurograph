@@ -2,13 +2,13 @@ import numpy as np
 import torch
 from torch_geometric.data import Data, Batch
 from neurograph.config import get_config, ModelConfig
-from neurograph.models.gat import GAT, MPGATConv
+from neurograph.models.gat import bgbGAT, MPGATConv
 from neurograph.data.utils import cm_to_edges
 from .utils import random_batch, random_graph
 
 
 def create_default_gat(n, f):
-    return GAT(input_dim=f, num_nodes=n, model_cfg=get_config().model)
+    return bgbGAT(input_dim=f, num_nodes=n, model_cfg=get_config().model)
 
 
 def test_gat_c1(b=3, n=37, f=13):

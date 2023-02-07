@@ -10,7 +10,8 @@ import torch.nn as nn
 
 from neurograph.config import Config, ModelConfig
 from neurograph.data.datasets import NeuroDataset
-from neurograph.models import GAT, GCN
+import neurograph.models
+#from neurograph.models import bgbGAT, bgbGCN
 from neurograph.models.available_modules import available_optimizers, available_losses
 
 
@@ -204,12 +205,8 @@ def evaluate(model, loader, loss_f, cfg: Config):
 
 
 def create_model(dataset: NeuroDataset, model_cfg: ModelConfig):
-    if model_cfg.name == 'GAT':
-        ModelKlass = GAT
-    elif model_cfg.name == 'GCN':
-        ModelKlass = GCN
-    else:
-        raise ValueError('Unknown model')
+    available_models = {name: obj for name, obj in inspect.getmembers(neurograph.models)}
+    ModelKlass = available_models[model_cfg.name]
     return ModelKlass(
         input_dim=dataset.n_features,
         num_nodes=dataset.num_nodes,
@@ -225,7 +222,6 @@ def process_ce_preds():
     pass
 
 
-def compute_stats(lst: list[float]):
+def compute_stats(lst: list[float]) -> dict[str, np.ndarray]:
     arr = np.array(lst)
     return {'mean': arr.mean(), 'std': arr.std(), 'min': arr.min(), 'max': arr.max()}
-

@@ -3,13 +3,13 @@ import torch
 from torch_geometric.data import Data, Batch
 
 from neurograph.config import get_config, ModelConfig
-from neurograph.models.gcn import GCN, MPGCNConv
+from neurograph.models.gcn import bgbGCN, MPGCNConv
 from neurograph.data.utils import cm_to_edges
 from .utils import random_batch, random_graph
 
 
 def create_default_gcn(n, f):
-    return GCN(input_dim=f, num_nodes=n, model_cfg=get_config().model)
+    return bgbGCN(input_dim=f, num_nodes=n, model_cfg=get_config().model)
 
 
 def test_gcn_1(b=3, n=37, f=13):
