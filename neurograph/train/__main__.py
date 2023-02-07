@@ -33,7 +33,10 @@ def main(cfg: Config):
     cfg_dict = OmegaConf.to_container(cfg)
     wandb.init(
         project=cfg.log.wandb_project,
+        settings=wandb.Settings(start_method="thread"),
         config=cfg_dict,  # type: ignore
+        mode=cfg.log.wandb_mode,
+        name=cfg.log.wandb_name,
     )
 
     ds = load_dataset(cfg)

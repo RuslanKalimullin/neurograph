@@ -95,6 +95,8 @@ class LogConfig:
     # how often print training metrics
     test_step: int = 1
     wandb_project: str = 'mri_gnn'
+    wandb_name: Optional[str] = None
+    wandb_mode: str = 'enabled'  # 'disabled' for testing
 
 
 @dataclass
