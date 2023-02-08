@@ -45,6 +45,7 @@ def main(cfg: Config):
 
     logging.info(f'Config: \n{OmegaConf.to_yaml(cfg)}')
     metrics = train(ds, cfg)
+    wandb.finish()
 
     logging.info(f'Results saved in: {os.getcwd()}')
 

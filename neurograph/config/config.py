@@ -47,7 +47,7 @@ class MLPConfig:
 
 @dataclass
 class ModelConfig:
-    name: str = 'bgbGCN'
+    name: str = 'bgbGCN'  # see neurograph.models/
     n_classes: int = 1  # must match with loss
     mp_type: str = 'node_concate'
     pooling: str = 'concat'
@@ -56,6 +56,7 @@ class ModelConfig:
     prepool_dim: int = 64  # input dim for prepool layer
     final_node_dim: int = 8  # final node_dim after prepool
     use_abs_weight: bool = True
+    # TODO: use it inside convolutions
     dropout: float = 0.3
     use_batchnorm: bool = True
     # gat spefic args
