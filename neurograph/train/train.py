@@ -56,7 +56,6 @@ def train(ds: NeuroDataset, cfg: Config):
             fold_i=fold_i,
             cfg=cfg,
         )
-
         # eval on test
         test_metrics = evaluate(model, test_loader, loss_f, cfg)
         logging.info(get_log_msg('test', fold_i, None, test_metrics))
@@ -65,9 +64,11 @@ def train(ds: NeuroDataset, cfg: Config):
         valid_folds_metrics.append(valid_metrics)
         test_folds_metrics.append(test_metrics)
 
-    # report valid metrics for all folds
+    # aggregate valid and test metrics for all folds
     final_valid_metrics = agg_fold_metrics(valid_folds_metrics)
     final_test_metrics = agg_fold_metrics(test_folds_metrics)
+
+    wandb.summary['final'] = {'valid': final_valid_metrics, 'test': final_test_metrics}
 
     logging.info(f'Valid metrics over folds: {json.dumps(final_valid_metrics, indent=2)}')
     logging.info(f'Test metrics over folds: {json.dumps(final_test_metrics, indent=2)}')
@@ -115,10 +116,11 @@ def train_one_split(
         valid_epoch_metrics = evaluate(model, valid_loader, loss_f, cfg)
         logging.info(get_log_msg('valid', fold_i, epoch_i, valid_epoch_metrics))
 
-        # log to wandb
+        # log to wandb, add prefix like 'train/fold_3/'to each metric
         wandb.log({
-            f'train/fold_{fold_i}': train_epoch_metrics,
-            f'valid/fold_{fold_i}': valid_epoch_metrics,
+            **{f'train/fold_{fold_i}/{name}': val for name, val in train_epoch_metrics.items()},
+            **{f'valid/fold_{fold_i}/{name}': val for name, val in valid_epoch_metrics.items()},
+            'epoch': epoch_i,
         })
 
     # last epoch valid metrics

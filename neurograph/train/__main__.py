@@ -38,6 +38,8 @@ def main(cfg: Config):
         mode=cfg.log.wandb_mode,
         name=cfg.log.wandb_name,
     )
+    wandb.define_metric('train/*', step_metric='epoch')
+    wandb.define_metric('valid/*', step_metric='epoch')
 
     ds = load_dataset(cfg)
 
