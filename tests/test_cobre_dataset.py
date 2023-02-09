@@ -5,13 +5,41 @@ from neurograph.data.datasets import CobreDataset
 
 
 @pytest.fixture(scope='session')
-def cobre_dataset():
+def cobre_ds_no_thr():
     return CobreDataset(root=get_config().dataset.data_path)
 
 
-def test_cobre_target(cobre_dataset):
-    target, label2idx, idx2label = cobre_dataset.load_targets()
-    target = target[cobre_dataset.target_col]
+@pytest.fixture(scope='session')
+def cobre_ds_abs_thr():
+    return CobreDataset(root=get_config().dataset.data_path, abs_thr=0.3)
+
+
+@pytest.fixture(scope='session')
+def cobre_ds_pt_thr():
+    return CobreDataset(root=get_config().dataset.data_path, pt_thr=0.5)
+
+
+def test_cobre_no_thr(cobre_ds_no_thr):
+    g = cobre_ds_no_thr
+    assert g[0].edge_index.shape[1] == cobre_ds_no_thr.num_nodes ** 2
+
+
+def test_cobre_abs_thr(cobre_ds_abs_thr):
+    g = cobre_ds_abs_thr[0]
+    assert 0 < g.edge_index.shape[1] < cobre_ds_abs_thr.num_nodes ** 2
+    assert g.edge_attr.min().abs() >= 0.5
+
+
+def test_cobre_pt_thr(cobre_ds_pt_thr):
+    g = cobre_ds_pt_thr[0]
+    p = cobre_ds_pt_thr.pt_thr * (cobre_ds_pt_thr.num_nodes ** 2)
+    assert p // 2 < g.edge_index.shape[1]
+    assert g.edge_index.shape[1] <= int(p)
+
+
+def test_cobre_target(cobre_ds_no_thr):
+    target, label2idx, idx2label = cobre_ds_no_thr.load_targets()
+    target = target[cobre_ds_no_thr.target_col]
 
     assert len(idx2label) == 2
     assert target.nunique() == 2
@@ -20,8 +48,8 @@ def test_cobre_target(cobre_dataset):
     assert target.index.isnull().sum() == 0
 
 
-def test_cobre_folds(cobre_dataset):
-    folds = cobre_dataset.folds
+def test_cobre_folds(cobre_ds_no_thr):
+    folds = cobre_ds_no_thr.folds
 
     all_train = set()  # everything that we run cross-val on
     all_valids = []
@@ -42,7 +70,7 @@ def test_cobre_folds(cobre_dataset):
     assert set(folds['test']) & all_train == set(), 'Intersection between test and train'
 
 
-def test_cobre_loaders(cobre_dataset):
+def test_cobre_loaders(cobre_ds_no_thr):
     def get_subj_from_loader(loader):
         ids = []
         for x in loader:
@@ -52,7 +80,7 @@ def test_cobre_loaders(cobre_dataset):
         return set_ids
 
     all_valids = []
-    for split in cobre_dataset.get_cv_loaders():
+    for split in cobre_ds_no_thr.get_cv_loaders():
         # get loaders
         train, valid = split['train'], split['valid']
         t_ids = get_subj_from_loader(train)
@@ -65,8 +93,9 @@ def test_cobre_loaders(cobre_dataset):
 
     assert reduce(set.intersection, all_valids) == set(), 'Non empty intersection between valids'
 
-def test_cobre_test_loader(cobre_dataset):
-    loader = cobre_dataset.get_test_loader(8)
+
+def test_cobre_test_loader(cobre_ds_no_thr):
+    loader = cobre_ds_no_thr.get_test_loader(8)
 
     for b in loader:
         print(b)

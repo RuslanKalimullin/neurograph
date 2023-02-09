@@ -56,21 +56,25 @@ def load_cms(
 
 
 @square_check
-def prepare_one_graph(
+def prepare_graph(
     cm: np.ndarray,
     subj_id: str,
     targets: pd.DataFrame,
-    thr: Optional[float] = None,
+    abs_thr: Optional[float] = None,
+    pt_thr: Optional[float] = None,
 ) -> Data:
 
-    """ Combine CM, subj_id and target to a pyg.Data instance
-
-        targets must be indexed by subj_id
     """
-
-    # fully connected graph
-    n = cm.shape[0]
-    edge_index, edge_attr = cm_to_edges(cm)
+    Args:
+        cm (np.ndarray): connectivity matrix
+        subj_id (str): subject_id
+        abs_thr (float, optional): Absolute threshold for sparsification
+        pt_thr (float, optional): Proportional threshold for sparsification (pt_thr must be (0, 1)
+        Combine CM, subj_id and target to a pyg.Data object
+        `targets` must be indexed by subj_id
+    """
+    # convert CM edge_index, edge_attr (and sparsify if thr are given)
+    edge_index, edge_attr = cm_to_edges(cm, abs_thr=abs_thr, pt_thr=pt_thr)
 
     # compute initial node embeddings -> just original weights
     x = torch.from_numpy(cm)
@@ -82,7 +86,7 @@ def prepare_one_graph(
         edge_index=edge_index,
         edge_attr=edge_attr,
         x=x,
-        num_nodes=n,
+        num_nodes=cm.shape[0],
         y=y,
         subj_id=subj_id,
     )
@@ -91,17 +95,68 @@ def prepare_one_graph(
 
 
 @square_check
-def cm_to_edges(cm: np.ndarray) -> tuple[torch.Tensor, torch.Tensor]:
+def cm_to_edges(
+    cm: np.ndarray,
+    abs_thr: Optional[float] = None,
+    pt_thr: Optional[float] = None,
+) -> tuple[torch.Tensor, torch.Tensor]:
     """
     Convert CM to (edge_index, edge_weights) of a fully connected weighted graph
     (including self-loops with zero weights)
+
     return: (edge_index, edge_weights)
     """
-    cm_tensor = torch.FloatTensor(cm)
-    index = (torch.isnan(cm_tensor) == 0).nonzero(as_tuple=True)
-    edge_attr = cm_tensor[index]
 
-    return torch.stack(index, dim=0), edge_attr
+    if abs_thr is not None and pt_thr is not None:
+        raise ValueError('`abs_thr` and `pt_thr` are both not None! Choose one!')
+
+    if abs_thr:
+        abs_cm = np.abs(cm)
+        idx = np.nonzero(abs_cm > abs_thr)
+    elif pt_thr:
+        assert 0 < pt_thr < 1, 'thr must be in range (0, 1)'
+        abs_cm = np.abs(cm)
+        vals = np.sort(abs_cm.flatten())[::-1]
+        top_k = int(pt_thr * cm.shape[0] ** 2)  # pt * num_nodes**2
+        idx = np.nonzero(abs_cm > vals[top_k])
+    else:
+        idx = (np.isnan(cm) == 0).nonzero()
+
+    edge_index = torch.LongTensor(np.stack(idx))
+    edge_weights = torch.FloatTensor(cm[idx])
+
+    return edge_index, edge_weights
+
+
+@square_check
+def apply_abs_thr(cm: np.ndarray, thr: float):
+    abs_cm = np.abs(cm)
+    idx = np.nonzero(abs_cm > thr)
+
+    edge_index = torch.LongTensor(np.stack(idx))
+    edge_weights = torch.FloatTensor(cm[idx])
+
+    return edge_index, edge_weights
+
+
+@square_check
+def apply_pt(cm: np.ndarray, pt: float):
+    ''' leave only `thr` of the strongest connections '''
+
+    assert 0 < pt < 1, 'thr must be in range (0, 1)'
+
+    n = cm.shape[0]
+    abs_cm = np.abs(cm)
+    vals = np.sort(abs_cm.flatten())[::-1]
+
+    top_k = int(pt * n**2)
+    thr = vals[top_k]
+    idx = np.nonzero(abs_cm > thr)
+
+    edge_index = torch.LongTensor(np.stack(idx))
+    edge_weights = torch.FloatTensor(cm[idx])
+
+    return edge_index, edge_weights
 
 
 @square_check
@@ -109,8 +164,9 @@ def find_thr(
     cm: np.ndarray,
     k: int = 5,
 ) -> float:
-    assert cm.ndim == 2, 'adj matrix must be 2d array!'
-    assert cm.shape[0] == cm.shape[1], 'adj matrix must be square!'
+
+    ''' For a given CM find a threshold so after sparsification
+    the new CM will have `k * num_nodes` edges '''
 
     n = cm.shape[0]
     abs_cm = np.abs(cm)
@@ -122,16 +178,6 @@ def find_thr(
     thr = vals[thr_idx]
 
     return thr
-
-
-@square_check
-def apply_thr(cm: np.ndarray, thr: float):
-    abs_cm = np.abs(cm)
-    idx = np.nonzero(abs_cm > thr)
-    edge_index = torch.LongTensor(np.stack(idx))
-    edge_weights = torch.FloatTensor(cm[idx])
-
-    return edge_index, edge_weights
 
 
 def generate_splits(subj_ids: list | np.ndarray, y: np.ndarray, seed: int = 1380):
@@ -154,4 +200,3 @@ def generate_splits(subj_ids: list | np.ndarray, y: np.ndarray, seed: int = 1380
     folds['test'] = list(test)
 
     return folds
-

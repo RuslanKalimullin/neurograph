@@ -8,7 +8,7 @@ import torch
 from torch_geometric.data import Data, InMemoryDataset
 from torch_geometric.loader import DataLoader
 
-from .utils import load_cms, prepare_one_graph
+from .utils import load_cms, prepare_graph
 
 
 class NeuroGraphDataset(InMemoryDataset):
@@ -45,9 +45,8 @@ class CobreDataset(NeuroGraphDataset):
         atlas: str = 'aal',
         experiment_type: str = 'fmri',
         init_node_features: str = 'conn_profile',
-        abs_thr: float = None,
-        pt_thr: float = None,
-        k: int = None,
+        abs_thr: Optional[float] = None,
+        pt_thr: Optional[float] = None,
         no_cache = False,
     ):
         """
@@ -64,8 +63,8 @@ class CobreDataset(NeuroGraphDataset):
         self.atlas = atlas
         self.experiment_type = experiment_type
         self.init_node_features = init_node_features
-        self.thr = abs_thr
-        self.k = k
+        self.abs_thr = abs_thr
+        self.pt_thr = pt_thr
 
         self._validate()
 
@@ -101,11 +100,18 @@ class CobreDataset(NeuroGraphDataset):
 
     @property
     def processed_file_names(self):
+        thr = ''
+        if self.abs_thr:
+            thr = f'abs={self.abs_thr}'
+        if self.pt_thr:
+            thr = f'pt={self.pt_thr}'
+
+        prefix = '_'.join(s for s in [self.atlas, self.experiment_type, thr] if s)
         return [
-            f'{self.atlas}_{self.experiment_type}_data.pt',
-            f'{self.atlas}_{self.experiment_type}_subj_ids.txt',
-            f'{self.atlas}_{self.experiment_type}_folds.json',
-            f'{self.atlas}_{self.experiment_type}_targets.csv',
+            f'{prefix}_data.pt',
+            f'{prefix}_subj_ids.txt',
+            f'{prefix}_folds.json',
+            f'{prefix}_targets.csv',
         ]
 
     @property
@@ -161,7 +167,7 @@ class CobreDataset(NeuroGraphDataset):
         for subj_id, cm in cms.items():
             try:
                 # try to process a graph
-                datalist.append(prepare_one_graph(cm, subj_id, targets))
+                datalist.append(prepare_graph(cm, subj_id, targets, self.abs_thr, self.pt_thr))
                 subj_ids.append(subj_id)
             except KeyError:
                 # ignore if subj_id is not in targets
@@ -228,10 +234,8 @@ class CobreDataset(NeuroGraphDataset):
             raise ValueError('Unknown atlas')
         if self.experiment_type not in self.available_experiments:
             raise ValueError(f'Unknown experiment type: {self.experiment_type}')
-        if self.k is not None and self.thr is not None:
-            raise ValueError('Both `k` and `thr` are not None! Choose one!')
-        if self.k is not None and k <= 0:
-            raise ValueError('`k` must be > 0')
+        if self.pt_thr is not None and self.abs_thr is not None:
+            raise ValueError('Both proportional threshold `pt` and absolute threshold `thr` are not None! Choose one!')
 
 
 class ListDataset(InMemoryDataset):
