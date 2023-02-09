@@ -11,7 +11,7 @@ from torch_geometric.loader import DataLoader
 from .utils import load_cms, prepare_one_graph
 
 
-class NeuroDataset(InMemoryDataset):
+class NeuroGraphDataset(InMemoryDataset):
     name: str
     available_atlases: set[str]
     available_experiments: set[str]
@@ -30,8 +30,7 @@ class NeuroDataset(InMemoryDataset):
         raise NotImplementedError
 
 
-class CobreDataset(NeuroDataset):
-
+class CobreDataset(NeuroGraphDataset):
     name = 'cobre'
     available_atlases = {'aal', 'msdl'}
     available_experiments = {'fmri', 'dti'}
@@ -46,8 +45,9 @@ class CobreDataset(NeuroDataset):
         atlas: str = 'aal',
         experiment_type: str = 'fmri',
         init_node_features: str = 'conn_profile',
-        thr = None,
-        k = None,
+        abs_thr: float = None,
+        pt_thr: float = None,
+        k: int = None,
         no_cache = False,
     ):
         """
@@ -64,12 +64,12 @@ class CobreDataset(NeuroDataset):
         self.atlas = atlas
         self.experiment_type = experiment_type
         self.init_node_features = init_node_features
-        self.thr = thr
+        self.thr = abs_thr
         self.k = k
 
         self._validate()
 
-        # root: experiment specific files (CMs)
+        # root: experiment specific files (CMs and time series matrices)
         self.root = osp.join(root, self.name, experiment_type)
         # global_dir: dir with meta info and cv_splits
         self.global_dir = osp.join(root, self.name)
@@ -77,23 +77,26 @@ class CobreDataset(NeuroDataset):
         if no_cache:
             rmtree(self.processed_dir, ignore_errors=True)
 
-        # here `process` is called
+        # here `self.process` is called
         super().__init__(self.root)
 
+        # load preprocessed graphs
         self.data, self.slices = torch.load(self.processed_paths[0])
 
+        # load dataframes w/ subj_ids and targets
         self.target_df = pd.read_csv(self.processed_paths[3])
 
         with open(self.processed_paths[1]) as f_ids:
             self.subj_ids = [l.rstrip() for l in f_ids.readlines()]
 
-        # load fixed stratified partition to 5 folds and test
+        # load cv splits
         with open(self.processed_paths[2]) as f_folds:
             self.folds = json.load(f_folds)
 
+        # get some graph attrs (used for initializing models)
         self.n_features = self.data.x.shape[1]
         num_nodes = self.slices['x'].diff().unique()
-        assert len(num_nodes) == 1, 'assert different number of nodes in graphs!'
+        assert len(num_nodes) == 1, 'You have different number of nodes in graphs!'
         self.num_nodes = num_nodes.item()
 
     @property
@@ -146,7 +149,7 @@ class CobreDataset(NeuroDataset):
     def load_datalist(self) -> tuple[list[Data], list[str], pd.DataFrame]:
         targets, label2idx, idx2label = self.load_targets()
 
-        # subj_id -> CM, etc.
+        # subj_id -> CM, time series matrices, ROI names
         cms, ts, roi_map = load_cms(self.cm_path)
 
         # apply thr, or compute thr from k

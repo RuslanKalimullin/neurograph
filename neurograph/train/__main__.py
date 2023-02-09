@@ -12,11 +12,11 @@ from torch_geometric import seed_everything
 
 from neurograph.config import Config
 from neurograph.data import available_datasets
-from neurograph.data.datasets import NeuroDataset
+from neurograph.data.datasets import NeuroGraphDataset
 from neurograph.train.train import train
 
 
-def load_dataset(cfg: Config) -> NeuroDataset:
+def load_dataset(cfg: Config) -> NeuroGraphDataset:
     ds_cfg = cfg.dataset
     DsKlass = available_datasets[ds_cfg.name]
     return DsKlass(

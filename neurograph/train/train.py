@@ -13,7 +13,7 @@ from torch_geometric.loader import DataLoader as pygDataLoader
 import wandb
 
 from neurograph.config import Config, ModelConfig
-from neurograph.data.datasets import NeuroDataset
+from neurograph.data.datasets import NeuroGraphDataset
 import neurograph.models
 from neurograph.models.available_modules import available_optimizers, available_losses
 
@@ -26,7 +26,7 @@ def get_log_msg(prefix, fold_i, epoch_i, metrics) -> str:
     ])
 
 
-def train(ds: NeuroDataset, cfg: Config):
+def train(ds: NeuroGraphDataset, cfg: Config):
     ''' Run cross-validation, report metrics on valids and test '''
 
     # metrics  # TODO put into dataclass or dict
@@ -162,7 +162,7 @@ def evaluate(model, loader, loss_f, cfg: Config):
     return {'acc': acc, 'auc': auc, 'f1_macro': f1_macro, 'loss': loss}
 
 
-def init_model_optim_loss(ds: NeuroDataset, cfg: Config):
+def init_model_optim_loss(ds: NeuroGraphDataset, cfg: Config):
     # create model instance
     model = init_model(ds, cfg.model)
     # set optimizer
@@ -179,7 +179,7 @@ def init_model_optim_loss(ds: NeuroDataset, cfg: Config):
     return model, optimizer, scheduler, loss_f
 
 
-def init_model(dataset: NeuroDataset, model_cfg: ModelConfig):
+def init_model(dataset: NeuroGraphDataset, model_cfg: ModelConfig):
     available_models = {name: obj for name, obj in inspect.getmembers(neurograph.models)}
     ModelKlass = available_models[model_cfg.name]
     return ModelKlass(
