@@ -14,6 +14,8 @@ class DatasetConfig:
     name: str = 'cobre'
     experiment_type: str = 'fmri' # TODO: support list for multimodal experiments
     atlas: str = 'aal'
+    abs_thr: Optional[float] = None
+    pt_thr: Optional[float] = None
     #init_node_features: str = 'conn_profile'  # TODO
     data_path: Path = Path(neurograph.__file__).resolve().parent.parent / 'datasets'
 
@@ -61,6 +63,7 @@ class ModelConfig:
     use_batchnorm: bool = True
     # gat spefic args
     num_heads: int = 1
+    # TODO: add adding self-loops
     # gcn spefic args
     edge_emb_dim: int = 4
     bucket_sz: float = 0.05
