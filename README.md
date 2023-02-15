@@ -9,15 +9,20 @@ python=3.10
 In order to install all dependencies via pip in some virtual env, run:
 
 ```bash
-# required for constructing 2-complexes
+# required for constructing 2-complexes for CWN
+# don't install it, if you're training just GNN
 ./graph-tool_install.sh  # via conda
+
+# install Pytorch Geometric
 ./pyg_cpu.sh  # or ./pyg_cuda.sh
+
+# install other requirements
 pip install -U -r requirements.txt
 
-# install neurograph into env
+# install `neurograph` into env
 pip install -e .
 
-# install cwn fork (maybe to another dir)
+# CWN: install `cwn` fork (maybe to another dir)
 git clone https://github.com/gennadylaptev/cwn.git
 cd cwn
 pip install -e .
