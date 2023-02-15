@@ -9,12 +9,18 @@ python=3.10
 In order to install all dependencies via pip in some virtual env, run:
 
 ```bash
-./install_pyg_via_pip.sh
+# required for constructing 2-complexes
+./graph-tool_install.sh  # via conda
+./pyg_cpu.sh  # or ./pyg_cuda.sh
 pip install -U -r requirements.txt
 
 # install neurograph into env
 pip install -e .
 
+# install cwn fork (maybe to another dir)
+git clone https://github.com/gennadylaptev/cwn.git
+cd cwn
+pip install -e .
 ```
 
 ## data
@@ -40,3 +46,9 @@ Results will be in `outputs/<hydra.job.name>/<timestamp>` dir
 * MP = message passing
 
 * subset = train, valid or test part of a whole dataset or of one fold in cross-validation
+
+## misc
+```bash
+jupyter nbextension enable --py widgetsnbextension
+```
+if IPython doesn't work in jupyter lab
