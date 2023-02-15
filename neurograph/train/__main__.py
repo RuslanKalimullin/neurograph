@@ -23,6 +23,8 @@ def load_dataset(cfg: Config) -> NeuroGraphDataset:
         root=ds_cfg.data_path,
         atlas=ds_cfg.atlas,
         experiment_type=ds_cfg.experiment_type,
+        pt_thr=ds_cfg.pt_thr,
+        abs_thr=ds_cfg.abs_thr,
     )
 
 

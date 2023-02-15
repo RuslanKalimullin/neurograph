@@ -13,6 +13,10 @@ from .utils import load_cms, prepare_graph
 
 class NeuroGraphDataset(InMemoryDataset):
     name: str
+    atlas: str
+    experiment_type: str
+    abs_thr: Optional[float]
+    pt_thr: Optional[float]
     available_atlases: set[str]
     available_experiments: set[str]
     n_features: int
@@ -28,6 +32,9 @@ class NeuroGraphDataset(InMemoryDataset):
 
     def get_test_loader(self, batch_size: int) -> DataLoader:
         raise NotImplementedError
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}: atlas={self.atlas}, experiment_type={self.experiment_type}, pt_thr={self.pt_thr}, abs_thr={self.abs_thr}, size={len(self)}'
 
 
 class CobreDataset(NeuroGraphDataset):

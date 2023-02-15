@@ -129,37 +129,6 @@ def cm_to_edges(
 
 
 @square_check
-def apply_abs_thr(cm: np.ndarray, thr: float):
-    abs_cm = np.abs(cm)
-    idx = np.nonzero(abs_cm > thr)
-
-    edge_index = torch.LongTensor(np.stack(idx))
-    edge_weights = torch.FloatTensor(cm[idx])
-
-    return edge_index, edge_weights
-
-
-@square_check
-def apply_pt(cm: np.ndarray, pt: float):
-    ''' leave only `thr` of the strongest connections '''
-
-    assert 0 < pt < 1, 'thr must be in range (0, 1)'
-
-    n = cm.shape[0]
-    abs_cm = np.abs(cm)
-    vals = np.sort(abs_cm.flatten())[::-1]
-
-    top_k = int(pt * n**2)
-    thr = vals[top_k]
-    idx = np.nonzero(abs_cm > thr)
-
-    edge_index = torch.LongTensor(np.stack(idx))
-    edge_weights = torch.FloatTensor(cm[idx])
-
-    return edge_index, edge_weights
-
-
-@square_check
 def find_thr(
     cm: np.ndarray,
     k: int = 5,
