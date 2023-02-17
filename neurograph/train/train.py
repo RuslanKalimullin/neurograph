@@ -85,7 +85,10 @@ def train_one_split(
     fold_i: int | str,
     cfg: Config,
 ):
-    ''' train on train/val split, return last epoch valid metrics '''
+    ''' train on train/val split, return last epoch valid metrics
+        Params:
+        loaders: dict, must have keys 'train' and 'valid'
+    '''
 
     model.train()
     train_loader = loaders['train']
