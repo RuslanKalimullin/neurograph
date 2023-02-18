@@ -49,12 +49,12 @@ class MLPConfig:
 
 @dataclass
 class ModelConfig:
-    name: str = 'bgbGCN'  # see neurograph.models/
+    name: str = 'bgbGAT'  # see neurograph.models/
     n_classes: int = 2  # must match with loss
     mp_type: str = 'node_concate'
     pooling: str = 'concat'
     num_layers: int = 1
-    hidden_dim: int = 8  # TODO: support list
+    hidden_dim: int = 16  # TODO: support list
     prepool_dim: int = 64  # input dim for prepool layer
     final_node_dim: int = 8  # final node_dim after prepool
     use_abs_weight: bool = True
@@ -62,7 +62,7 @@ class ModelConfig:
     dropout: float = 0.3
     use_batchnorm: bool = True
     # gat spefic args
-    num_heads: int = 1
+    num_heads: int = 2
     # TODO: add adding self-loops
     # gcn spefic args
     edge_emb_dim: int = 4
@@ -85,6 +85,7 @@ class TrainConfig:
     )
     device: str = 'cpu'
 
+    select_best_metric: str = 'loss'
     loss: str = 'CrossEntropyLoss' # 'BCEWithLogitsLoss'
     loss_args: Optional[dict[str, Any]] = field(
         # reduction sum is necessary here

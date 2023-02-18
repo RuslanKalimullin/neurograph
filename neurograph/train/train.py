@@ -2,7 +2,9 @@ import inspect
 import json
 import logging
 from collections import defaultdict
+from copy import deepcopy
 from typing import Type
+from operator import gt, lt
 
 import numpy as np
 import sklearn.metrics as metrics
@@ -48,7 +50,7 @@ def train(ds: NeuroGraphDataset, cfg: Config):
         model, optimizer, scheduler, loss_f = init_model_optim_loss(ds, cfg)
 
         # train and return valid metrics on last epoch
-        valid_metrics = train_one_split(
+        valid_metrics, best_model = train_one_split(
             model,
             loaders,
             optimizer,
@@ -58,12 +60,15 @@ def train(ds: NeuroGraphDataset, cfg: Config):
             cfg=cfg,
         )
         # eval on test
-        test_metrics = evaluate(model, test_loader, loss_f, cfg)
+        test_metrics = evaluate(best_model, test_loader, loss_f, cfg)
         logging.info(get_log_msg('test', fold_i, None, test_metrics))
 
         # save valid and test metrics for each fold
         valid_folds_metrics.append(valid_metrics)
         test_folds_metrics.append(test_metrics)
+
+        # just to be sure
+        del model, best_model
 
     # aggregate valid and test metrics for all folds
     final_valid_metrics = agg_fold_metrics(valid_folds_metrics)
@@ -95,6 +100,12 @@ def train_one_split(
     train_loader = loaders['train']
     valid_loader = loaders['valid']
 
+    best_metric = cfg.train.select_best_metric
+    best_result = float('inf') if best_metric == 'loss' else -float('inf')
+    comparator = lt if best_metric == 'loss' else gt
+    best_nodel: nn.Module
+    best_valid_metrics: dict[str, float]
+
     for epoch_i in range(cfg.train.epochs):
         total_loss = 0.
         for data in train_loader:
@@ -111,7 +122,6 @@ def train_one_split(
 
             loss.backward()
             optimizer.step()
-            # TODO: add lr_scheduler
             total_loss += loss.item()
 
         # average by total num of samples
@@ -127,6 +137,12 @@ def train_one_split(
         valid_epoch_metrics = evaluate(model, valid_loader, loss_f, cfg)
         logging.info(get_log_msg('valid', fold_i, epoch_i, valid_epoch_metrics))
 
+        # update best_model
+        if comparator(valid_epoch_metrics[best_metric], best_result):
+            best_model = deepcopy(model)
+            best_result = valid_epoch_metrics[best_metric]
+            best_valid_metrics = deepcopy(valid_epoch_metrics)
+
         # log to wandb, add prefix like 'train/fold_3/'to each metric
         wandb.log({
             **{f'train/fold_{fold_i}/{name}': val for name, val in train_epoch_metrics.items()},
@@ -135,7 +151,7 @@ def train_one_split(
         })
 
     # last epoch valid metrics
-    return valid_epoch_metrics
+    return best_valid_metrics, best_model
 
 
 # TODO: add support for both CE and BCE
