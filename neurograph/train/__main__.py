@@ -10,7 +10,7 @@ import wandb
 from omegaconf import OmegaConf
 from torch_geometric import seed_everything
 
-from neurograph.config import Config
+from neurograph.config import Config, validate_config
 from neurograph.data import available_datasets
 from neurograph.data.datasets import NeuroGraphDataset
 from neurograph.train.train import train
@@ -31,6 +31,9 @@ def load_dataset(cfg: Config) -> NeuroGraphDataset:
 @hydra.main(version_base=None, config_path='../config', config_name="config")
 def main(cfg: Config):
     seed_everything(cfg.seed)
+    validate_config(cfg)
+
+    logging.info(f'Config: \n{OmegaConf.to_yaml(cfg)}')
 
     cfg_dict = OmegaConf.to_container(cfg)
     wandb.init(
@@ -44,8 +47,6 @@ def main(cfg: Config):
     wandb.define_metric('valid/*', step_metric='epoch')
 
     ds = load_dataset(cfg)
-
-    logging.info(f'Config: \n{OmegaConf.to_yaml(cfg)}')
     metrics = train(ds, cfg)
     wandb.finish()
 

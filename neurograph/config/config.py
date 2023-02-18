@@ -50,7 +50,7 @@ class MLPConfig:
 @dataclass
 class ModelConfig:
     name: str = 'bgbGCN'  # see neurograph.models/
-    n_classes: int = 1  # must match with loss
+    n_classes: int = 2  # must match with loss
     mp_type: str = 'node_concate'
     pooling: str = 'concat'
     num_layers: int = 1
@@ -85,8 +85,9 @@ class TrainConfig:
     )
     device: str = 'cpu'
 
-    loss: str = 'BCEWithLogitsLoss'
+    loss: str = 'CrossEntropyLoss' # 'BCEWithLogitsLoss'
     loss_args: Optional[dict[str, Any]] = field(
+        # reduction sum is necessary here
         default_factory=lambda: {'reduction': 'sum'}
     )
 
@@ -111,6 +112,14 @@ class Config:
     model: ModelConfig = field(default_factory=ModelConfig)
     train: TrainConfig = field(default_factory=TrainConfig)
     log: LogConfig = field(default_factory=LogConfig)
+
+
+def validate_config(cfg: Config):
+    if cfg.train.loss == 'CrossEntropyLoss' and cfg.model.n_classes < 2:
+        raise ValueError(f'For loss = {cfg.train.loss} `Config.model.n_classes` must be > 1')
+    if cfg.train.loss == 'BCEWithLogitsLoss' and cfg.model.n_classes != 1:
+        raise ValueError(f'For loss = {cfg.train.loss} `Config.model.n_classes` must be = 1')
+
 
 # register default config as `base_config`
 cs = ConfigStore.instance()

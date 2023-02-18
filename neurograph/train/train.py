@@ -8,6 +8,7 @@ import numpy as np
 import sklearn.metrics as metrics
 import torch
 import torch.nn as nn
+from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss
 from torch.utils.data import DataLoader
 from torch_geometric.loader import DataLoader as pygDataLoader
 import wandb
@@ -100,7 +101,14 @@ def train_one_split(
             optimizer.zero_grad()
             data = data.to(device)
             out = model(data)
-            loss = loss_f(out, data.y.float().reshape(out.shape))
+
+            if isinstance(loss_f, BCEWithLogitsLoss):
+                loss = loss_f(out, data.y.float().reshape(out.shape))
+            elif isinstance(loss_f, CrossEntropyLoss):
+                loss = loss_f(out, data.y)
+            else:
+                ValueError(f'{loss_f} this loss function is not supported')
+
             loss.backward()
             optimizer.step()
             # TODO: add lr_scheduler
@@ -136,33 +144,34 @@ def evaluate(model, loader, loss_f, cfg: Config):
     ''' compute metrics on a subset e.g. train, valid or test'''
     model.eval()
     device = cfg.train.device
-
     thr = cfg.train.prob_thr
-    preds, trues, preds_prob = [], [], []
 
-    total_loss = 0.
-    # infer, get labels, probs and trues
+    # infer
+    y_pred_list, true_list = [], []
     for data in loader:
         data = data.to(device)
-        c = model(data)
-        loss = loss_f(c, data.y.float().reshape(c.shape))
-        total_loss += loss.item()
+        out = model(data)
+        y_pred_list.append(out)
+        true_list.append(data.y)
+    y_pred = torch.cat(y_pred_list, dim=0)
+    trues = torch.cat(true_list, dim=0)
 
-        # append batch preds to a list
-        preds += (torch.sigmoid(c) > thr).long().detach().cpu().tolist()
-        preds_prob += (torch.sigmoid(c)).detach().cpu().tolist()
-        trues += data.y.detach().long().cpu().tolist()
+    # compute metrics based on loss_f
+    metrics = {}
+    if isinstance(loss_f, BCEWithLogitsLoss):
+        total_loss = loss_f(y_pred, trues.float().reshape(y_pred.shape)).item()
+        metrics = process_bce_preds(trues, y_pred, thr)
+    elif isinstance(loss_f, CrossEntropyLoss):
+        total_loss = loss_f(y_pred, trues).item()
+        metrics = process_ce_preds(trues, y_pred)
+    else:
+        ValueError(f'{loss_f} this loss function is not supported')
 
+    # compute loss per sample, add to final result
     loss = total_loss / len(loader.dataset)
-    auc = metrics.roc_auc_score(trues, preds_prob)
+    metrics['loss'] = loss
 
-    if np.isnan(auc):
-        auc = 0.5
-
-    acc = metrics.accuracy_score(trues, preds)
-    f1_macro = metrics.f1_score(trues, preds, average='macro', labels=[0, 1])
-
-    return {'acc': acc, 'auc': auc, 'f1_macro': f1_macro, 'loss': loss}
+    return metrics
 
 
 def init_model_optim_loss(ds: NeuroGraphDataset, cfg: Config):
@@ -192,12 +201,32 @@ def init_model(dataset: NeuroGraphDataset, model_cfg: ModelConfig):
     )
 
 
-def process_bce_preds():
-    pass
+def process_bce_preds(trues_pt: torch.Tensor, y_pred: torch.Tensor, thr: float):
+    # compute probas, labels (using thr)
+    pred_labels = (torch.sigmoid(y_pred) > thr).long().detach().cpu().numpy()
+    pred_proba = (torch.sigmoid(y_pred)).detach().cpu().numpy()
+    trues = trues_pt.detach().long().cpu().numpy()
+
+    return compute_metrics(pred_labels, pred_proba, trues)
 
 
-def process_ce_preds():
-    pass
+def process_ce_preds(trues_pt: torch.Tensor, y_pred: torch.Tensor):
+    pred_proba = (torch.softmax(y_pred, dim=1)).detach().cpu().numpy()
+    pred_labels = pred_proba.argmax(axis=1)
+    trues = trues_pt.detach().long().cpu().numpy()
+
+    return compute_metrics(pred_labels, pred_proba[:, 1], trues)
+
+
+def compute_metrics(pred_labels: np.ndarray, pred_proba: np.ndarray, trues: np.ndarray):
+    """ Compute metrics for binary classification """
+    auc = metrics.roc_auc_score(trues, pred_proba)
+    if np.isnan(auc):
+        auc = 0.5
+    acc = metrics.accuracy_score(trues, pred_labels)
+    f1_macro = metrics.f1_score(trues, pred_labels, average='macro', labels=[0, 1])
+
+    return {'acc': acc, 'auc': auc, 'f1_macro': f1_macro}
 
 
 def agg_fold_metrics(lst: list[dict[str, float]]):
