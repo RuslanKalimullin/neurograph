@@ -4,6 +4,7 @@ import os.path as osp
 import json
 from typing import Generator, Optional
 
+import numpy as np
 import pandas as pd
 import torch
 from torch.utils.data import Dataset
@@ -53,7 +54,7 @@ class CobreTrait(ABC):
         return target, label2idx, idx2label
 
 
-class CobreDataset(NeuroGraphDataset, CobreTrait):
+class CobreGraphDataset(NeuroGraphDataset, CobreTrait):
     def __init__(
         self,
         root: str,
@@ -128,10 +129,6 @@ class CobreDataset(NeuroGraphDataset, CobreTrait):
             f'{prefix}_folds.json',
             f'{prefix}_targets.csv',
         ]
-
-    @property
-    def cm_path(self):
-        return osp.join(self.raw_dir, self.atlas)
 
     def process(self):
         # load data list
@@ -247,6 +244,7 @@ class CobreDenseDataset(NeuroDenseDataset, CobreTrait):
         self.experiment_type = experiment_type
         self.feature_type = feature_type
 
+        # TODO: move to base class
         # root: experiment specific files (CMs and time series matrices)
         self.root = osp.join(root, self.name, experiment_type)
         # global_dir: dir with meta info and cv_splits
@@ -254,25 +252,23 @@ class CobreDenseDataset(NeuroDenseDataset, CobreTrait):
         # path to CM and time series
         self.cm_path = osp.join(self.root, 'raw', self.atlas)
 
-        self.data: torch.Tensor = torch.tensor([0])
+        self.data, self.subj_ids, self.y = self.load_data()
         folds = self.load_folds()
 
-    def load_data(self):
-        cms, ts, roi_map = load_cms(self.cm_path)
-
-        # load_targets
+    def load_data(self) -> tuple[torch.Tensor, list[str], torch.Tensor]:
+        cms, ts, _ = load_cms(self.cm_path)
+        targets, *_ = self.load_targets()
 
         if self.feature_type == 'timeseries':
-            return ts
+            # prepare list of subj_ids and corresponding tensors
+            return self.prepare_data(ts, targets)
         elif self.feature_type == 'conn_profile':
-            return cms
+            return self.prepare_data(ts, targets)
         else:
             raise ValueError(f'Unknown feature_type: {self.feature_type}')
 
     def __len__(self):
-        return len(data)
+        return len(self.data)
 
     def __getitem__(self, idx: int):
-        return self.data[idx]
-
-
+        return self.data[idx], self.y[idx]

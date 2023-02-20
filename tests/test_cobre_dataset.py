@@ -1,22 +1,21 @@
 import pytest
 from functools import reduce
 from neurograph.config import get_config
-from neurograph.data.datasets import CobreDataset
-
+from neurograph.data.cobre import CobreGraphDataset
 
 @pytest.fixture(scope='session')
 def cobre_ds_no_thr():
-    return CobreDataset(root=get_config().dataset.data_path)
+    return CobreGraphDataset(root=get_config().dataset.data_path)
 
 
 @pytest.fixture(scope='session')
 def cobre_ds_abs_thr():
-    return CobreDataset(root=get_config().dataset.data_path, abs_thr=0.3)
+    return CobreGraphDataset(root=get_config().dataset.data_path, abs_thr=0.3)
 
 
 @pytest.fixture(scope='session')
 def cobre_ds_pt_thr():
-    return CobreDataset(root=get_config().dataset.data_path, pt_thr=0.5)
+    return CobreGraphDataset(root=get_config().dataset.data_path, pt_thr=0.5)
 
 
 def test_cobre_no_thr(cobre_ds_no_thr):

@@ -4,6 +4,7 @@ import os.path as osp
 import json
 from typing import Generator, Optional
 
+import numpy as np
 import pandas as pd
 import torch
 from torch.utils.data import Dataset as thDataset
@@ -18,6 +19,8 @@ class NeuroDataset(ABC):
     name: str
     atlas: str
     experiment_type: str
+    available_atlases: set[str]
+    available_experiments: set[str]
 
     root: str
     global_dir: str
@@ -63,8 +66,6 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
 
     abs_thr: Optional[float]
     pt_thr: Optional[float]
-    available_atlases: set[str]
-    available_experiments: set[str]
     n_features: int
     num_nodes: int
 
@@ -91,6 +92,28 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
 
 class NeuroDenseDataset(thDataset, NeuroDataset):
     data_type: str = 'dense'
+
+    @staticmethod
+    def prepare_data(
+        matrix_dict: dict[str, np.ndarray],
+        targets: pd.DataFrame,
+    ) -> tuple[torch.Tensor, list[str], torch.Tensor]:
+        # matrix_dict: mapping subj_id -> CM of time series
+
+        datalist = []
+        subj_ids = []
+        for subj_id, m in matrix_dict.items():
+            try:
+                datalist.append(torch.tensor(m))
+                subj_ids.append(subj_id)
+            except KeyError:
+                # ignore if subj_id is not in targets
+                pass
+
+        # NB: use LongTensor here
+        y = torch.LongTensor(targets.loc[subj_ids].copy().values)
+        data = torch.cat(datalist, dim=0)
+        return data, subj_ids, y
 
 
 class ListDataset(InMemoryDataset):
