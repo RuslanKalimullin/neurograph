@@ -12,6 +12,7 @@ from neurograph.data import available_datasets
 @dataclass
 class DatasetConfig:
     name: str = 'cobre'
+    data_type: str = 'graph'  # or 'dense'
     experiment_type: str = 'fmri' # TODO: support list for multimodal experiments
     atlas: str = 'aal'
     abs_thr: Optional[float] = None

@@ -12,20 +12,24 @@ from torch_geometric import seed_everything
 
 from neurograph.config import Config, validate_config
 from neurograph.data import available_datasets
-from neurograph.data.datasets import NeuroGraphDataset
+from neurograph.data import NeuroDataset, NeuroDenseDataset, NeuroGraphDataset, dataset_factory
 from neurograph.train.train import train
 
 
-def load_dataset(cfg: Config) -> NeuroGraphDataset:
+def load_dataset(cfg: Config) -> NeuroGraphDataset: # -> NeuroDataset:
     ds_cfg = cfg.dataset
-    DsKlass = available_datasets[ds_cfg.name]
-    return DsKlass(
-        root=ds_cfg.data_path,
-        atlas=ds_cfg.atlas,
-        experiment_type=ds_cfg.experiment_type,
-        pt_thr=ds_cfg.pt_thr,
-        abs_thr=ds_cfg.abs_thr,
-    )
+    # get dataset class based on name and data_type
+    DsKlass = dataset_factory(ds_cfg.name, ds_cfg.data_type)
+    if issubclass(DsKlass, NeuroGraphDataset):
+        return DsKlass(
+            root=ds_cfg.data_path,
+            atlas=ds_cfg.atlas,
+            experiment_type=ds_cfg.experiment_type,
+            pt_thr=ds_cfg.pt_thr,
+            abs_thr=ds_cfg.abs_thr,
+        )
+    else:
+        raise ValueError('NeuroDenseDataset is not supported yet')
 
 
 @hydra.main(version_base=None, config_path='../config', config_name="config")

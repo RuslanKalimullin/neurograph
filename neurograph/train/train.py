@@ -16,7 +16,7 @@ from torch_geometric.loader import DataLoader as pygDataLoader
 import wandb
 
 from neurograph.config import Config, ModelConfig
-from neurograph.data.datasets import NeuroGraphDataset
+from neurograph.data import NeuroDataset, NeuroGraphDataset
 import neurograph.models
 from neurograph.models.available_modules import available_optimizers, available_losses
 
