@@ -75,7 +75,6 @@ class CobreGraphDataset(NeuroGraphDataset, CobreTrait):
             no_cache (bool): if True, delete processed files and run processing from scratch
         """
 
-        # TODO: thr add thr to processed file names
         self.atlas = atlas
         self.experiment_type = experiment_type
         self.init_node_features = init_node_features
@@ -184,31 +183,6 @@ class CobreGraphDataset(NeuroGraphDataset, CobreTrait):
         y = targets.loc[subj_ids].copy()
         return datalist, subj_ids, y
 
-    def load_targets(self) -> tuple[pd.DataFrame, dict[str, int], dict[int, str]]:
-        """ Process tsv file with targets """
-
-        target = pd.read_csv(osp.join(self.global_dir, self.target_file), sep='\t')
-        target = target[[self.subj_id_col, self.target_col]]
-
-        # check that there are no different labels assigned to the same ID
-        max_labels_per_id = target.groupby(self.subj_id_col)[self.target_col].nunique().max()
-        assert max_labels_per_id == 1, 'Diffrent targets assigned to the same id!'
-
-        # remove duplicates by subj_id
-        target.drop_duplicates(subset=[self.subj_id_col], inplace=True)
-        # set subj_id as index
-        target.set_index(self.subj_id_col, inplace=True)
-
-        # leave only Schizo and Control
-        target = target[target[self.target_col].isin(('No_Known_Disorder', 'Schizophrenia_Strict'))].copy()
-
-        # label encoding
-        label2idx: dict[str, int] = {x: i for i, x in enumerate(target[self.target_col].unique())}
-        idx2label: dict[int, str] = {i: x for x, i in label2idx.items()}
-        target[self.target_col] = target[self.target_col].map(label2idx)
-
-        return target, label2idx, idx2label
-
     def get_cv_loaders(self, batch_size=8, valid_batch_size=None):
         valid_batch_size = valid_batch_size if valid_batch_size else batch_size
         for fold in self.folds['train']:
@@ -263,12 +237,13 @@ class CobreDenseDataset(NeuroDenseDataset, CobreTrait):
             # prepare list of subj_ids and corresponding tensors
             return self.prepare_data(ts, targets)
         elif self.feature_type == 'conn_profile':
-            return self.prepare_data(ts, targets)
+            return self.prepare_data(cms, targets)
         else:
             raise ValueError(f'Unknown feature_type: {self.feature_type}')
 
     def __len__(self):
-        return len(self.data)
+        return self.data.shape[0]
 
     def __getitem__(self, idx: int):
         return self.data[idx], self.y[idx]
+

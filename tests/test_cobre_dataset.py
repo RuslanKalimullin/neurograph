@@ -1,7 +1,8 @@
 import pytest
 from functools import reduce
 from neurograph.config import get_config
-from neurograph.data.cobre import CobreGraphDataset
+from neurograph.data.cobre import CobreDenseDataset, CobreGraphDataset
+
 
 @pytest.fixture(scope='session')
 def cobre_ds_no_thr():
@@ -16,6 +17,26 @@ def cobre_ds_abs_thr():
 @pytest.fixture(scope='session')
 def cobre_ds_pt_thr():
     return CobreGraphDataset(root=get_config().dataset.data_path, pt_thr=0.5)
+
+
+@pytest.fixture(scope='session')
+def cobre_dense_ts():
+    return CobreDenseDataset(
+        root=get_config().dataset.data_path,
+        atlas='aal',
+        experiment_type='fmri',
+        feature_type='timeseries',
+    )
+
+
+@pytest.fixture(scope='session')
+def cobre_dense_connprofile():
+    return CobreDenseDataset(
+        root=get_config().dataset.data_path,
+        atlas='aal',
+        experiment_type='fmri',
+        feature_type='conn_profile',
+    )
 
 
 def test_cobre_no_thr(cobre_ds_no_thr):
@@ -98,3 +119,14 @@ def test_cobre_test_loader(cobre_ds_no_thr):
 
     for b in loader:
         print(b)
+
+
+def test_cobre_dense_ts(cobre_dense_ts):
+    assert cobre_dense_ts.data.shape[1] == 116
+    assert cobre_dense_ts.data.shape[2] == 150
+
+
+def test_cobre_dense_connprofile(cobre_dense_connprofile):
+    assert cobre_dense_connprofile.data.shape[1] == 116
+    assert cobre_dense_connprofile.data.shape[2] == 116
+
