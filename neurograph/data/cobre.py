@@ -109,7 +109,6 @@ class CobreGraphDataset(CobreTrait, NeuroGraphDataset):
             self.folds = json.load(f_folds)
 
         # get some graph attrs (used for initializing models)
-        self.n_features = self.data.x.shape[1]
         num_nodes = self.slices['x'].diff().unique()
         assert len(num_nodes) == 1, 'You have different number of nodes in graphs!'
         self.num_nodes = num_nodes.item()

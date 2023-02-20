@@ -211,7 +211,7 @@ def init_model(dataset: NeuroGraphDataset, model_cfg: ModelConfig):
     available_models = {name: obj for name, obj in inspect.getmembers(neurograph.models)}
     ModelKlass = available_models[model_cfg.name]
     return ModelKlass(
-        input_dim=dataset.n_features,
+        input_dim=dataset.num_features,
         num_nodes=dataset.num_nodes,
         model_cfg=model_cfg,
     )

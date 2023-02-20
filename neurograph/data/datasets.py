@@ -72,7 +72,7 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
 
     abs_thr: Optional[float]
     pt_thr: Optional[float]
-    n_features: int
+    #num_features: int # it's set in InMemoryDataset class
     num_nodes: int
 
     init_node_features: str = 'conn_profile'
@@ -111,7 +111,6 @@ class NeuroDenseDataset(thDataset, NeuroDataset):
         self.experiment_type = experiment_type
         self.feature_type = feature_type
 
-        # TODO: move to base class
         # root: experiment specific files (CMs and time series matrices)
         self.root = osp.join(root, self.name, experiment_type)
         # global_dir: dir with meta info and cv_splits
@@ -120,12 +119,13 @@ class NeuroDenseDataset(thDataset, NeuroDataset):
         self.cm_path = osp.join(self.root, 'raw', self.atlas)
 
         self.data, self.subj_ids, self.y = self.load_data()
+
         # load folds data w/ subj_ids
-        # load fold splits
         id_folds, num_folds = self.load_folds()
+        # map subj_id to idx
         id2idx = {s: i for i, s in enumerate(self.subj_ids)}
 
-        # map each subj_id to idx in `data`
+        # compute folds where each subj_id is mapped to idx in `data`
         self.folds: dict[str, Any] = {'train': []}
         for i in range(num_folds):
             train_ids, valid_ids = id_folds[i]['train'], id_folds[i]['valid']
@@ -135,6 +135,8 @@ class NeuroDenseDataset(thDataset, NeuroDataset):
             }
             self.folds['train'].append(one_fold)
         self.folds['test'] = [id2idx[subj_id] for subj_id in id_folds['test']]
+
+        self.num_features = self.data.shape[-1]
 
     def load_data(self) -> tuple[torch.Tensor, list[str], torch.Tensor]:
         cms, ts, _ = load_cms(self.cm_path)
