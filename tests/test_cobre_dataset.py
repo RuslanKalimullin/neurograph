@@ -67,9 +67,11 @@ def test_cobre_target(cobre_ds_no_thr):
 
     assert target.index.isnull().sum() == 0
 
-
-def test_cobre_folds(cobre_ds_no_thr):
-    folds = cobre_ds_no_thr.folds
+@pytest.mark.parametrize('ds', ['cobre_ds_no_thr', 'cobre_dense_ts'])
+def test_cobre_folds(ds, request):
+    # workaround for parameterizing tests w/ fixtures
+    ds = request.getfixturevalue(ds)
+    folds = ds.folds
 
     all_train = set()  # everything that we run cross-val on
     all_valids = []

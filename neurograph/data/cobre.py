@@ -16,7 +16,7 @@ from .datasets import NeuroDataset, NeuroGraphDataset, NeuroDenseDataset
 from .utils import load_cms, prepare_graph
 
 
-class CobreTrait(ABC):
+class CobreTrait:
     """ Common fields and methods for all Cobre datasets """
     name = 'cobre'
     available_atlases = {'aal', 'msdl'}
@@ -54,7 +54,8 @@ class CobreTrait(ABC):
         return target, label2idx, idx2label
 
 
-class CobreGraphDataset(NeuroGraphDataset, CobreTrait):
+# NB: trait must go first
+class CobreGraphDataset(CobreTrait, NeuroGraphDataset):
     def __init__(
         self,
         root: str,
@@ -183,6 +184,7 @@ class CobreGraphDataset(NeuroGraphDataset, CobreTrait):
         y = targets.loc[subj_ids].copy()
         return datalist, subj_ids, y
 
+    # TODO: move to base class?
     def get_cv_loaders(self, batch_size=8, valid_batch_size=None):
         valid_batch_size = valid_batch_size if valid_batch_size else batch_size
         for fold in self.folds['train']:
@@ -192,8 +194,8 @@ class CobreGraphDataset(NeuroGraphDataset, CobreTrait):
                 'valid': pygDataLoader(self[valid_idx], batch_size=valid_batch_size, shuffle=False),
             }
 
+    # TODO: move to base class?
     def get_test_loader(self, batch_size: int) -> pygDataLoader:
-        # TODO: test it
         test_idx = self.folds['test']
         return pygDataLoader(self[test_idx], batch_size=batch_size, shuffle=False)
 
@@ -206,44 +208,5 @@ class CobreGraphDataset(NeuroGraphDataset, CobreTrait):
             raise ValueError('Both proportional threshold `pt` and absolute threshold `thr` are not None! Choose one!')
 
 
-class CobreDenseDataset(NeuroDenseDataset, CobreTrait):
-    def __init__(
-        self,
-        root: str,
-        atlas: str = 'aal',
-        experiment_type: str = 'fmri',
-        feature_type: str = 'timeseries',  # or 'conn_profile'
-    ):
-        self.atlas = atlas
-        self.experiment_type = experiment_type
-        self.feature_type = feature_type
-
-        # TODO: move to base class
-        # root: experiment specific files (CMs and time series matrices)
-        self.root = osp.join(root, self.name, experiment_type)
-        # global_dir: dir with meta info and cv_splits
-        self.global_dir = osp.join(root, self.name)
-        # path to CM and time series
-        self.cm_path = osp.join(self.root, 'raw', self.atlas)
-
-        self.data, self.subj_ids, self.y = self.load_data()
-        folds = self.load_folds()
-
-    def load_data(self) -> tuple[torch.Tensor, list[str], torch.Tensor]:
-        cms, ts, _ = load_cms(self.cm_path)
-        targets, *_ = self.load_targets()
-
-        if self.feature_type == 'timeseries':
-            # prepare list of subj_ids and corresponding tensors
-            return self.prepare_data(ts, targets)
-        elif self.feature_type == 'conn_profile':
-            return self.prepare_data(cms, targets)
-        else:
-            raise ValueError(f'Unknown feature_type: {self.feature_type}')
-
-    def __len__(self):
-        return self.data.shape[0]
-
-    def __getitem__(self, idx: int):
-        return self.data[idx], self.y[idx]
-
+class CobreDenseDataset(CobreTrait, NeuroDenseDataset):
+    pass
