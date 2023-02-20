@@ -1,3 +1,4 @@
+from abc import ABC
 from shutil import rmtree
 import os.path as osp
 import json
@@ -14,7 +15,7 @@ from .datasets import NeuroDataset, NeuroGraphDataset, NeuroDenseDataset
 from .utils import load_cms, prepare_graph
 
 
-class CobreTrait(NeuroDataset):
+class CobreTrait(ABC):
     """ Common fields and methods for all Cobre datasets """
     name = 'cobre'
     available_atlases = {'aal', 'msdl'}
@@ -23,6 +24,8 @@ class CobreTrait(NeuroDataset):
     target_file = 'meta_data.tsv'
     subj_id_col = 'Subjectid'
     target_col = 'Dx'
+
+    global_dir: str  # just for type checks
 
     def load_targets(self) -> tuple[pd.DataFrame, dict[str, int], dict[int, str]]:
         """ Load and process *cobre* targets """
@@ -233,16 +236,6 @@ class CobreDataset(NeuroGraphDataset, CobreTrait):
 
 
 class CobreDenseDataset(NeuroDenseDataset, CobreTrait):
-    # TODO: create Cobre mixup
-    name = 'cobre'
-    data_type = 'dense'
-    available_atlases = {'aal', 'msdl'}
-    available_experiments = {'fmri', 'dti'}
-    splits_file = 'cobre_splits.json'
-    target_file = 'meta_data.tsv'
-    subj_id_col = 'Subjectid'
-    target_col = 'Dx'
-
     def __init__(
         self,
         root: str,

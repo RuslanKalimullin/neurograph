@@ -81,6 +81,10 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
     def get_test_loader(self, batch_size: int) -> pygDataLoader:
         raise NotImplementedError
 
+    @property
+    def cm_path(self):
+        return osp.join(self.raw_dir, self.atlas)
+
     def __repr__(self):
         return f'{self.__class__.__name__}: atlas={self.atlas}, experiment_type={self.experiment_type}, pt_thr={self.pt_thr}, abs_thr={self.abs_thr}, size={len(self)}'
 
