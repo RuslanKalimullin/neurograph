@@ -12,6 +12,7 @@ import torch
 import torch.nn as nn
 from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss
 from torch.utils.data import DataLoader
+from torch_geometric.data import Batch as pygBatch, Data as pygData
 from torch_geometric.loader import DataLoader as pygDataLoader
 import wandb
 
@@ -84,6 +85,24 @@ def train(ds: NeuroDataset, cfg: Config):
     return {'valid': final_valid_metrics, 'test': final_test_metrics}
 
 
+def handle_batch(
+    batch: pygData | pygBatch | list[torch.Tensor] | tuple[torch.Tensor],
+    device: str,
+):
+    # TODO: create DataDense dataclass (analogue of pyg.Data) and
+    # define custom collate_fn for DenseDataset DataLoaders
+    # so we have the same interface with PyG
+    if isinstance(batch, list) or isinstance(batch, tuple):
+        x, y = batch
+        x, y = x.to(device), y.to(device)
+        batch = (x, y)
+    else:
+        batch = batch.to(device)
+        y = batch.y
+
+    return batch, y
+
+
 def train_one_split(
     model: nn.Module,
     loaders: dict[str, DataLoader | pygDataLoader],
@@ -112,13 +131,14 @@ def train_one_split(
         total_loss = 0.
         for data in train_loader:
             optimizer.zero_grad()
-            data = data.to(device)
+            data, y = handle_batch(data, device)
             out = model(data)
 
             if isinstance(loss_f, BCEWithLogitsLoss):
-                loss = loss_f(out, data.y.float().reshape(out.shape))
+                loss = loss_f(out, y.float().reshape(out.shape))
             elif isinstance(loss_f, CrossEntropyLoss):
-                loss = loss_f(out, data.y)
+                #import pdb; pdb.set_trace()
+                loss = loss_f(out, y)
             else:
                 ValueError(f'{loss_f} this loss function is not supported')
 
@@ -167,10 +187,10 @@ def evaluate(model, loader, loss_f, cfg: Config):
     # infer
     y_pred_list, true_list = [], []
     for data in loader:
-        data = data.to(device)
+        data, y = handle_batch(data, device)
         out = model(data)
         y_pred_list.append(out)
-        true_list.append(data.y)
+        true_list.append(y)
     y_pred = torch.cat(y_pred_list, dim=0)
     trues = torch.cat(true_list, dim=0)
 

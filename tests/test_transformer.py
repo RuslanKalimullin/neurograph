@@ -45,7 +45,7 @@ def test_transformers(num_classes, pooling, expected):
     m = Transformer(
        input_dim=d_i,
        num_nodes=n,
-       cfg=t_cfg,
+       model_cfg=t_cfg,
     )
     o = m(x)
 

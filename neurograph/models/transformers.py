@@ -127,36 +127,37 @@ class Transformer(nn.Module):
         # comes from dataset
         input_dim: int,
         num_nodes: int,  # used for concat pooling
-        cfg: TransformerConfig,
+        model_cfg: TransformerConfig,
     ):
         super().__init__()
         #self.cfg = cfg
         self.input_dim = input_dim
         self.num_nodes = num_nodes
-        self.pooling = cfg.pooling
-        num_classes = cfg.n_classes
+        self.pooling = model_cfg.pooling
+        num_classes = model_cfg.n_classes
 
         self.lin_proj: nn.Module
-        if input_dim != cfg.hidden_dim:
-            self.lin_proj = nn.Linear(input_dim, cfg.hidden_dim)
+        if input_dim != model_cfg.hidden_dim:
+            self.lin_proj = nn.Linear(input_dim, model_cfg.hidden_dim)
         else:
             self.lin_proj = nn.Identity()
 
         self.blocks = nn.ModuleList([
-            TransformerBlock(cfg.hidden_dim, self.build_msa_cfg(cfg), self.build_mlp_cfg(cfg))
-            for _ in range(cfg.num_layers)
+            TransformerBlock(model_cfg.hidden_dim, self.build_msa_cfg(model_cfg), self.build_mlp_cfg(model_cfg))
+            for _ in range(model_cfg.num_layers)
         ])
 
-        if cfg.pooling == 'concat':
-            fcn_dim = self.num_nodes * cfg.hidden_dim
-        elif cfg.pooling in ('mean', 'sum'):
-            fcn_dim = cfg.hidden_dim
+        if model_cfg.pooling == 'concat':
+            fcn_dim = self.num_nodes * model_cfg.hidden_dim
+        elif model_cfg.pooling in ('mean', 'sum'):
+            fcn_dim = model_cfg.hidden_dim
         else:
             raise ValueError('Unknown pooling type!')
 
-        self.fcn = BasicMLP(in_size=fcn_dim, out_size=num_classes, config=cfg.head_config)
+        self.fcn = BasicMLP(in_size=fcn_dim, out_size=num_classes, config=model_cfg.head_config)
 
-    def forward(self, x):
+    def forward(self, batch):
+        x, y = batch
         # porject to hidden_dim
         out = self.lin_proj(x)
 

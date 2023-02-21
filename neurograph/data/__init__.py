@@ -8,8 +8,9 @@ from neurograph.data.datasets import NeuroDataset, NeuroDenseDataset, NeuroGraph
 # later we add other datasets
 datasets = [cobre]
 
-available_datasets: dict[str, Type[NeuroDataset]] = {
-    obj.name: obj
+# TODO: refactor this, this is too complicated for such a simple thing
+available_datasets: dict[tuple[str, str], Type[NeuroDataset]] = {
+    (obj.name, obj.data_type): obj
     for modules in datasets
     for (class_name, obj) in inspect.getmembers(modules)
     if inspect.isclass(obj)
@@ -19,12 +20,12 @@ available_datasets: dict[str, Type[NeuroDataset]] = {
     if class_name.endswith('Dataset')
 }
 dense_datasets: dict[str, Type[NeuroDenseDataset]] = {
-    ds_name: obj for ds_name, obj in available_datasets.items()
+    ds_name: obj for (ds_name, data_type), obj in available_datasets.items()
     if obj.data_type == 'dense'  # TODO: is this check redundant
     if issubclass(obj, NeuroDenseDataset)
 }
 graph_datasets: dict[str, Type[NeuroGraphDataset]] = {
-    ds_name: obj for ds_name, obj in available_datasets.items()
+    ds_name: obj for (ds_name, data_type), obj in available_datasets.items()
     if obj.data_type == 'graph'  # TODO: is this check redundant
-    if issubclass(obj, NeuroGraphDataset )
+    if issubclass(obj, NeuroGraphDataset)
 }

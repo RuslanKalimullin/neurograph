@@ -124,6 +124,7 @@ class NeuroDenseDataset(thDataset, NeuroDataset):
         self.cm_path = osp.join(self.root, 'raw', self.atlas)
 
         self.data, self.subj_ids, self.y = self.load_data()
+        self.y = self.y.reshape(-1)  # reshape to 1d tensor
 
         # load folds data w/ subj_ids
         id_folds, num_folds = self.load_folds()
@@ -142,6 +143,8 @@ class NeuroDenseDataset(thDataset, NeuroDataset):
         self.folds['test'] = [id2idx[subj_id] for subj_id in id_folds['test']]
 
         self.num_features = self.data.shape[-1]
+        # used for concat pooling
+        self.num_nodes = self.data.shape[1]
 
     def load_data(self) -> tuple[torch.Tensor, list[str], torch.Tensor]:
         cms, ts, _ = load_cms(self.cm_path)

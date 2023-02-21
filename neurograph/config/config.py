@@ -89,7 +89,8 @@ class bgbGNNConfig(ModelConfig):
 
 @dataclass
 class TransformerConfig(ModelConfig):
-    name: str  = 'transformer'  # TODO: remove, refactor ModelConfig class?
+    # name is a class name; used for initializing a model
+    name: str  = 'Transformer'  # TODO: remove, refactor ModelConfig class?
     n_classes: int = 2
     num_layers: int = 1
     hidden_dim: int = 64
