@@ -19,6 +19,7 @@ from neurograph.config import Config, ModelConfig
 from neurograph.data import NeuroDataset, NeuroGraphDataset
 import neurograph.models
 from neurograph.models.available_modules import available_optimizers, available_losses
+from neurograph.models import graph_model_classes, dense_model_classes
 
 
 def get_log_msg(prefix, fold_i, epoch_i, metrics) -> str:
@@ -29,7 +30,7 @@ def get_log_msg(prefix, fold_i, epoch_i, metrics) -> str:
     ])
 
 
-def train(ds: NeuroGraphDataset, cfg: Config):
+def train(ds: NeuroDataset, cfg: Config):
     ''' Run cross-validation, report metrics on valids and test '''
 
     # metrics  # TODO put into dataclass or dict
@@ -47,6 +48,7 @@ def train(ds: NeuroGraphDataset, cfg: Config):
     for fold_i, loaders in enumerate(loaders_iter):
         logging.info(f'Run training on fold: {fold_i}')
 
+        # create model, optim, loss etc.
         model, optimizer, scheduler, loss_f = init_model_optim_loss(ds, cfg)
 
         # train and return valid metrics on last epoch
@@ -190,7 +192,7 @@ def evaluate(model, loader, loss_f, cfg: Config):
     return metrics
 
 
-def init_model_optim_loss(ds: NeuroGraphDataset, cfg: Config):
+def init_model_optim_loss(ds: NeuroDataset, cfg: Config):
     # create model instance
     model = init_model(ds, cfg.model)
     # set optimizer
@@ -207,9 +209,14 @@ def init_model_optim_loss(ds: NeuroGraphDataset, cfg: Config):
     return model, optimizer, scheduler, loss_f
 
 
-def init_model(dataset: NeuroGraphDataset, model_cfg: ModelConfig):
+def init_model(dataset: NeuroDataset, model_cfg: ModelConfig):
+    # TODO: discriminate between graph and dense models
     available_models = {name: obj for name, obj in inspect.getmembers(neurograph.models)}
+
     ModelKlass = available_models[model_cfg.name]
+
+    # TODO: dense models do not need num_nodes for initialization!
+    # TODO: model config?
     return ModelKlass(
         input_dim=dataset.num_features,
         num_nodes=dataset.num_nodes,

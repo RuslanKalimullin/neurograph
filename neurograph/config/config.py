@@ -15,10 +15,13 @@ class DatasetConfig:
     data_type: str = 'graph'  # or 'dense'
     experiment_type: str = 'fmri' # TODO: support list for multimodal experiments
     atlas: str = 'aal'
+    data_path: Path = Path(neurograph.__file__).resolve().parent.parent / 'datasets'
+    # graph specific
+    #init_node_features: str = 'conn_profile'  # TODO
     abs_thr: Optional[float] = None
     pt_thr: Optional[float] = None
-    #init_node_features: str = 'conn_profile'  # TODO
-    data_path: Path = Path(neurograph.__file__).resolve().parent.parent / 'datasets'
+    # dense specific
+    feature_type: str = 'timeseries'
 
 
 @dataclass
@@ -50,6 +53,12 @@ class MLPConfig:
 
 @dataclass
 class ModelConfig:
+    name: str  # see neurograph.models/
+    n_classes: int  # must match with loss
+
+
+@dataclass
+class bgbGNNConfig(ModelConfig):
     name: str = 'bgbGAT'  # see neurograph.models/
     n_classes: int = 2  # must match with loss
     mp_type: str = 'node_concate'
@@ -71,6 +80,20 @@ class ModelConfig:
 
     mlp_config: MLPConfig = field(default_factory=MLPConfig)
 
+
+@dataclass
+class TransformerConfig(ModelConfig):
+    name: str  # TODO: remove, refactor ModelConfig class?
+    n_classes: int
+    num_layers: int
+    hidden_dim: int
+    num_heads: int
+    attn_dropout: float
+    mlp_dropout: float
+    mlp_hidden_multiplier: float
+    return_attn: bool = False
+    mlp_act_func: Optional[str] = None
+    mlp_act_func_params: Optional[dict] = None
 
 @dataclass
 class TrainConfig:
@@ -111,7 +134,7 @@ class Config:
     ''' Config schema w/ default values (see dataclasses above) '''
     seed: int = 1380
     dataset: DatasetConfig = field(default_factory=DatasetConfig)
-    model: ModelConfig = field(default_factory=ModelConfig)
+    model: ModelConfig = field(default_factory=bgbGNNConfig)
     train: TrainConfig = field(default_factory=TrainConfig)
     log: LogConfig = field(default_factory=LogConfig)
 

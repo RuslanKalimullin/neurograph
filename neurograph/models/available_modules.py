@@ -3,8 +3,7 @@ from typing import Type
 import torch.nn as nn
 import torch.optim as optim
 
-import neurograph.models as models
-
+# put different pytorch models into dicts for easier instantiation
 available_modules: dict[str, Type[nn.Module]] = {
     name: obj for (name, obj) in inspect.getmembers(nn)
     if inspect.isclass(obj)

@@ -31,7 +31,12 @@ class NeuroDataset(ABC):
     splits_file: str
     target_file: str
 
+    # TODO: is it redundant
     data_type: str
+
+    # needed for type checks
+    num_nodes: int
+    num_features: int
 
     def load_folds(self) -> tuple[dict, int]:
         """ Loads json w/ splits, returns a dict w/ splits and number of folds """
