@@ -116,6 +116,10 @@ class TransformerBlock(nn.Module):
         z1 = self.ln1(x)
         s1 = x + self.msa(z1).x  # sum_1
 
+        z2 = self.ln2(s1)
+        s2 = s1 + self.mlp(z2)  # sum_2
+        return s2
+
 
 class Transformer(nn.Module):
     def __init__(
@@ -137,7 +141,7 @@ class Transformer(nn.Module):
             self.lin_proj = nn.Linear(input_dim, cfg.hidden_dim)
         else:
             self.lin_proj = nn.Identity()
-        # TODO
+
         self.blocks = nn.ModuleList([
             TransformerBlock(cfg.hidden_dim, self.build_msa_cfg(cfg), self.build_mlp_cfg(cfg))
             for _ in range(cfg.num_layers)
@@ -162,7 +166,7 @@ class Transformer(nn.Module):
 
         # pool
         if self.pooling == 'concat':
-            out = concat_pool(out)
+            out = out.reshape(out.size(0), -1)
         elif self.pooling == 'mean':
             out = out.mean(axis=1)
         else:  # 'sum'
