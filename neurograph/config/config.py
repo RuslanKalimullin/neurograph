@@ -21,7 +21,7 @@ class DatasetConfig:
     abs_thr: Optional[float] = None
     pt_thr: Optional[float] = None
     # dense specific
-    feature_type: str = 'timeseries'
+    feature_type: str = 'conn_profile'  #'timeseries'
 
 
 @dataclass
@@ -91,19 +91,20 @@ class bgbGNNConfig(ModelConfig):
 class TransformerConfig(ModelConfig):
     # name is a class name; used for initializing a model
     name: str  = 'Transformer'  # TODO: remove, refactor ModelConfig class?
-    n_classes: int = 2
+    n_classes: int = 1
     num_layers: int = 1
-    hidden_dim: int = 64
+    hidden_dim: int = 116
     num_heads: int = 4
-    attn_dropout: float = 0.5
-    mlp_dropout: float = 0.5
-    mlp_hidden_multiplier: float = 2.
+    attn_dropout: float = 0.4
+    mlp_dropout: float = 0.4
+    # hidden layer in transformer block mlp
+    mlp_hidden_multiplier: float = 0.2
 
     data_type: str = 'dense'
 
     return_attn: bool = False
     # transformer block MLP parameters
-    mlp_act_func: Optional[str] = None
+    mlp_act_func: Optional[str] = 'GELU'
     mlp_act_func_params: Optional[dict] = None
 
     pooling: str = 'concat'
@@ -111,7 +112,7 @@ class TransformerConfig(ModelConfig):
     # final MLP layer config
     head_config: MLPConfig = field(default_factory=lambda: MLPConfig(
         layers = [
-            MLPlayer(out_size=32, dropout=0.5, act_func='ELU',),
+            MLPlayer(out_size=4, dropout=0.5, act_func='GELU',),
         ]
     ))
 
@@ -121,17 +122,17 @@ class TrainConfig:
     epochs: int = 1
     batch_size: int = 8
     valid_batch_size: int = 8
-    optim: str = 'Adam'
+    optim: str = 'AdamW'
     optim_args: Optional[dict[str, Any]] = field(
         default_factory=lambda: {
-            'lr': 1e-3,
+            'lr': 3e-4,
             'weight_decay': 1e-4,
         }
     )
     device: str = 'cpu'
 
     select_best_metric: str = 'loss'
-    loss: str = 'CrossEntropyLoss' # 'BCEWithLogitsLoss'
+    loss: str = 'BCEWithLogitsLoss' # 'CrossEntropyLoss' #
     loss_args: Optional[dict[str, Any]] = field(
         # reduction sum is necessary here
         default_factory=lambda: {'reduction': 'sum'}
