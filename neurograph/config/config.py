@@ -152,9 +152,9 @@ class LogConfig:
 @dataclass
 class Config:
     ''' Config schema w/ default values (see dataclasses above) '''
+    model: ModelConfig
     seed: int = 1380
     dataset: DatasetConfig = field(default_factory=DatasetConfig)
-    model: ModelConfig = field(default_factory=bgbGNNConfig)
     train: TrainConfig = field(default_factory=TrainConfig)
     log: LogConfig = field(default_factory=LogConfig)
 
@@ -169,3 +169,5 @@ def validate_config(cfg: Config):
 # register default config as `base_config`
 cs = ConfigStore.instance()
 cs.store(name='base_config', node=Config)
+cs.store(group='model', name='bgbGAT', node=bgbGNNConfig)
+cs.store(group='model', name='transformer', node=TransformerConfig)
