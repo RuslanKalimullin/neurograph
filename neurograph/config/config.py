@@ -56,11 +56,17 @@ class ModelConfig:
     name: str  # see neurograph.models/
     n_classes: int  # must match with loss
 
+    # required for correct init of models
+    # see `train.train.init_model`
+    data_type: str
+
 
 @dataclass
 class bgbGNNConfig(ModelConfig):
     name: str = 'bgbGAT'  # see neurograph.models/
     n_classes: int = 2  # must match with loss
+    data_type: str = 'graph'
+
     mp_type: str = 'node_concate'
     pooling: str = 'concat'
     num_layers: int = 1
@@ -83,17 +89,21 @@ class bgbGNNConfig(ModelConfig):
 
 @dataclass
 class TransformerConfig(ModelConfig):
-    name: str  # TODO: remove, refactor ModelConfig class?
-    n_classes: int
-    num_layers: int
-    hidden_dim: int
-    num_heads: int
-    attn_dropout: float
-    mlp_dropout: float
-    mlp_hidden_multiplier: float
+    name: str  = 'transformer'  # TODO: remove, refactor ModelConfig class?
+    n_classes: int = 2
+    num_layers: int = 1
+    hidden_dim: int = 64
+    num_heads: int = 4
+    attn_dropout: float = 0.5
+    mlp_dropout: float = 0.5
+    mlp_hidden_multiplier: float = 2.
+
+    data_type: str = 'dense'
+
     return_attn: bool = False
     mlp_act_func: Optional[str] = None
     mlp_act_func_params: Optional[dict] = None
+
 
 @dataclass
 class TrainConfig:
