@@ -47,6 +47,6 @@ def test_transformers(num_classes, pooling, expected):
        num_nodes=n,
        model_cfg=t_cfg,
     )
-    o = m(x)
+    o = m((x, torch.tensor([0.])))
 
     assert o.shape == (b, expected)
