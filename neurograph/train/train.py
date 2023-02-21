@@ -19,7 +19,7 @@ from neurograph.config import Config, ModelConfig
 from neurograph.data import NeuroDataset, NeuroGraphDataset
 import neurograph.models
 from neurograph.models.available_modules import available_optimizers, available_losses
-from neurograph.models import graph_model_classes, dense_model_classes
+#from neurograph.models import graph_model_classes, dense_model_classes
 
 
 def get_log_msg(prefix, fold_i, epoch_i, metrics) -> str:
@@ -210,13 +210,10 @@ def init_model_optim_loss(ds: NeuroDataset, cfg: Config):
 
 
 def init_model(dataset: NeuroDataset, model_cfg: ModelConfig):
-    # TODO: discriminate between graph and dense models
     available_models = {name: obj for name, obj in inspect.getmembers(neurograph.models)}
 
     ModelKlass = available_models[model_cfg.name]
 
-    # TODO: dense models do not need num_nodes for initialization!
-    # TODO: model config?
     return ModelKlass(
         input_dim=dataset.num_features,
         num_nodes=dataset.num_nodes,

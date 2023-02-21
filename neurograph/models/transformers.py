@@ -6,8 +6,9 @@ import torch.nn as nn
 
 from dataclasses import dataclass, field
 
-from neurograph.models.mlp import BasicMLP
 from neurograph.config import MLPConfig, MLPlayer, TransformerConfig
+from neurograph.models.mlp import BasicMLP
+from neurograph.models.utils import concat_pool
 
 
 # TODO: move to config maybe?
@@ -119,11 +120,18 @@ class TransformerBlock(nn.Module):
 class Transformer(nn.Module):
     def __init__(
         self,
-        input_dim: int,  # comes from dataset
+        # comes from dataset
+        input_dim: int,
+        num_nodes: int,  # used for concat pooling
         cfg: TransformerConfig,
     ):
         super().__init__()
         #self.cfg = cfg
+        self.input_dim = input_dim
+        self.num_nodes = num_nodes
+        self.pooling = cfg.pooling
+        num_classes = cfg.n_classes
+
         self.lin_proj: nn.Module
         if input_dim != cfg.hidden_dim:
             self.lin_proj = nn.Linear(input_dim, cfg.hidden_dim)
@@ -135,10 +143,34 @@ class Transformer(nn.Module):
             for _ in range(cfg.num_layers)
         ])
 
+        if cfg.pooling == 'concat':
+            fcn_dim = self.num_nodes * cfg.hidden_dim
+        elif cfg.pooling in ('mean', 'sum'):
+            fcn_dim = cfg.hidden_dim
+        else:
+            raise ValueError('Unknown pooling type!')
+
+        self.fcn = BasicMLP(in_size=fcn_dim, out_size=num_classes, config=cfg.head_config)
+
     def forward(self, x):
+        # porject to hidden_dim
         out = self.lin_proj(x)
+
+        # go thru transformer layers
         for block in self.blocks:
              out = block(out)
+
+        # pool
+        if self.pooling == 'concat':
+            out = concat_pool(out)
+        elif self.pooling == 'mean':
+            out = out.mean(axis=1)
+        else:  # 'sum'
+            out = out.sum(axis=1)
+
+        # infer mlp head
+        out = self.fcn(out)
+
         return out
 
     @staticmethod

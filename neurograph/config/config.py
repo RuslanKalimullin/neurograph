@@ -63,7 +63,7 @@ class ModelConfig:
 
 @dataclass
 class bgbGNNConfig(ModelConfig):
-    name: str = 'bgbGAT'  # see neurograph.models/
+    name: str = 'bgbGAT'  # see neurograph.models
     n_classes: int = 2  # must match with loss
     data_type: str = 'graph'
 
@@ -101,8 +101,18 @@ class TransformerConfig(ModelConfig):
     data_type: str = 'dense'
 
     return_attn: bool = False
+    # transformer block MLP parameters
     mlp_act_func: Optional[str] = None
     mlp_act_func_params: Optional[dict] = None
+
+    pooling: str = 'concat'
+
+    # final MLP layer config
+    head_config: MLPConfig = field(default_factory=lambda: MLPConfig(
+        layers = [
+            MLPlayer(out_size=32, dropout=0.5, act_func='ELU',),
+        ]
+    ))
 
 
 @dataclass
