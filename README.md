@@ -34,19 +34,30 @@ By default, neurograph expects that your datasets are stored in `datasets` folde
 # how to use it
 Neurograph uses `hydra` for managing different configurations. See default config in `config/config.py` and `config/config.yaml`
 
-Here we overwrite some default values in config
 ```bash
+# Run bgbGAT, bgbGCN
+!python -m neurograph.train --multirun \
+  dataset.data_path='<path_to_data>' \
+  +model=bgbGAT  # bgbGCN \
+  model.num_layers=1,2 \
+  model.num_heads=1,2,4 \
+  model.hidden_dim=8,12,16 \
+  dataset.pt_thr=0.25,0.5,0.75,null \
+  train.epochs=20 \
+  train.scheduler=null
+```
 
-python -m neurograph.train \
-	# choose default model config by +model=<model_name> \
-	# where <model_name> in {bgbGCN, bgbGAT, transfomer} \
-	+model=bgbGCN \
-	# disable wandb while testing \
-	log.wandb_mode=disabled \
-	# override some parameters \
-	dataset.data_path=<datasets dir> \
-	'model={num_layers: 2, num_heads: 4, prepool_dim: 64, dropout: 0.5, mp_type: node_concate, final_node_dim:8}' \
-	train.epochs=2 train.optim_args='{lr: 3.5e-4}'
+```bash
+# Vanilla Transformer
+!python -m neurograph.train --multirun \
+  dataset.data_path='<path_to_data>' \
+  +model=transformer dataset.data_type=dense\
+  model.num_layers=1,2 \
+  model.num_heads=1,2,4 \
+  model.hidden_dim=8,16,32,64,116,128 \
+  head_config=[out_size=4, dropout=0.5, act_func=GELU]
+  train.epochs=1 \
+  train.scheduler=null
 ```
 
 Results will be logged into wandb
