@@ -173,7 +173,7 @@ class TrainConfig:
     )
     scheduler: Optional[str] = 'ReduceLROnPlateau'
     # used in ReduceLROnPlateau
-    scheduler_metric: Optional[str] = 'f1_macro'
+    scheduler_metric: Optional[str] = 'loss'
     scheduler_args: Optional[dict[str, Any]] = field(
         default_factory=lambda: {
             'factor': 0.1,
@@ -183,7 +183,7 @@ class TrainConfig:
     )
 
     # select best model on valid based on what metric
-    select_best_metric: str = 'f1_macro'
+    select_best_metric: str = 'loss'
     loss: str = 'CrossEntropyLoss' #'BCEWithLogitsLoss'
     loss_args: Optional[dict[str, Any]] = field(
         # reduction sum is necessary here
