@@ -179,7 +179,7 @@ class TrainConfig:
 class LogConfig:
     # how often print training metrics
     test_step: int = 1
-    wandb_project: str = 'mri_gnn'
+    wandb_project: str = 'mri_gnn_2'
     wandb_name: Optional[str] = None
     wandb_mode: Optional[str] = None  # 'disabled' for testing
 
