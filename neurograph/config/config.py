@@ -160,7 +160,7 @@ class TransformerConfig(ModelConfig):
 
 @dataclass
 class TrainConfig:
-    device: str = 'cpu'
+    device: str = 'gpu'
     epochs: int = 1
     batch_size: int = 8
     valid_batch_size: int = 8
