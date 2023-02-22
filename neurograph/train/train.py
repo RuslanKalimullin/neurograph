@@ -3,7 +3,7 @@ import json
 import logging
 from collections import defaultdict
 from copy import deepcopy
-from typing import Type
+from typing import Any, Type
 from operator import gt, lt
 
 import numpy as np
@@ -12,13 +12,19 @@ import torch
 import torch.nn as nn
 from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss
 from torch.utils.data import DataLoader
+from torch_geometric.data import Batch as pygBatch, Data as pygData
 from torch_geometric.loader import DataLoader as pygDataLoader
 import wandb
 
 from neurograph.config import Config, ModelConfig
-from neurograph.data.datasets import NeuroGraphDataset
+from neurograph.data import NeuroDataset, NeuroGraphDataset
 import neurograph.models
-from neurograph.models.available_modules import available_optimizers, available_losses
+from neurograph.models.available_modules import (
+    available_optimizers,
+    available_losses,
+    available_schedulers,
+)
+#from neurograph.models import graph_model_classes, dense_model_classes
 
 
 def get_log_msg(prefix, fold_i, epoch_i, metrics) -> str:
@@ -29,7 +35,7 @@ def get_log_msg(prefix, fold_i, epoch_i, metrics) -> str:
     ])
 
 
-def train(ds: NeuroGraphDataset, cfg: Config):
+def train(ds: NeuroDataset, cfg: Config):
     ''' Run cross-validation, report metrics on valids and test '''
 
     # metrics  # TODO put into dataclass or dict
@@ -47,6 +53,7 @@ def train(ds: NeuroGraphDataset, cfg: Config):
     for fold_i, loaders in enumerate(loaders_iter):
         logging.info(f'Run training on fold: {fold_i}')
 
+        # create model, optim, loss etc.
         model, optimizer, scheduler, loss_f = init_model_optim_loss(ds, cfg)
 
         # train and return valid metrics on last epoch
@@ -54,6 +61,7 @@ def train(ds: NeuroGraphDataset, cfg: Config):
             model,
             loaders,
             optimizer,
+            scheduler,
             loss_f=loss_f,
             device=cfg.train.device,
             fold_i=fold_i,
@@ -82,10 +90,29 @@ def train(ds: NeuroGraphDataset, cfg: Config):
     return {'valid': final_valid_metrics, 'test': final_test_metrics}
 
 
+def handle_batch(
+    batch: pygData | pygBatch | list[torch.Tensor] | tuple[torch.Tensor],
+    device: str,
+):
+    # TODO: create DataDense dataclass (analogue of pyg.Data) and
+    # define custom collate_fn for DenseDataset DataLoaders
+    # so we have the same interface with PyG
+    if isinstance(batch, list) or isinstance(batch, tuple):
+        x, y = batch
+        x, y = x.to(device), y.to(device)
+        batch = (x, y)
+    else:
+        batch = batch.to(device)
+        y = batch.y
+
+    return batch, y
+
+
 def train_one_split(
     model: nn.Module,
     loaders: dict[str, DataLoader | pygDataLoader],
     optimizer,
+    scheduler,
     loss_f,
     device,
     fold_i: int | str,
@@ -103,20 +130,20 @@ def train_one_split(
     best_metric = cfg.train.select_best_metric
     best_result = float('inf') if best_metric == 'loss' else -float('inf')
     comparator = lt if best_metric == 'loss' else gt
-    best_nodel: nn.Module
+    best_model: nn.Module
     best_valid_metrics: dict[str, float]
 
     for epoch_i in range(cfg.train.epochs):
         total_loss = 0.
         for data in train_loader:
             optimizer.zero_grad()
-            data = data.to(device)
+            data, y = handle_batch(data, device)
             out = model(data)
 
             if isinstance(loss_f, BCEWithLogitsLoss):
-                loss = loss_f(out, data.y.float().reshape(out.shape))
+                loss = loss_f(out, y.float().reshape(out.shape))
             elif isinstance(loss_f, CrossEntropyLoss):
-                loss = loss_f(out, data.y)
+                loss = loss_f(out, y)
             else:
                 ValueError(f'{loss_f} this loss function is not supported')
 
@@ -136,6 +163,19 @@ def train_one_split(
         # epoch valid metrics
         valid_epoch_metrics = evaluate(model, valid_loader, loss_f, cfg)
         logging.info(get_log_msg('valid', fold_i, epoch_i, valid_epoch_metrics))
+
+        # TODO: add link to cwn code
+        # decay learning rate
+        if scheduler is not None:
+            if cfg.train.scheduler == 'ReduceLROnPlateau':
+                scheduler.step(valid_epoch_metrics[cfg.train.scheduler_metric])
+                # We use a strict inequality here like in the benchmarking GNNs paper code
+                # https://github.com/graphdeeplearning/benchmarking-gnns/blob/master/main_molecules_graph_regression.py#L217
+                #if args.early_stop and optimizer.param_groups[0]['lr'] < args.lr_scheduler_min:
+                #    print("\n!! The minimum learning rate has been reached.")
+                #    break
+            else:
+                scheduler.step()
 
         # update best_model
         if comparator(valid_epoch_metrics[best_metric], best_result):
@@ -165,10 +205,10 @@ def evaluate(model, loader, loss_f, cfg: Config):
     # infer
     y_pred_list, true_list = [], []
     for data in loader:
-        data = data.to(device)
+        data, y = handle_batch(data, device)
         out = model(data)
         y_pred_list.append(out)
-        true_list.append(data.y)
+        true_list.append(y)
     y_pred = torch.cat(y_pred_list, dim=0)
     trues = torch.cat(true_list, dim=0)
 
@@ -190,7 +230,7 @@ def evaluate(model, loader, loss_f, cfg: Config):
     return metrics
 
 
-def init_model_optim_loss(ds: NeuroGraphDataset, cfg: Config):
+def init_model_optim_loss(ds: NeuroDataset, cfg: Config):
     # create model instance
     model = init_model(ds, cfg.model)
     # set optimizer
@@ -198,8 +238,24 @@ def init_model_optim_loss(ds: NeuroGraphDataset, cfg: Config):
         model.parameters(),
         **cfg.train.optim_args if cfg.train.optim_args else {}
     )
+
+    # TODO: refactor it somehow or maybe refactor TrainConfig
     # set lr_scheduler
     scheduler = None
+    if cfg.train.scheduler is not None:
+        scheduler_params: dict[str, Any]
+        if cfg.train.scheduler_args is not None:
+            scheduler_params = dict(deepcopy(cfg.train.scheduler_args))
+        else:
+            scheduler_params = {}
+        if cfg.train.scheduler == 'ReduceLROnPlateau':
+            if cfg.train.scheduler_metric is not None:
+                scheduler_params['mode'] = metrics_resistry[cfg.train.scheduler_metric]
+
+        scheduler = available_schedulers[cfg.train.scheduler](
+            optimizer,
+            **scheduler_params
+        )
     # set loss function
     loss_f = available_losses[cfg.train.loss](
         **cfg.train.loss_args if cfg.train.loss_args else {}
@@ -207,11 +263,13 @@ def init_model_optim_loss(ds: NeuroGraphDataset, cfg: Config):
     return model, optimizer, scheduler, loss_f
 
 
-def init_model(dataset: NeuroGraphDataset, model_cfg: ModelConfig):
+def init_model(dataset: NeuroDataset, model_cfg: ModelConfig):
     available_models = {name: obj for name, obj in inspect.getmembers(neurograph.models)}
+
     ModelKlass = available_models[model_cfg.name]
+
     return ModelKlass(
-        input_dim=dataset.n_features,
+        input_dim=dataset.num_features,
         num_nodes=dataset.num_nodes,
         model_cfg=model_cfg,
     )
@@ -232,6 +290,9 @@ def process_ce_preds(trues_pt: torch.Tensor, y_pred: torch.Tensor):
     trues = trues_pt.detach().long().cpu().numpy()
 
     return compute_metrics(pred_labels, pred_proba[:, 1], trues)
+
+# used in scheduler ReduceLROnPlateau
+metrics_resistry = {'acc': 'max', 'auc': 'max', 'f1_macro': 'max', 'loss': 'min'}
 
 
 def compute_metrics(pred_labels: np.ndarray, pred_proba: np.ndarray, trues: np.ndarray):

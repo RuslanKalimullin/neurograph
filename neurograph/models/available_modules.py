@@ -1,10 +1,10 @@
 import inspect
-from typing import Type
+from typing import Any, Type
 import torch.nn as nn
 import torch.optim as optim
+import torch.optim.lr_scheduler as lr_scheduler
 
-import neurograph.models as models
-
+# put different pytorch models into dicts for easier instantiation
 available_modules: dict[str, Type[nn.Module]] = {
     name: obj for (name, obj) in inspect.getmembers(nn)
     if inspect.isclass(obj)
@@ -25,4 +25,10 @@ available_optimizers: dict[str, Type[optim.Optimizer]] = {
     name: obj for (name, obj) in inspect.getmembers(optim)
     if inspect.isclass(obj)
     if issubclass(obj, optim.Optimizer)
+}
+
+# there's no base class for all schedulers
+available_schedulers: dict[str, Any] = {
+    name: obj for (name, obj) in inspect.getmembers(lr_scheduler)
+    if inspect.isclass(obj)
 }

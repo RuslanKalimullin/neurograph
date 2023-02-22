@@ -1,22 +1,42 @@
 import pytest
 from functools import reduce
 from neurograph.config import get_config
-from neurograph.data.datasets import CobreDataset
+from neurograph.data.cobre import CobreDenseDataset, CobreGraphDataset
 
 
 @pytest.fixture(scope='session')
 def cobre_ds_no_thr():
-    return CobreDataset(root=get_config().dataset.data_path)
+    return CobreGraphDataset(root=get_config().dataset.data_path)
 
 
 @pytest.fixture(scope='session')
 def cobre_ds_abs_thr():
-    return CobreDataset(root=get_config().dataset.data_path, abs_thr=0.3)
+    return CobreGraphDataset(root=get_config().dataset.data_path, abs_thr=0.3)
 
 
 @pytest.fixture(scope='session')
 def cobre_ds_pt_thr():
-    return CobreDataset(root=get_config().dataset.data_path, pt_thr=0.5)
+    return CobreGraphDataset(root=get_config().dataset.data_path, pt_thr=0.5)
+
+
+@pytest.fixture(scope='session')
+def cobre_dense_ts():
+    return CobreDenseDataset(
+        root=get_config().dataset.data_path,
+        atlas='aal',
+        experiment_type='fmri',
+        feature_type='timeseries',
+    )
+
+
+@pytest.fixture(scope='session')
+def cobre_dense_connprofile():
+    return CobreDenseDataset(
+        root=get_config().dataset.data_path,
+        atlas='aal',
+        experiment_type='fmri',
+        feature_type='conn_profile',
+    )
 
 
 def test_cobre_no_thr(cobre_ds_no_thr):
@@ -47,9 +67,11 @@ def test_cobre_target(cobre_ds_no_thr):
 
     assert target.index.isnull().sum() == 0
 
-
-def test_cobre_folds(cobre_ds_no_thr):
-    folds = cobre_ds_no_thr.folds
+@pytest.mark.parametrize('ds', ['cobre_ds_no_thr', 'cobre_dense_ts'])
+def test_cobre_folds(ds, request):
+    # workaround for parameterizing tests w/ fixtures
+    ds = request.getfixturevalue(ds)
+    folds = ds.folds
 
     all_train = set()  # everything that we run cross-val on
     all_valids = []
@@ -99,3 +121,14 @@ def test_cobre_test_loader(cobre_ds_no_thr):
 
     for b in loader:
         print(b)
+
+
+def test_cobre_dense_ts(cobre_dense_ts):
+    assert cobre_dense_ts.data.shape[1] == 116
+    assert cobre_dense_ts.data.shape[2] == 150
+
+
+def test_cobre_dense_connprofile(cobre_dense_connprofile):
+    assert cobre_dense_connprofile.data.shape[1] == 116
+    assert cobre_dense_connprofile.data.shape[2] == 116
+

@@ -27,7 +27,6 @@ def build_mlp_layer(in_size: int, layer: MLPlayer) -> nn.Sequential:
 class BasicMLP(nn.Module):
     def __init__(self, in_size: int, out_size: int, config: MLPConfig):
         super().__init__()
-        # TODO: process in_size, out_size from config
         self.in_size = in_size
         self.out_size = out_size
 

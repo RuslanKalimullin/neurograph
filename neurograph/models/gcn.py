@@ -14,7 +14,7 @@ from torch_geometric.nn import Sequential as pygSequential
 from torch import nn
 import torch_geometric
 
-from neurograph.config import Config, ModelConfig
+from neurograph.config import Config, ModelConfig, bgbGCNConfig
 from neurograph.models.mlp import BasicMLP
 from neurograph.models.utils import concat_pool
 
@@ -162,7 +162,7 @@ class bgbGCN(torch.nn.Module):
         # determined by dataset
         input_dim: int,
         num_nodes: int,
-        model_cfg: ModelConfig,
+        model_cfg: bgbGCNConfig,  # ModelConfig,
     ):
         super().__init__()
         self.convs = torch.nn.ModuleList()

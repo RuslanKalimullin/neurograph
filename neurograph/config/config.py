@@ -13,12 +13,16 @@ from neurograph.data import available_datasets
 @dataclass
 class DatasetConfig:
     name: str = 'cobre'
+    data_type: str = 'graph'  # or 'dense'
     experiment_type: str = 'fmri' # TODO: support list for multimodal experiments
     atlas: str = 'aal'
+    data_path: Path = Path(neurograph.__file__).resolve().parent.parent / 'datasets'
+    # graph specific
+    #init_node_features: str = 'conn_profile'  # TODO
     abs_thr: Optional[float] = None
     pt_thr: Optional[float] = None
-    #init_node_features: str = 'conn_profile'  # TODO
-    data_path: Path = Path(neurograph.__file__).resolve().parent.parent / 'datasets'
+    # dense specific
+    feature_type: str = 'conn_profile'  #'timeseries'
 
 
 @dataclass
@@ -70,8 +74,42 @@ class standartGNNConfig:
 
 @dataclass
 class ModelConfig:
-    name: str = 'bgbGAT'  # see neurograph.models/
+    name: str  # see neurograph.models/
+    n_classes: int  # must match with loss
+
+    # required for correct init of models
+    # see `train.train.init_model`
+    data_type: str
+
+
+@dataclass
+class bgbGCNConfig(ModelConfig):
+    name: str = 'bgbGCN'  # see neurograph.models
     n_classes: int = 2  # must match with loss
+    data_type: str = 'graph'
+
+    mp_type: str = 'node_concate'
+    pooling: str = 'concat'
+    num_layers: int = 1
+    hidden_dim: int = 16  # TODO: support list
+    prepool_dim: int = 64  # input dim for prepool layer
+    final_node_dim: int = 8  # final node_dim after prepool
+    use_abs_weight: bool = True
+    # TODO: use it inside convolutions
+    dropout: float = 0.3
+    use_batchnorm: bool = True
+
+    # gcn spefic args
+
+    mlp_config: MLPConfig = field(default_factory=MLPConfig)
+
+
+@dataclass
+class bgbGATConfig(ModelConfig):
+    name: str = 'bgbGAT'  # see neurograph.models
+    n_classes: int = 2  # must match with loss
+    data_type: str = 'graph'
+
     mp_type: str = 'node_concate'
     pooling: str = 'concat'
     num_layers: int = 1
@@ -85,13 +123,44 @@ class ModelConfig:
     # gat spefic args
     num_heads: int = 2
     # TODO: add adding self-loops
-    # gcn spefic args
 
     mlp_config: MLPConfig = field(default_factory=MLPConfig)
 
 
 @dataclass
+class TransformerConfig(ModelConfig):
+    # name is a class name; used for initializing a model
+    name: str  = 'Transformer'  # TODO: remove, refactor ModelConfig class?
+
+    n_classes: int = 2
+    num_layers: int = 1
+    hidden_dim: int = 116
+    num_heads: int = 4
+    attn_dropout: float = 0.4
+    mlp_dropout: float = 0.4
+    # hidden layer in transformer block mlp
+    mlp_hidden_multiplier: float = 0.2
+
+    data_type: str = 'dense'
+
+    return_attn: bool = False
+    # transformer block MLP parameters
+    mlp_act_func: Optional[str] = 'GELU'
+    mlp_act_func_params: Optional[dict] = None
+
+    pooling: str = 'concat'
+
+    # final MLP layer config
+    head_config: MLPConfig = field(default_factory=lambda: MLPConfig(
+        layers = [
+            MLPlayer(out_size=4, dropout=0.5, act_func='GELU',),
+        ]
+    ))
+
+
+@dataclass
 class TrainConfig:
+    device: str = 'cpu'
     epochs: int = 1
     batch_size: int = 8
     valid_batch_size: int = 8
@@ -102,10 +171,20 @@ class TrainConfig:
             'weight_decay': 1e-4,
         }
     )
-    device: str = 'cpu'
+    scheduler: Optional[str] = 'ReduceLROnPlateau'
+    # used in ReduceLROnPlateau
+    scheduler_metric: Optional[str] = 'f1_macro'
+    scheduler_args: Optional[dict[str, Any]] = field(
+        default_factory=lambda: {
+            'factor': 0.1,
+            'patience': 5,
+            'verbose': True,
+        }
+    )
 
-    select_best_metric: str = 'loss'
-    loss: str = 'CrossEntropyLoss' # 'BCEWithLogitsLoss'
+    # select best model on valid based on what metric
+    select_best_metric: str = 'f1_macro'
+    loss: str = 'CrossEntropyLoss' #'BCEWithLogitsLoss'
     loss_args: Optional[dict[str, Any]] = field(
         # reduction sum is necessary here
         default_factory=lambda: {'reduction': 'sum'}
@@ -119,7 +198,7 @@ class TrainConfig:
 class LogConfig:
     # how often print training metrics
     test_step: int = 1
-    wandb_project: str = 'mri_gnn'
+    wandb_project: str = 'mri_gnn_2'
     wandb_name: Optional[str] = None
     wandb_mode: Optional[str] = None  # 'disabled' for testing
 
@@ -127,9 +206,9 @@ class LogConfig:
 @dataclass
 class Config:
     ''' Config schema w/ default values (see dataclasses above) '''
+    model: ModelConfig
     seed: int = 1380
     dataset: DatasetConfig = field(default_factory=DatasetConfig)
-    model: ModelConfig = field(default_factory=ModelConfig)
     train: TrainConfig = field(default_factory=TrainConfig)
     log: LogConfig = field(default_factory=LogConfig)
 
@@ -144,3 +223,6 @@ def validate_config(cfg: Config):
 # register default config as `base_config`
 cs = ConfigStore.instance()
 cs.store(name='base_config', node=Config)
+cs.store(group='model', name='bgbGAT', node=bgbGATConfig)
+cs.store(group='model', name='bgbGCN', node=bgbGCNConfig)
+cs.store(group='model', name='transformer', node=TransformerConfig)
