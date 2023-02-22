@@ -47,19 +47,6 @@ Neurograph uses `hydra` for managing different configurations. See default confi
   train.scheduler=null
 ```
 
-```bash
-# Vanilla Transformer
-!python -m neurograph.train --multirun \
-  dataset.data_path='<path_to_data>' \
-  +model=transformer dataset.data_type=dense\
-  model.num_layers=1,2 \
-  model.num_heads=1,2,4 \
-  model.hidden_dim=8,16,32,64,116,128 \
-  head_config=[out_size=4, dropout=0.5, act_func=GELU]
-  train.epochs=1 \
-  train.scheduler=null
-```
-
 Results will be logged into wandb
 
 ## acronyms
