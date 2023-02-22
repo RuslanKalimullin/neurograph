@@ -112,6 +112,7 @@ class bgbGATConfig(ModelConfig):
 class TransformerConfig(ModelConfig):
     # name is a class name; used for initializing a model
     name: str  = 'Transformer'  # TODO: remove, refactor ModelConfig class?
+
     n_classes: int = 2
     num_layers: int = 1
     hidden_dim: int = 116
@@ -140,6 +141,7 @@ class TransformerConfig(ModelConfig):
 
 @dataclass
 class TrainConfig:
+    device: str = 'cpu'
     epochs: int = 1
     batch_size: int = 8
     valid_batch_size: int = 8
@@ -150,9 +152,19 @@ class TrainConfig:
             'weight_decay': 1e-4,
         }
     )
-    device: str = 'cpu'
+    scheduler: Optional[str] = 'ReduceLROnPlateau'
+    # used in ReduceLROnPlateau
+    scheduler_metric: Optional[str] = 'f1_macro'
+    scheduler_args: Optional[dict[str, Any]] = field(
+        default_factory=lambda: {
+            'factor': 0.1,
+            'patience': 5,
+            'verbose': True,
+        }
+    )
 
-    select_best_metric: str = 'loss'
+    # select best model on valid based on what metric
+    select_best_metric: str = 'f1_macro'
     loss: str = 'CrossEntropyLoss' #'BCEWithLogitsLoss'
     loss_args: Optional[dict[str, Any]] = field(
         # reduction sum is necessary here
