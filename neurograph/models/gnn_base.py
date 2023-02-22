@@ -17,7 +17,7 @@ import torch_geometric
 from neurograph.config import Config, ModelConfig, bgbGCNConfig,standartGNNConfig
 from neurograph.models.mlp import BasicMLP
 from neurograph.models.utils import concat_pool
-
+from neurograph.models.available_modules import available_pg_modules
 
 def build_gnn_block(
     input_dim: int,
@@ -25,22 +25,42 @@ def build_gnn_block(
     layer_module: nn.Module,
     proj_dim: Optional[int] = None,
     use_batchnorm: bool = True,
+    use_weighted_edges: bool =True,
     dropout: float = 0.0
     ):
-    return pygSequential(
-        [
-                layer_module(
-                    input_dim,
-                    hidden_dim
+    if use_weighted_edges:
+        return pygSequential(
+            'x, edge_index, edge_attr',
+            [
+                (available_pg_modules[layer_module](
+                        input_dim,
+                        hidden_dim
+                    ),
+                    'x, edge_index, edge_attr -> x'
                 ),
-            nn.LeakyReLU(negative_slope = 0.2),
-            nn.Dropout(p=dropout),
-            nn.BatchNorm1d(hidden_dim) if use_batchnorm else nn.Identity(),
-        ]
-    )
+                nn.LeakyReLU(negative_slope = 0.2),
+                nn.Dropout(p=dropout),
+                nn.BatchNorm1d(hidden_dim) if use_batchnorm else nn.Identity(),
+            ]   
+        )
+    else:
+        return pygSequential(
+            'x, edge_index',
+            [
+                (available_pg_modules[layer_module](
+                        input_dim,
+                        hidden_dim
+                    ),
+                    'x, edge_index -> x'
+                ),
+                nn.LeakyReLU(negative_slope = 0.2),
+                nn.Dropout(p=dropout),
+                nn.BatchNorm1d(hidden_dim) if use_batchnorm else nn.Identity(),
+            ]   
+        )
 
 
-class baseGCN(torch.nn.Module):
+class baseGNN(torch.nn.Module):
     def __init__(
         self,
         # determined by dataset
@@ -67,12 +87,13 @@ class baseGCN(torch.nn.Module):
         common_args: dict[str, Any] = dict(
             dropout=dropout
         )
-        for i in range(num_layers - 1):
+        for i in range(num_layers):
             conv = build_gnn_block(
                 gcn_input_dim,
                 hidden_dim,
                 layer_module,
                 use_batchnorm=use_batchnorm,
+                use_weighted_edges=self.use_weighted_edges,
                 **common_args,
             )
             gcn_input_dim = hidden_dim

@@ -1,0 +1,77 @@
+[2023-02-22 19:47:17,684][HYDRA] 	#1 : +model=baseGNN model.data_type=graph model.num_layers=2 model.hidden_dim=32 dataset.pt_thr=null train.epochs=20 train.scheduler=null
+[2023-02-22 19:47:17,903][root][INFO] - Config:
+model:
+  name: baseGNN
+  n_classes: 2
+  data_type: graph
+  num_layers: 2
+  layer_module: GCNConv
+  hidden_dim: 32
+  use_abs_weight: true
+  use_weighted_edges: false
+  final_node_dim: 32
+  pooling: mean
+  dropout: 0.2
+  use_batchnorm: true
+  num_heads: 2
+  mlp_config:
+    in_size: null
+    out_size: null
+    act_func: null
+    act_func_params: null
+    layers: []
+seed: 1380
+dataset:
+  name: cobre
+  data_type: graph
+  experiment_type: fmri
+  atlas: aal
+  data_path: !!python/object/apply:pathlib.PosixPath
+  - /
+  - mnt
+  - workspace
+  - graph_NN
+  - neurograph
+  - datasets
+  abs_thr: null
+  pt_thr: null
+  feature_type: conn_profile
+train:
+  device: cuda
+  epochs: 20
+  batch_size: 8
+  valid_batch_size: 8
+  optim: Adam
+  optim_args:
+    lr: 0.001
+    weight_decay: 0.0001
+  scheduler: null
+  scheduler_metric: loss
+  scheduler_args:
+    factor: 0.1
+    patience: 5
+    verbose: true
+  select_best_metric: loss
+  loss: CrossEntropyLoss
+  loss_args:
+    reduction: sum
+  prob_thr: 0.5
+log:
+  test_step: 1
+  wandb_project: mri_gnn_2
+  wandb_name: null
+  wandb_mode: null
+Error executing job with overrides: ['+model=baseGNN', 'model.data_type=graph', 'model.num_layers=1', 'model.hidden_dim=32', 'dataset.pt_thr=null', 'train.epochs=20', 'train.scheduler=null']
+Traceback (most recent call last):
+  File "/mnt/workspace/graph_NN/neurograph/neurograph/train/__main__.py", line 63, in main
+    metrics = train(ds, cfg)
+  File "/mnt/workspace/graph_NN/neurograph/neurograph/train/train.py", line 42, in train
+    logging.info(f'Model architecture:\n{init_model(ds, cfg.model)})')
+  File "/mnt/workspace/graph_NN/neurograph/neurograph/train/train.py", line 271, in init_model
+    return ModelKlass(
+  File "/mnt/workspace/graph_NN/neurograph/neurograph/models/gnn_base.py", line 71, in __init__
+    conv = build_gnn_block(
+  File "/mnt/workspace/graph_NN/neurograph/neurograph/models/gnn_base.py", line 32, in build_gnn_block
+    available_modules[layer_module](
+NameError: name 'available_modules' is not defined
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.

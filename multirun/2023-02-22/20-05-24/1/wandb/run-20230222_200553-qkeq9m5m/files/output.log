@@ -1,0 +1,286 @@
+[2023-02-22 20:05:55,484][root][INFO] - Model architecture:
+baseGNN(
+  (convs): ModuleList(
+    (0): Sequential(
+      (0): GCNConv(116, 32)
+      (1): LeakyReLU(negative_slope=0.2)
+      (2): Dropout(p=0.2, inplace=False)
+      (3): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (1): Sequential(
+      (0): GCNConv(32, 32)
+      (1): LeakyReLU(negative_slope=0.2)
+      (2): Dropout(p=0.2, inplace=False)
+      (3): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+  )
+  (fcn): BasicMLP(
+    (net): Sequential(
+      (0): Sequential(
+        (0): Linear(in_features=32, out_features=2, bias=True)
+      )
+    )
+  )
+))
+[2023-02-22 20:05:55,485][root][INFO] - Run training on fold: 0
+[2023-02-22 20:05:55,698][root][INFO] - Fold=00, Epoch=000, train/acc=0.417 | train/auc=0.535 | train/f1_macro=0.354 | train/loss=0.655
+[2023-02-22 20:05:55,721][root][INFO] - Fold=00, Epoch=000, valid/acc=0.320 | valid/auc=0.318 | valid/f1_macro=0.302 | valid/loss=0.710
+[2023-02-22 20:05:55,885][root][INFO] - Fold=00, Epoch=001, train/acc=0.604 | train/auc=0.729 | train/f1_macro=0.486 | train/loss=0.690
+[2023-02-22 20:05:55,907][root][INFO] - Fold=00, Epoch=001, valid/acc=0.560 | valid/auc=0.578 | valid/f1_macro=0.359 | valid/loss=0.679
+[2023-02-22 20:05:56,069][root][INFO] - Fold=00, Epoch=002, train/acc=0.562 | train/auc=0.796 | train/f1_macro=0.400 | train/loss=0.664
+[2023-02-22 20:05:56,091][root][INFO] - Fold=00, Epoch=002, valid/acc=0.560 | valid/auc=0.740 | valid/f1_macro=0.359 | valid/loss=0.658
+[2023-02-22 20:05:56,253][root][INFO] - Fold=00, Epoch=003, train/acc=0.562 | train/auc=0.786 | train/f1_macro=0.417 | train/loss=0.651
+[2023-02-22 20:05:56,274][root][INFO] - Fold=00, Epoch=003, valid/acc=0.560 | valid/auc=0.760 | valid/f1_macro=0.359 | valid/loss=0.640
+[2023-02-22 20:05:56,435][root][INFO] - Fold=00, Epoch=004, train/acc=0.656 | train/auc=0.791 | train/f1_macro=0.596 | train/loss=0.642
+[2023-02-22 20:05:56,457][root][INFO] - Fold=00, Epoch=004, valid/acc=0.680 | valid/auc=0.747 | valid/f1_macro=0.653 | valid/loss=0.632
+[2023-02-22 20:05:56,619][root][INFO] - Fold=00, Epoch=005, train/acc=0.667 | train/auc=0.798 | train/f1_macro=0.612 | train/loss=0.632
+[2023-02-22 20:05:56,640][root][INFO] - Fold=00, Epoch=005, valid/acc=0.720 | valid/auc=0.760 | valid/f1_macro=0.688 | valid/loss=0.622
+[2023-02-22 20:05:56,802][root][INFO] - Fold=00, Epoch=006, train/acc=0.740 | train/auc=0.818 | train/f1_macro=0.726 | train/loss=0.620
+[2023-02-22 20:05:56,823][root][INFO] - Fold=00, Epoch=006, valid/acc=0.640 | valid/auc=0.747 | valid/f1_macro=0.631 | valid/loss=0.623
+[2023-02-22 20:05:56,982][root][INFO] - Fold=00, Epoch=007, train/acc=0.698 | train/auc=0.808 | train/f1_macro=0.663 | train/loss=0.607
+[2023-02-22 20:05:57,004][root][INFO] - Fold=00, Epoch=007, valid/acc=0.720 | valid/auc=0.766 | valid/f1_macro=0.703 | valid/loss=0.611
+[2023-02-22 20:05:57,166][root][INFO] - Fold=00, Epoch=008, train/acc=0.750 | train/auc=0.840 | train/f1_macro=0.750 | train/loss=0.605
+[2023-02-22 20:05:57,187][root][INFO] - Fold=00, Epoch=008, valid/acc=0.680 | valid/auc=0.740 | valid/f1_macro=0.679 | valid/loss=0.632
+[2023-02-22 20:05:57,345][root][INFO] - Fold=00, Epoch=009, train/acc=0.760 | train/auc=0.831 | train/f1_macro=0.751 | train/loss=0.586
+[2023-02-22 20:05:57,366][root][INFO] - Fold=00, Epoch=009, valid/acc=0.680 | valid/auc=0.753 | valid/f1_macro=0.667 | valid/loss=0.611
+[2023-02-22 20:05:57,530][root][INFO] - Fold=00, Epoch=010, train/acc=0.750 | train/auc=0.851 | train/f1_macro=0.750 | train/loss=0.565
+[2023-02-22 20:05:57,551][root][INFO] - Fold=00, Epoch=010, valid/acc=0.600 | valid/auc=0.721 | valid/f1_macro=0.599 | valid/loss=0.625
+[2023-02-22 20:05:57,709][root][INFO] - Fold=00, Epoch=011, train/acc=0.771 | train/auc=0.852 | train/f1_macro=0.767 | train/loss=0.553
+[2023-02-22 20:05:57,730][root][INFO] - Fold=00, Epoch=011, valid/acc=0.680 | valid/auc=0.727 | valid/f1_macro=0.675 | valid/loss=0.617
+[2023-02-22 20:05:57,885][root][INFO] - Fold=00, Epoch=012, train/acc=0.781 | train/auc=0.864 | train/f1_macro=0.781 | train/loss=0.534
+[2023-02-22 20:05:57,907][root][INFO] - Fold=00, Epoch=012, valid/acc=0.600 | valid/auc=0.714 | valid/f1_macro=0.599 | valid/loss=0.630
+[2023-02-22 20:05:58,067][root][INFO] - Fold=00, Epoch=013, train/acc=0.792 | train/auc=0.865 | train/f1_macro=0.787 | train/loss=0.533
+[2023-02-22 20:05:58,088][root][INFO] - Fold=00, Epoch=013, valid/acc=0.680 | valid/auc=0.721 | valid/f1_macro=0.667 | valid/loss=0.620
+[2023-02-22 20:05:58,248][root][INFO] - Fold=00, Epoch=014, train/acc=0.750 | train/auc=0.886 | train/f1_macro=0.749 | train/loss=0.492
+[2023-02-22 20:05:58,269][root][INFO] - Fold=00, Epoch=014, valid/acc=0.640 | valid/auc=0.695 | valid/f1_macro=0.640 | valid/loss=0.661
+[2023-02-22 20:05:58,430][root][INFO] - Fold=00, Epoch=015, train/acc=0.781 | train/auc=0.882 | train/f1_macro=0.776 | train/loss=0.495
+[2023-02-22 20:05:58,451][root][INFO] - Fold=00, Epoch=015, valid/acc=0.680 | valid/auc=0.721 | valid/f1_macro=0.667 | valid/loss=0.633
+[2023-02-22 20:05:58,609][root][INFO] - Fold=00, Epoch=016, train/acc=0.812 | train/auc=0.896 | train/f1_macro=0.813 | train/loss=0.475
+[2023-02-22 20:05:58,631][root][INFO] - Fold=00, Epoch=016, valid/acc=0.600 | valid/auc=0.701 | valid/f1_macro=0.599 | valid/loss=0.658
+[2023-02-22 20:05:58,789][root][INFO] - Fold=00, Epoch=017, train/acc=0.812 | train/auc=0.901 | train/f1_macro=0.812 | train/loss=0.462
+[2023-02-22 20:05:58,810][root][INFO] - Fold=00, Epoch=017, valid/acc=0.600 | valid/auc=0.701 | valid/f1_macro=0.599 | valid/loss=0.663
+[2023-02-22 20:05:58,970][root][INFO] - Fold=00, Epoch=018, train/acc=0.760 | train/auc=0.888 | train/f1_macro=0.740 | train/loss=0.475
+[2023-02-22 20:05:58,991][root][INFO] - Fold=00, Epoch=018, valid/acc=0.640 | valid/auc=0.714 | valid/f1_macro=0.599 | valid/loss=0.686
+[2023-02-22 20:05:59,149][root][INFO] - Fold=00, Epoch=019, train/acc=0.760 | train/auc=0.913 | train/f1_macro=0.760 | train/loss=0.486
+[2023-02-22 20:05:59,170][root][INFO] - Fold=00, Epoch=019, valid/acc=0.520 | valid/auc=0.649 | valid/f1_macro=0.519 | valid/loss=0.706
+[2023-02-22 20:05:59,195][root][INFO] - Fold=00, test/acc=0.645 | test/auc=0.697 | test/f1_macro=0.620 | test/loss=0.629
+[2023-02-22 20:05:59,195][root][INFO] - Run training on fold: 1
+[2023-02-22 20:05:59,384][root][INFO] - Fold=01, Epoch=000, train/acc=0.495 | train/auc=0.517 | train/f1_macro=0.484 | train/loss=0.772
+[2023-02-22 20:05:59,402][root][INFO] - Fold=01, Epoch=000, valid/acc=0.542 | valid/auc=0.559 | valid/f1_macro=0.541 | valid/loss=0.693
+[2023-02-22 20:05:59,574][root][INFO] - Fold=01, Epoch=001, train/acc=0.557 | train/auc=0.738 | train/f1_macro=0.396 | train/loss=0.683
+[2023-02-22 20:05:59,592][root][INFO] - Fold=01, Epoch=001, valid/acc=0.583 | valid/auc=0.664 | valid/f1_macro=0.444 | valid/loss=0.673
+[2023-02-22 20:05:59,763][root][INFO] - Fold=01, Epoch=002, train/acc=0.557 | train/auc=0.735 | train/f1_macro=0.413 | train/loss=0.657
+[2023-02-22 20:05:59,781][root][INFO] - Fold=01, Epoch=002, valid/acc=0.583 | valid/auc=0.650 | valid/f1_macro=0.444 | valid/loss=0.668
+[2023-02-22 20:05:59,955][root][INFO] - Fold=01, Epoch=003, train/acc=0.660 | train/auc=0.743 | train/f1_macro=0.605 | train/loss=0.648
+[2023-02-22 20:05:59,973][root][INFO] - Fold=01, Epoch=003, valid/acc=0.708 | valid/auc=0.643 | valid/f1_macro=0.681 | valid/loss=0.662
+[2023-02-22 20:06:00,145][root][INFO] - Fold=01, Epoch=004, train/acc=0.670 | train/auc=0.751 | train/f1_macro=0.638 | train/loss=0.638
+[2023-02-22 20:06:00,163][root][INFO] - Fold=01, Epoch=004, valid/acc=0.667 | valid/auc=0.643 | valid/f1_macro=0.644 | valid/loss=0.658
+[2023-02-22 20:06:00,335][root][INFO] - Fold=01, Epoch=005, train/acc=0.680 | train/auc=0.753 | train/f1_macro=0.641 | train/loss=0.629
+[2023-02-22 20:06:00,354][root][INFO] - Fold=01, Epoch=005, valid/acc=0.667 | valid/auc=0.643 | valid/f1_macro=0.644 | valid/loss=0.660
+[2023-02-22 20:06:00,523][root][INFO] - Fold=01, Epoch=006, train/acc=0.670 | train/auc=0.759 | train/f1_macro=0.654 | train/loss=0.624
+[2023-02-22 20:06:00,540][root][INFO] - Fold=01, Epoch=006, valid/acc=0.708 | valid/auc=0.643 | valid/f1_macro=0.695 | valid/loss=0.658
+[2023-02-22 20:06:00,712][root][INFO] - Fold=01, Epoch=007, train/acc=0.711 | train/auc=0.771 | train/f1_macro=0.709 | train/loss=0.622
+[2023-02-22 20:06:00,730][root][INFO] - Fold=01, Epoch=007, valid/acc=0.583 | valid/auc=0.650 | valid/f1_macro=0.580 | valid/loss=0.655
+[2023-02-22 20:06:00,901][root][INFO] - Fold=01, Epoch=008, train/acc=0.691 | train/auc=0.771 | train/f1_macro=0.681 | train/loss=0.608
+[2023-02-22 20:06:00,919][root][INFO] - Fold=01, Epoch=008, valid/acc=0.708 | valid/auc=0.643 | valid/f1_macro=0.695 | valid/loss=0.658
+[2023-02-22 20:06:01,087][root][INFO] - Fold=01, Epoch=009, train/acc=0.711 | train/auc=0.784 | train/f1_macro=0.709 | train/loss=0.598
+[2023-02-22 20:06:01,105][root][INFO] - Fold=01, Epoch=009, valid/acc=0.583 | valid/auc=0.650 | valid/f1_macro=0.580 | valid/loss=0.653
+[2023-02-22 20:06:01,277][root][INFO] - Fold=01, Epoch=010, train/acc=0.701 | train/auc=0.788 | train/f1_macro=0.695 | train/loss=0.592
+[2023-02-22 20:06:01,294][root][INFO] - Fold=01, Epoch=010, valid/acc=0.708 | valid/auc=0.650 | valid/f1_macro=0.695 | valid/loss=0.658
+[2023-02-22 20:06:01,464][root][INFO] - Fold=01, Epoch=011, train/acc=0.722 | train/auc=0.790 | train/f1_macro=0.716 | train/loss=0.579
+[2023-02-22 20:06:01,482][root][INFO] - Fold=01, Epoch=011, valid/acc=0.708 | valid/auc=0.650 | valid/f1_macro=0.695 | valid/loss=0.660
+[2023-02-22 20:06:01,651][root][INFO] - Fold=01, Epoch=012, train/acc=0.742 | train/auc=0.809 | train/f1_macro=0.741 | train/loss=0.570
+[2023-02-22 20:06:01,668][root][INFO] - Fold=01, Epoch=012, valid/acc=0.583 | valid/auc=0.657 | valid/f1_macro=0.580 | valid/loss=0.656
+[2023-02-22 20:06:01,838][root][INFO] - Fold=01, Epoch=013, train/acc=0.753 | train/auc=0.826 | train/f1_macro=0.752 | train/loss=0.570
+[2023-02-22 20:06:01,855][root][INFO] - Fold=01, Epoch=013, valid/acc=0.583 | valid/auc=0.685 | valid/f1_macro=0.583 | valid/loss=0.654
+[2023-02-22 20:06:02,026][root][INFO] - Fold=01, Epoch=014, train/acc=0.732 | train/auc=0.815 | train/f1_macro=0.723 | train/loss=0.560
+[2023-02-22 20:06:02,044][root][INFO] - Fold=01, Epoch=014, valid/acc=0.708 | valid/auc=0.664 | valid/f1_macro=0.695 | valid/loss=0.681
+[2023-02-22 20:06:02,213][root][INFO] - Fold=01, Epoch=015, train/acc=0.784 | train/auc=0.834 | train/f1_macro=0.783 | train/loss=0.550
+[2023-02-22 20:06:02,230][root][INFO] - Fold=01, Epoch=015, valid/acc=0.625 | valid/auc=0.685 | valid/f1_macro=0.624 | valid/loss=0.660
+[2023-02-22 20:06:02,400][root][INFO] - Fold=01, Epoch=016, train/acc=0.784 | train/auc=0.843 | train/f1_macro=0.783 | train/loss=0.539
+[2023-02-22 20:06:02,418][root][INFO] - Fold=01, Epoch=016, valid/acc=0.625 | valid/auc=0.706 | valid/f1_macro=0.624 | valid/loss=0.667
+[2023-02-22 20:06:02,585][root][INFO] - Fold=01, Epoch=017, train/acc=0.732 | train/auc=0.838 | train/f1_macro=0.723 | train/loss=0.544
+[2023-02-22 20:06:02,603][root][INFO] - Fold=01, Epoch=017, valid/acc=0.708 | valid/auc=0.685 | valid/f1_macro=0.695 | valid/loss=0.689
+[2023-02-22 20:06:02,769][root][INFO] - Fold=01, Epoch=018, train/acc=0.804 | train/auc=0.873 | train/f1_macro=0.804 | train/loss=0.534
+[2023-02-22 20:06:02,787][root][INFO] - Fold=01, Epoch=018, valid/acc=0.583 | valid/auc=0.713 | valid/f1_macro=0.583 | valid/loss=0.663
+[2023-02-22 20:06:02,954][root][INFO] - Fold=01, Epoch=019, train/acc=0.814 | train/auc=0.871 | train/f1_macro=0.814 | train/loss=0.510
+[2023-02-22 20:06:02,975][root][INFO] - Fold=01, Epoch=019, valid/acc=0.625 | valid/auc=0.713 | valid/f1_macro=0.624 | valid/loss=0.668
+[2023-02-22 20:06:02,998][root][INFO] - Fold=01, test/acc=0.516 | test/auc=0.639 | test/f1_macro=0.514 | test/loss=0.664
+[2023-02-22 20:06:02,999][root][INFO] - Run training on fold: 2
+[2023-02-22 20:06:03,189][root][INFO] - Fold=02, Epoch=000, train/acc=0.649 | train/auc=0.685 | train/f1_macro=0.604 | train/loss=0.664
+[2023-02-22 20:06:03,207][root][INFO] - Fold=02, Epoch=000, valid/acc=0.583 | valid/auc=0.783 | valid/f1_macro=0.531 | valid/loss=0.662
+[2023-02-22 20:06:03,380][root][INFO] - Fold=02, Epoch=001, train/acc=0.629 | train/auc=0.705 | train/f1_macro=0.548 | train/loss=0.667
+[2023-02-22 20:06:03,398][root][INFO] - Fold=02, Epoch=001, valid/acc=0.583 | valid/auc=0.790 | valid/f1_macro=0.444 | valid/loss=0.644
+[2023-02-22 20:06:03,571][root][INFO] - Fold=02, Epoch=002, train/acc=0.629 | train/auc=0.715 | train/f1_macro=0.557 | train/loss=0.653
+[2023-02-22 20:06:03,589][root][INFO] - Fold=02, Epoch=002, valid/acc=0.583 | valid/auc=0.769 | valid/f1_macro=0.444 | valid/loss=0.629
+[2023-02-22 20:06:03,760][root][INFO] - Fold=02, Epoch=003, train/acc=0.670 | train/auc=0.725 | train/f1_macro=0.638 | train/loss=0.647
+[2023-02-22 20:06:03,777][root][INFO] - Fold=02, Epoch=003, valid/acc=0.625 | valid/auc=0.783 | valid/f1_macro=0.590 | valid/loss=0.620
+[2023-02-22 20:06:03,949][root][INFO] - Fold=02, Epoch=004, train/acc=0.660 | train/auc=0.732 | train/f1_macro=0.641 | train/loss=0.641
+[2023-02-22 20:06:03,966][root][INFO] - Fold=02, Epoch=004, valid/acc=0.750 | valid/auc=0.790 | valid/f1_macro=0.743 | valid/loss=0.613
+[2023-02-22 20:06:04,137][root][INFO] - Fold=02, Epoch=005, train/acc=0.670 | train/auc=0.741 | train/f1_macro=0.650 | train/loss=0.632
+[2023-02-22 20:06:04,154][root][INFO] - Fold=02, Epoch=005, valid/acc=0.667 | valid/auc=0.797 | valid/f1_macro=0.644 | valid/loss=0.603
+[2023-02-22 20:06:04,325][root][INFO] - Fold=02, Epoch=006, train/acc=0.680 | train/auc=0.741 | train/f1_macro=0.660 | train/loss=0.628
+[2023-02-22 20:06:04,343][root][INFO] - Fold=02, Epoch=006, valid/acc=0.667 | valid/auc=0.804 | valid/f1_macro=0.644 | valid/loss=0.593
+[2023-02-22 20:06:04,514][root][INFO] - Fold=02, Epoch=007, train/acc=0.701 | train/auc=0.755 | train/f1_macro=0.696 | train/loss=0.620
+[2023-02-22 20:06:04,531][root][INFO] - Fold=02, Epoch=007, valid/acc=0.625 | valid/auc=0.804 | valid/f1_macro=0.624 | valid/loss=0.591
+[2023-02-22 20:06:04,703][root][INFO] - Fold=02, Epoch=008, train/acc=0.691 | train/auc=0.753 | train/f1_macro=0.678 | train/loss=0.614
+[2023-02-22 20:06:04,721][root][INFO] - Fold=02, Epoch=008, valid/acc=0.750 | valid/auc=0.790 | valid/f1_macro=0.748 | valid/loss=0.577
+[2023-02-22 20:06:04,893][root][INFO] - Fold=02, Epoch=009, train/acc=0.711 | train/auc=0.766 | train/f1_macro=0.702 | train/loss=0.607
+[2023-02-22 20:06:04,910][root][INFO] - Fold=02, Epoch=009, valid/acc=0.708 | valid/auc=0.797 | valid/f1_macro=0.708 | valid/loss=0.576
+[2023-02-22 20:06:05,082][root][INFO] - Fold=02, Epoch=010, train/acc=0.701 | train/auc=0.778 | train/f1_macro=0.701 | train/loss=0.606
+[2023-02-22 20:06:05,100][root][INFO] - Fold=02, Epoch=010, valid/acc=0.625 | valid/auc=0.783 | valid/f1_macro=0.624 | valid/loss=0.576
+[2023-02-22 20:06:05,272][root][INFO] - Fold=02, Epoch=011, train/acc=0.711 | train/auc=0.779 | train/f1_macro=0.702 | train/loss=0.592
+[2023-02-22 20:06:05,290][root][INFO] - Fold=02, Epoch=011, valid/acc=0.708 | valid/auc=0.797 | valid/f1_macro=0.704 | valid/loss=0.560
+[2023-02-22 20:06:05,463][root][INFO] - Fold=02, Epoch=012, train/acc=0.732 | train/auc=0.795 | train/f1_macro=0.731 | train/loss=0.604
+[2023-02-22 20:06:05,481][root][INFO] - Fold=02, Epoch=012, valid/acc=0.625 | valid/auc=0.783 | valid/f1_macro=0.624 | valid/loss=0.565
+[2023-02-22 20:06:05,647][root][INFO] - Fold=02, Epoch=013, train/acc=0.722 | train/auc=0.789 | train/f1_macro=0.712 | train/loss=0.606
+[2023-02-22 20:06:05,664][root][INFO] - Fold=02, Epoch=013, valid/acc=0.625 | valid/auc=0.790 | valid/f1_macro=0.619 | valid/loss=0.562
+[2023-02-22 20:06:05,830][root][INFO] - Fold=02, Epoch=014, train/acc=0.732 | train/auc=0.801 | train/f1_macro=0.731 | train/loss=0.579
+[2023-02-22 20:06:05,848][root][INFO] - Fold=02, Epoch=014, valid/acc=0.625 | valid/auc=0.783 | valid/f1_macro=0.624 | valid/loss=0.560
+[2023-02-22 20:06:06,017][root][INFO] - Fold=02, Epoch=015, train/acc=0.753 | train/auc=0.806 | train/f1_macro=0.748 | train/loss=0.565
+[2023-02-22 20:06:06,035][root][INFO] - Fold=02, Epoch=015, valid/acc=0.625 | valid/auc=0.776 | valid/f1_macro=0.624 | valid/loss=0.548
+[2023-02-22 20:06:06,207][root][INFO] - Fold=02, Epoch=016, train/acc=0.753 | train/auc=0.815 | train/f1_macro=0.749 | train/loss=0.554
+[2023-02-22 20:06:06,225][root][INFO] - Fold=02, Epoch=016, valid/acc=0.625 | valid/auc=0.790 | valid/f1_macro=0.624 | valid/loss=0.540
+[2023-02-22 20:06:06,398][root][INFO] - Fold=02, Epoch=017, train/acc=0.742 | train/auc=0.822 | train/f1_macro=0.739 | train/loss=0.571
+[2023-02-22 20:06:06,416][root][INFO] - Fold=02, Epoch=017, valid/acc=0.625 | valid/auc=0.797 | valid/f1_macro=0.624 | valid/loss=0.534
+[2023-02-22 20:06:06,587][root][INFO] - Fold=02, Epoch=018, train/acc=0.753 | train/auc=0.828 | train/f1_macro=0.750 | train/loss=0.577
+[2023-02-22 20:06:06,605][root][INFO] - Fold=02, Epoch=018, valid/acc=0.625 | valid/auc=0.783 | valid/f1_macro=0.624 | valid/loss=0.544
+[2023-02-22 20:06:06,774][root][INFO] - Fold=02, Epoch=019, train/acc=0.773 | train/auc=0.824 | train/f1_macro=0.768 | train/loss=0.584
+[2023-02-22 20:06:06,792][root][INFO] - Fold=02, Epoch=019, valid/acc=0.708 | valid/auc=0.790 | valid/f1_macro=0.704 | valid/loss=0.543
+[2023-02-22 20:06:06,814][root][INFO] - Fold=02, test/acc=0.548 | test/auc=0.660 | test/f1_macro=0.548 | test/loss=0.651
+[2023-02-22 20:06:06,815][root][INFO] - Run training on fold: 3
+[2023-02-22 20:06:07,003][root][INFO] - Fold=03, Epoch=000, train/acc=0.619 | train/auc=0.756 | train/f1_macro=0.598 | train/loss=0.665
+[2023-02-22 20:06:07,021][root][INFO] - Fold=03, Epoch=000, valid/acc=0.625 | valid/auc=0.622 | valid/f1_macro=0.624 | valid/loss=0.691
+[2023-02-22 20:06:07,194][root][INFO] - Fold=03, Epoch=001, train/acc=0.680 | train/auc=0.758 | train/f1_macro=0.622 | train/loss=0.657
+[2023-02-22 20:06:07,211][root][INFO] - Fold=03, Epoch=001, valid/acc=0.583 | valid/auc=0.580 | valid/f1_macro=0.496 | valid/loss=0.698
+[2023-02-22 20:06:07,380][root][INFO] - Fold=03, Epoch=002, train/acc=0.660 | train/auc=0.761 | train/f1_macro=0.624 | train/loss=0.630
+[2023-02-22 20:06:07,398][root][INFO] - Fold=03, Epoch=002, valid/acc=0.583 | valid/auc=0.580 | valid/f1_macro=0.496 | valid/loss=0.705
+[2023-02-22 20:06:07,566][root][INFO] - Fold=03, Epoch=003, train/acc=0.680 | train/auc=0.762 | train/f1_macro=0.651 | train/loss=0.620
+[2023-02-22 20:06:07,584][root][INFO] - Fold=03, Epoch=003, valid/acc=0.542 | valid/auc=0.580 | valid/f1_macro=0.467 | valid/loss=0.714
+[2023-02-22 20:06:07,752][root][INFO] - Fold=03, Epoch=004, train/acc=0.701 | train/auc=0.771 | train/f1_macro=0.685 | train/loss=0.611
+[2023-02-22 20:06:07,770][root][INFO] - Fold=03, Epoch=004, valid/acc=0.500 | valid/auc=0.594 | valid/f1_macro=0.438 | valid/loss=0.703
+[2023-02-22 20:06:07,940][root][INFO] - Fold=03, Epoch=005, train/acc=0.701 | train/auc=0.775 | train/f1_macro=0.685 | train/loss=0.602
+[2023-02-22 20:06:07,958][root][INFO] - Fold=03, Epoch=005, valid/acc=0.500 | valid/auc=0.608 | valid/f1_macro=0.438 | valid/loss=0.708
+[2023-02-22 20:06:08,142][root][INFO] - Fold=03, Epoch=006, train/acc=0.701 | train/auc=0.780 | train/f1_macro=0.696 | train/loss=0.596
+[2023-02-22 20:06:08,160][root][INFO] - Fold=03, Epoch=006, valid/acc=0.500 | valid/auc=0.608 | valid/f1_macro=0.467 | valid/loss=0.698
+[2023-02-22 20:06:08,331][root][INFO] - Fold=03, Epoch=007, train/acc=0.722 | train/auc=0.784 | train/f1_macro=0.707 | train/loss=0.595
+[2023-02-22 20:06:08,349][root][INFO] - Fold=03, Epoch=007, valid/acc=0.500 | valid/auc=0.601 | valid/f1_macro=0.438 | valid/loss=0.730
+[2023-02-22 20:06:08,519][root][INFO] - Fold=03, Epoch=008, train/acc=0.732 | train/auc=0.787 | train/f1_macro=0.721 | train/loss=0.585
+[2023-02-22 20:06:08,537][root][INFO] - Fold=03, Epoch=008, valid/acc=0.500 | valid/auc=0.608 | valid/f1_macro=0.438 | valid/loss=0.725
+[2023-02-22 20:06:08,708][root][INFO] - Fold=03, Epoch=009, train/acc=0.722 | train/auc=0.795 | train/f1_macro=0.716 | train/loss=0.579
+[2023-02-22 20:06:08,726][root][INFO] - Fold=03, Epoch=009, valid/acc=0.500 | valid/auc=0.636 | valid/f1_macro=0.467 | valid/loss=0.712
+[2023-02-22 20:06:08,894][root][INFO] - Fold=03, Epoch=010, train/acc=0.732 | train/auc=0.808 | train/f1_macro=0.727 | train/loss=0.565
+[2023-02-22 20:06:08,912][root][INFO] - Fold=03, Epoch=010, valid/acc=0.500 | valid/auc=0.643 | valid/f1_macro=0.467 | valid/loss=0.708
+[2023-02-22 20:06:09,081][root][INFO] - Fold=03, Epoch=011, train/acc=0.742 | train/auc=0.815 | train/f1_macro=0.737 | train/loss=0.558
+[2023-02-22 20:06:09,099][root][INFO] - Fold=03, Epoch=011, valid/acc=0.500 | valid/auc=0.643 | valid/f1_macro=0.467 | valid/loss=0.714
+[2023-02-22 20:06:09,268][root][INFO] - Fold=03, Epoch=012, train/acc=0.742 | train/auc=0.822 | train/f1_macro=0.737 | train/loss=0.544
+[2023-02-22 20:06:09,285][root][INFO] - Fold=03, Epoch=012, valid/acc=0.500 | valid/auc=0.664 | valid/f1_macro=0.467 | valid/loss=0.711
+[2023-02-22 20:06:09,456][root][INFO] - Fold=03, Epoch=013, train/acc=0.732 | train/auc=0.829 | train/f1_macro=0.725 | train/loss=0.532
+[2023-02-22 20:06:09,473][root][INFO] - Fold=03, Epoch=013, valid/acc=0.500 | valid/auc=0.664 | valid/f1_macro=0.467 | valid/loss=0.715
+[2023-02-22 20:06:09,643][root][INFO] - Fold=03, Epoch=014, train/acc=0.732 | train/auc=0.831 | train/f1_macro=0.721 | train/loss=0.542
+[2023-02-22 20:06:09,660][root][INFO] - Fold=03, Epoch=014, valid/acc=0.500 | valid/auc=0.657 | valid/f1_macro=0.467 | valid/loss=0.754
+[2023-02-22 20:06:09,829][root][INFO] - Fold=03, Epoch=015, train/acc=0.732 | train/auc=0.850 | train/f1_macro=0.732 | train/loss=0.531
+[2023-02-22 20:06:09,847][root][INFO] - Fold=03, Epoch=015, valid/acc=0.708 | valid/auc=0.671 | valid/f1_macro=0.708 | valid/loss=0.692
+[2023-02-22 20:06:10,015][root][INFO] - Fold=03, Epoch=016, train/acc=0.763 | train/auc=0.848 | train/f1_macro=0.756 | train/loss=0.515
+[2023-02-22 20:06:10,033][root][INFO] - Fold=03, Epoch=016, valid/acc=0.500 | valid/auc=0.678 | valid/f1_macro=0.467 | valid/loss=0.727
+[2023-02-22 20:06:10,201][root][INFO] - Fold=03, Epoch=017, train/acc=0.722 | train/auc=0.869 | train/f1_macro=0.719 | train/loss=0.553
+[2023-02-22 20:06:10,219][root][INFO] - Fold=03, Epoch=017, valid/acc=0.708 | valid/auc=0.678 | valid/f1_macro=0.704 | valid/loss=0.685
+[2023-02-22 20:06:10,393][root][INFO] - Fold=03, Epoch=018, train/acc=0.742 | train/auc=0.852 | train/f1_macro=0.731 | train/loss=0.522
+[2023-02-22 20:06:10,411][root][INFO] - Fold=03, Epoch=018, valid/acc=0.542 | valid/auc=0.657 | valid/f1_macro=0.499 | valid/loss=0.756
+[2023-02-22 20:06:10,581][root][INFO] - Fold=03, Epoch=019, train/acc=0.753 | train/auc=0.876 | train/f1_macro=0.752 | train/loss=0.496
+[2023-02-22 20:06:10,599][root][INFO] - Fold=03, Epoch=019, valid/acc=0.708 | valid/auc=0.685 | valid/f1_macro=0.704 | valid/loss=0.674
+[2023-02-22 20:06:10,624][root][INFO] - Fold=03, test/acc=0.581 | test/auc=0.639 | test/f1_macro=0.564 | test/loss=0.689
+[2023-02-22 20:06:10,625][root][INFO] - Run training on fold: 4
+[2023-02-22 20:06:10,814][root][INFO] - Fold=04, Epoch=000, train/acc=0.691 | train/auc=0.714 | train/f1_macro=0.672 | train/loss=0.665
+[2023-02-22 20:06:10,832][root][INFO] - Fold=04, Epoch=000, valid/acc=0.583 | valid/auc=0.776 | valid/f1_macro=0.496 | valid/loss=0.621
+[2023-02-22 20:06:11,005][root][INFO] - Fold=04, Epoch=001, train/acc=0.660 | train/auc=0.710 | train/f1_macro=0.629 | train/loss=0.659
+[2023-02-22 20:06:11,022][root][INFO] - Fold=04, Epoch=001, valid/acc=0.583 | valid/auc=0.783 | valid/f1_macro=0.496 | valid/loss=0.623
+[2023-02-22 20:06:11,193][root][INFO] - Fold=04, Epoch=002, train/acc=0.680 | train/auc=0.725 | train/f1_macro=0.666 | train/loss=0.644
+[2023-02-22 20:06:11,211][root][INFO] - Fold=04, Epoch=002, valid/acc=0.667 | valid/auc=0.769 | valid/f1_macro=0.625 | valid/loss=0.615
+[2023-02-22 20:06:11,385][root][INFO] - Fold=04, Epoch=003, train/acc=0.680 | train/auc=0.736 | train/f1_macro=0.669 | train/loss=0.642
+[2023-02-22 20:06:11,402][root][INFO] - Fold=04, Epoch=003, valid/acc=0.750 | valid/auc=0.776 | valid/f1_macro=0.733 | valid/loss=0.607
+[2023-02-22 20:06:11,576][root][INFO] - Fold=04, Epoch=004, train/acc=0.680 | train/auc=0.737 | train/f1_macro=0.666 | train/loss=0.636
+[2023-02-22 20:06:11,593][root][INFO] - Fold=04, Epoch=004, valid/acc=0.625 | valid/auc=0.776 | valid/f1_macro=0.564 | valid/loss=0.604
+[2023-02-22 20:06:11,766][root][INFO] - Fold=04, Epoch=005, train/acc=0.670 | train/auc=0.753 | train/f1_macro=0.662 | train/loss=0.629
+[2023-02-22 20:06:11,783][root][INFO] - Fold=04, Epoch=005, valid/acc=0.792 | valid/auc=0.783 | valid/f1_macro=0.782 | valid/loss=0.593
+[2023-02-22 20:06:11,956][root][INFO] - Fold=04, Epoch=006, train/acc=0.680 | train/auc=0.762 | train/f1_macro=0.674 | train/loss=0.624
+[2023-02-22 20:06:11,974][root][INFO] - Fold=04, Epoch=006, valid/acc=0.792 | valid/auc=0.783 | valid/f1_macro=0.782 | valid/loss=0.591
+[2023-02-22 20:06:12,145][root][INFO] - Fold=04, Epoch=007, train/acc=0.701 | train/auc=0.763 | train/f1_macro=0.690 | train/loss=0.621
+[2023-02-22 20:06:12,163][root][INFO] - Fold=04, Epoch=007, valid/acc=0.750 | valid/auc=0.790 | valid/f1_macro=0.733 | valid/loss=0.587
+[2023-02-22 20:06:12,334][root][INFO] - Fold=04, Epoch=008, train/acc=0.670 | train/auc=0.774 | train/f1_macro=0.662 | train/loss=0.611
+[2023-02-22 20:06:12,352][root][INFO] - Fold=04, Epoch=008, valid/acc=0.792 | valid/auc=0.783 | valid/f1_macro=0.782 | valid/loss=0.582
+[2023-02-22 20:06:12,523][root][INFO] - Fold=04, Epoch=009, train/acc=0.670 | train/auc=0.782 | train/f1_macro=0.662 | train/loss=0.605
+[2023-02-22 20:06:12,541][root][INFO] - Fold=04, Epoch=009, valid/acc=0.792 | valid/auc=0.783 | valid/f1_macro=0.782 | valid/loss=0.579
+[2023-02-22 20:06:12,714][root][INFO] - Fold=04, Epoch=010, train/acc=0.680 | train/auc=0.785 | train/f1_macro=0.674 | train/loss=0.601
+[2023-02-22 20:06:12,732][root][INFO] - Fold=04, Epoch=010, valid/acc=0.792 | valid/auc=0.776 | valid/f1_macro=0.782 | valid/loss=0.575
+[2023-02-22 20:06:12,905][root][INFO] - Fold=04, Epoch=011, train/acc=0.742 | train/auc=0.798 | train/f1_macro=0.742 | train/loss=0.597
+[2023-02-22 20:06:12,922][root][INFO] - Fold=04, Epoch=011, valid/acc=0.792 | valid/auc=0.776 | valid/f1_macro=0.782 | valid/loss=0.570
+[2023-02-22 20:06:13,099][root][INFO] - Fold=04, Epoch=012, train/acc=0.701 | train/auc=0.793 | train/f1_macro=0.695 | train/loss=0.585
+[2023-02-22 20:06:13,117][root][INFO] - Fold=04, Epoch=012, valid/acc=0.792 | valid/auc=0.783 | valid/f1_macro=0.782 | valid/loss=0.569
+[2023-02-22 20:06:13,287][root][INFO] - Fold=04, Epoch=013, train/acc=0.742 | train/auc=0.807 | train/f1_macro=0.741 | train/loss=0.585
+[2023-02-22 20:06:13,304][root][INFO] - Fold=04, Epoch=013, valid/acc=0.792 | valid/auc=0.783 | valid/f1_macro=0.782 | valid/loss=0.565
+[2023-02-22 20:06:13,474][root][INFO] - Fold=04, Epoch=014, train/acc=0.773 | train/auc=0.811 | train/f1_macro=0.770 | train/loss=0.573
+[2023-02-22 20:06:13,492][root][INFO] - Fold=04, Epoch=014, valid/acc=0.750 | valid/auc=0.783 | valid/f1_macro=0.733 | valid/loss=0.565
+[2023-02-22 20:06:13,660][root][INFO] - Fold=04, Epoch=015, train/acc=0.732 | train/auc=0.830 | train/f1_macro=0.732 | train/loss=0.559
+[2023-02-22 20:06:13,678][root][INFO] - Fold=04, Epoch=015, valid/acc=0.792 | valid/auc=0.769 | valid/f1_macro=0.782 | valid/loss=0.564
+[2023-02-22 20:06:13,852][root][INFO] - Fold=04, Epoch=016, train/acc=0.722 | train/auc=0.802 | train/f1_macro=0.696 | train/loss=0.597
+[2023-02-22 20:06:13,869][root][INFO] - Fold=04, Epoch=016, valid/acc=0.708 | valid/auc=0.790 | valid/f1_macro=0.661 | valid/loss=0.646
+[2023-02-22 20:06:14,038][root][INFO] - Fold=04, Epoch=017, train/acc=0.753 | train/auc=0.843 | train/f1_macro=0.752 | train/loss=0.620
+[2023-02-22 20:06:14,056][root][INFO] - Fold=04, Epoch=017, valid/acc=0.792 | valid/auc=0.776 | valid/f1_macro=0.782 | valid/loss=0.573
+[2023-02-22 20:06:14,225][root][INFO] - Fold=04, Epoch=018, train/acc=0.794 | train/auc=0.837 | train/f1_macro=0.791 | train/loss=0.581
+[2023-02-22 20:06:14,243][root][INFO] - Fold=04, Epoch=018, valid/acc=0.750 | valid/auc=0.783 | valid/f1_macro=0.733 | valid/loss=0.566
+[2023-02-22 20:06:14,413][root][INFO] - Fold=04, Epoch=019, train/acc=0.814 | train/auc=0.835 | train/f1_macro=0.812 | train/loss=0.542
+[2023-02-22 20:06:14,431][root][INFO] - Fold=04, Epoch=019, valid/acc=0.750 | valid/auc=0.790 | valid/f1_macro=0.733 | valid/loss=0.560
+[2023-02-22 20:06:14,457][root][INFO] - Fold=04, test/acc=0.516 | test/auc=0.630 | test/f1_macro=0.508 | test/loss=0.677
+[2023-02-22 20:06:14,458][root][INFO] - Valid metrics over folds: {
+  "acc": {
+    "mean": 0.6693333333333333,
+    "std": 0.05916643192441696,
+    "min": 0.5833333333333334,
+    "max": 0.75
+  },
+  "auc": {
+    "mean": 0.7352647352647352,
+    "std": 0.05811060950706415,
+    "min": 0.6503496503496504,
+    "max": 0.7972027972027972
+  },
+  "f1_macro": {
+    "mean": 0.6616942220420482,
+    "std": 0.054629670845294444,
+    "min": 0.5804195804195804,
+    "max": 0.7333333333333334
+  },
+  "loss": {
+    "mean": 0.6060681651433308,
+    "std": 0.05310043330357193,
+    "min": 0.5340385834376017,
+    "max": 0.6735143661499023
+  }
+}
+[2023-02-22 20:06:14,458][root][INFO] - Test metrics over folds: {
+  "acc": {
+    "mean": 0.5612903225806452,
+    "std": 0.04827945015192183,
+    "min": 0.5161290322580645,
+    "max": 0.6451612903225806
+  },
+  "auc": {
+    "mean": 0.6529411764705881,
+    "std": 0.024297197134119257,
+    "min": 0.6302521008403361,
+    "max": 0.6974789915966386
+  },
+  "f1_macro": {
+    "mean": 0.5508256012382698,
+    "std": 0.040353356608692395,
+    "min": 0.507936507936508,
+    "max": 0.6198439241917503
+  },
+  "loss": {
+    "mean": 0.662019508115707,
+    "std": 0.020953934928202283,
+    "min": 0.6290597608012538,
+    "max": 0.6893509280297064
+  }
+}

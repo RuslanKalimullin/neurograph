@@ -1,0 +1,183 @@
+2023-02-22 19:47:50,310 INFO    StreamThr :2391 [internal.py:wandb_internal():87] W&B internal server running at pid: 2391, started at: 2023-02-22 19:47:50.309339
+2023-02-22 19:47:50,312 DEBUG   HandlerThread:2391 [handler.py:handle_request():144] handle_request: status
+2023-02-22 19:47:50,313 INFO    WriterThread:2391 [datastore.py:open_for_write():85] open: /mnt/workspace/graph_NN/neurograph/multirun/2023-02-22/19-47-47/0/wandb/run-20230222_194750-r8xezocx/run-r8xezocx.wandb
+2023-02-22 19:47:50,316 DEBUG   SenderThread:2391 [sender.py:send():334] send: header
+2023-02-22 19:47:50,317 DEBUG   SenderThread:2391 [sender.py:send():334] send: run
+2023-02-22 19:47:51,358 INFO    SenderThread:2391 [dir_watcher.py:__init__():216] watching files in: /mnt/workspace/graph_NN/neurograph/multirun/2023-02-22/19-47-47/0/wandb/run-20230222_194750-r8xezocx/files
+2023-02-22 19:47:51,358 INFO    SenderThread:2391 [sender.py:_start_run_threads():1065] run started: r8xezocx with start time 1677084470.306963
+2023-02-22 19:47:51,358 DEBUG   SenderThread:2391 [sender.py:send_request():361] send_request: summary_record
+2023-02-22 19:47:51,359 INFO    SenderThread:2391 [sender.py:_save_file():1319] saving file wandb-summary.json with policy end
+2023-02-22 19:47:51,362 DEBUG   HandlerThread:2391 [handler.py:handle_request():144] handle_request: check_version
+2023-02-22 19:47:51,362 DEBUG   SenderThread:2391 [sender.py:send_request():361] send_request: check_version
+2023-02-22 19:47:51,656 DEBUG   HandlerThread:2391 [handler.py:handle_request():144] handle_request: run_start
+2023-02-22 19:47:51,663 DEBUG   HandlerThread:2391 [system_info.py:__init__():31] System info init
+2023-02-22 19:47:51,663 DEBUG   HandlerThread:2391 [system_info.py:__init__():46] System info init done
+2023-02-22 19:47:51,663 INFO    HandlerThread:2391 [system_monitor.py:start():151] Starting system monitor
+2023-02-22 19:47:51,664 INFO    SystemMonitor:2391 [system_monitor.py:_start():116] Starting system asset monitoring threads
+2023-02-22 19:47:51,664 INFO    HandlerThread:2391 [system_monitor.py:probe():172] Collecting system info
+2023-02-22 19:47:51,665 INFO    SystemMonitor:2391 [interfaces.py:start():168] Started cpu
+2023-02-22 19:47:51,665 INFO    SystemMonitor:2391 [interfaces.py:start():168] Started disk
+2023-02-22 19:47:51,666 INFO    SystemMonitor:2391 [interfaces.py:start():168] Started gpu
+2023-02-22 19:47:51,666 INFO    SystemMonitor:2391 [interfaces.py:start():168] Started memory
+2023-02-22 19:47:51,667 INFO    SystemMonitor:2391 [interfaces.py:start():168] Started network
+2023-02-22 19:47:51,714 DEBUG   HandlerThread:2391 [system_info.py:probe():195] Probing system
+2023-02-22 19:47:51,716 DEBUG   HandlerThread:2391 [system_info.py:_probe_git():180] Probing git
+2023-02-22 19:47:51,723 DEBUG   HandlerThread:2391 [system_info.py:_probe_git():188] Probing git done
+2023-02-22 19:47:51,723 DEBUG   HandlerThread:2391 [system_info.py:probe():241] Probing system done
+2023-02-22 19:47:51,723 DEBUG   HandlerThread:2391 [system_monitor.py:probe():181] {'os': 'Linux-4.15.0-20-generic-x86_64-with-glibc2.27', 'python': '3.10.8', 'heartbeatAt': '2023-02-22T16:47:51.714356', 'startedAt': '2023-02-22T16:47:50.296439', 'docker': None, 'cuda': '10.2.89', 'args': ('--multirun', '+model=baseGNN', 'model.data_type=graph', 'model.num_layers=1,2', 'model.hidden_dim=32', 'dataset.pt_thr=null', 'train.epochs=20', 'train.scheduler=null'), 'state': 'running', 'program': '-m neurograph.train.__main__', 'git': {'remote': 'https://github.com/gennadylaptev/neurograph.git', 'commit': '3a40c4a61e95f424587ececa92b44f9cd96d70f3'}, 'email': 'm.zubrikhina2014@yandex.ru', 'root': '/mnt/workspace/graph_NN/neurograph', 'host': '107ec8ba63e8', 'username': 'root', 'executable': '/usr/local/bin/python3.10', 'cpu_count': 20, 'cpu_count_logical': 40, 'cpu_freq': {'current': 1344.9910499999999, 'min': 1200.0, 'max': 3600.0}, 'cpu_freq_per_core': [{'current': 1399.155, 'min': 1200.0, 'max': 3600.0}, {'current': 1199.035, 'min': 1200.0, 'max': 3600.0}, {'current': 1749.583, 'min': 1200.0, 'max': 3600.0}, {'current': 1197.73, 'min': 1200.0, 'max': 3600.0}, {'current': 1198.432, 'min': 1200.0, 'max': 3600.0}, {'current': 1199.329, 'min': 1200.0, 'max': 3600.0}, {'current': 1198.475, 'min': 1200.0, 'max': 3600.0}, {'current': 1199.892, 'min': 1200.0, 'max': 3600.0}, {'current': 1198.78, 'min': 1200.0, 'max': 3600.0}, {'current': 1829.524, 'min': 1200.0, 'max': 3600.0}, {'current': 2698.428, 'min': 1200.0, 'max': 3600.0}, {'current': 1198.953, 'min': 1200.0, 'max': 3600.0}, {'current': 1199.183, 'min': 1200.0, 'max': 3600.0}, {'current': 1203.757, 'min': 1200.0, 'max': 3600.0}, {'current': 1198.005, 'min': 1200.0, 'max': 3600.0}, {'current': 1306.008, 'min': 1200.0, 'max': 3600.0}, {'current': 1198.299, 'min': 1200.0, 'max': 3600.0}, {'current': 1400.398, 'min': 1200.0, 'max': 3600.0}, {'current': 1202.74, 'min': 1200.0, 'max': 3600.0}, {'current': 1199.889, 'min': 1200.0, 'max': 3600.0}, {'current': 1392.58, 'min': 1200.0, 'max': 3600.0}, {'current': 1198.902, 'min': 1200.0, 'max': 3600.0}, {'current': 1484.389, 'min': 1200.0, 'max': 3600.0}, {'current': 1200.519, 'min': 1200.0, 'max': 3600.0}, {'current': 1199.106, 'min': 1200.0, 'max': 3600.0}, {'current': 1200.642, 'min': 1200.0, 'max': 3600.0}, {'current': 1199.526, 'min': 1200.0, 'max': 3600.0}, {'current': 1197.683, 'min': 1200.0, 'max': 3600.0}, {'current': 1199.139, 'min': 1200.0, 'max': 3600.0}, {'current': 1792.371, 'min': 1200.0, 'max': 3600.0}, {'current': 2694.78, 'min': 1200.0, 'max': 3600.0}, {'current': 1199.156, 'min': 1200.0, 'max': 3600.0}, {'current': 1198.545, 'min': 1200.0, 'max': 3600.0}, {'current': 1199.319, 'min': 1200.0, 'max': 3600.0}, {'current': 1198.144, 'min': 1200.0, 'max': 3600.0}, {'current': 1299.165, 'min': 1200.0, 'max': 3600.0}, {'current': 1198.931, 'min': 1200.0, 'max': 3600.0}, {'current': 1397.608, 'min': 1200.0, 'max': 3600.0}, {'current': 1199.389, 'min': 1200.0, 'max': 3600.0}, {'current': 1198.613, 'min': 1200.0, 'max': 3600.0}], 'disk': {'total': 663.8083343505859, 'used': 514.344856262207}, 'gpu': 'NVIDIA GeForce GTX 1080 Ti', 'gpu_count': 4, 'gpu_devices': [{'name': 'NVIDIA GeForce GTX 1080 Ti', 'memory_total': 11721506816}, {'name': 'NVIDIA GeForce GTX 1080 Ti', 'memory_total': 11721506816}, {'name': 'NVIDIA GeForce GTX 1080 Ti', 'memory_total': 11721506816}, {'name': 'NVIDIA GeForce GTX 1080 Ti', 'memory_total': 11721506816}], 'memory': {'total': 251.81998443603516}}
+2023-02-22 19:47:51,724 INFO    HandlerThread:2391 [system_monitor.py:probe():182] Finished collecting system info
+2023-02-22 19:47:51,724 INFO    HandlerThread:2391 [system_monitor.py:probe():185] Publishing system info
+2023-02-22 19:47:51,724 DEBUG   HandlerThread:2391 [system_info.py:_save_pip():51] Saving list of pip packages installed into the current environment
+2023-02-22 19:47:51,724 DEBUG   HandlerThread:2391 [system_info.py:_save_pip():67] Saving pip packages done
+2023-02-22 19:47:51,725 INFO    HandlerThread:2391 [system_monitor.py:probe():187] Finished publishing system info
+2023-02-22 19:47:51,727 DEBUG   SenderThread:2391 [sender.py:send():334] send: files
+2023-02-22 19:47:51,728 INFO    SenderThread:2391 [sender.py:_save_file():1319] saving file wandb-metadata.json with policy now
+2023-02-22 19:47:51,739 DEBUG   HandlerThread:2391 [handler.py:handle_request():144] handle_request: stop_status
+2023-02-22 19:47:51,740 DEBUG   SenderThread:2391 [sender.py:send_request():361] send_request: stop_status
+2023-02-22 19:47:52,163 DEBUG   SenderThread:2391 [sender.py:send():334] send: telemetry
+2023-02-22 19:47:52,164 DEBUG   SenderThread:2391 [sender.py:send():334] send: metric
+2023-02-22 19:47:52,164 WARNING SenderThread:2391 [sender.py:send_metric():1270] Seen metric with glob (shouldn't happen)
+2023-02-22 19:47:52,164 DEBUG   SenderThread:2391 [sender.py:send():334] send: telemetry
+2023-02-22 19:47:52,164 DEBUG   SenderThread:2391 [sender.py:send():334] send: metric
+2023-02-22 19:47:52,164 WARNING SenderThread:2391 [sender.py:send_metric():1270] Seen metric with glob (shouldn't happen)
+2023-02-22 19:47:52,165 DEBUG   SenderThread:2391 [sender.py:send():334] send: telemetry
+2023-02-22 19:47:52,165 DEBUG   SenderThread:2391 [sender.py:send():334] send: metric
+2023-02-22 19:47:52,166 WARNING SenderThread:2391 [sender.py:send_metric():1270] Seen metric with glob (shouldn't happen)
+2023-02-22 19:47:52,166 DEBUG   SenderThread:2391 [sender.py:send():334] send: metric
+2023-02-22 19:47:52,166 WARNING SenderThread:2391 [sender.py:send_metric():1270] Seen metric with glob (shouldn't happen)
+2023-02-22 19:47:52,240 DEBUG   SenderThread:2391 [sender.py:send():334] send: exit
+2023-02-22 19:47:52,240 INFO    SenderThread:2391 [sender.py:send_exit():557] handling exit code: 1
+2023-02-22 19:47:52,242 INFO    SenderThread:2391 [sender.py:send_exit():559] handling runtime: 0
+2023-02-22 19:47:52,243 INFO    SenderThread:2391 [sender.py:_save_file():1319] saving file wandb-summary.json with policy end
+2023-02-22 19:47:52,246 INFO    SenderThread:2391 [sender.py:send_exit():565] send defer
+2023-02-22 19:47:52,248 DEBUG   HandlerThread:2391 [handler.py:handle_request():144] handle_request: defer
+2023-02-22 19:47:52,248 INFO    HandlerThread:2391 [handler.py:handle_request_defer():170] handle defer: 0
+2023-02-22 19:47:52,248 DEBUG   SenderThread:2391 [sender.py:send_request():361] send_request: defer
+2023-02-22 19:47:52,249 INFO    SenderThread:2391 [sender.py:send_request_defer():581] handle sender defer: 0
+2023-02-22 19:47:52,249 INFO    SenderThread:2391 [sender.py:transition_state():585] send defer: 1
+2023-02-22 19:47:52,249 DEBUG   HandlerThread:2391 [handler.py:handle_request():144] handle_request: defer
+2023-02-22 19:47:52,249 INFO    HandlerThread:2391 [handler.py:handle_request_defer():170] handle defer: 1
+2023-02-22 19:47:52,250 DEBUG   SenderThread:2391 [sender.py:send_request():361] send_request: defer
+2023-02-22 19:47:52,250 INFO    SenderThread:2391 [sender.py:send_request_defer():581] handle sender defer: 1
+2023-02-22 19:47:52,250 INFO    SenderThread:2391 [sender.py:transition_state():585] send defer: 2
+2023-02-22 19:47:52,250 DEBUG   HandlerThread:2391 [handler.py:handle_request():144] handle_request: defer
+2023-02-22 19:47:52,250 INFO    HandlerThread:2391 [handler.py:handle_request_defer():170] handle defer: 2
+2023-02-22 19:47:52,250 INFO    HandlerThread:2391 [system_monitor.py:finish():161] Stopping system monitor
+2023-02-22 19:47:52,251 DEBUG   SystemMonitor:2391 [system_monitor.py:_start():130] Starting system metrics aggregation loop
+2023-02-22 19:47:52,251 DEBUG   SystemMonitor:2391 [system_monitor.py:_start():137] Finished system metrics aggregation loop
+2023-02-22 19:47:52,252 DEBUG   SystemMonitor:2391 [system_monitor.py:_start():141] Publishing last batch of metrics
+2023-02-22 19:47:52,254 INFO    HandlerThread:2391 [interfaces.py:finish():175] Joined cpu
+2023-02-22 19:47:52,254 INFO    HandlerThread:2391 [interfaces.py:finish():175] Joined disk
+2023-02-22 19:47:52,292 INFO    HandlerThread:2391 [interfaces.py:finish():175] Joined gpu
+2023-02-22 19:47:52,292 INFO    HandlerThread:2391 [interfaces.py:finish():175] Joined memory
+2023-02-22 19:47:52,292 INFO    HandlerThread:2391 [interfaces.py:finish():175] Joined network
+2023-02-22 19:47:52,293 DEBUG   SenderThread:2391 [sender.py:send_request():361] send_request: defer
+2023-02-22 19:47:52,293 INFO    SenderThread:2391 [sender.py:send_request_defer():581] handle sender defer: 2
+2023-02-22 19:47:52,293 INFO    SenderThread:2391 [sender.py:transition_state():585] send defer: 3
+2023-02-22 19:47:52,293 DEBUG   SenderThread:2391 [sender.py:send():334] send: stats
+2023-02-22 19:47:52,293 DEBUG   HandlerThread:2391 [handler.py:handle_request():144] handle_request: defer
+2023-02-22 19:47:52,294 INFO    HandlerThread:2391 [handler.py:handle_request_defer():170] handle defer: 3
+2023-02-22 19:47:52,294 DEBUG   SenderThread:2391 [sender.py:send_request():361] send_request: defer
+2023-02-22 19:47:52,295 INFO    SenderThread:2391 [sender.py:send_request_defer():581] handle sender defer: 3
+2023-02-22 19:47:52,295 INFO    SenderThread:2391 [sender.py:transition_state():585] send defer: 4
+2023-02-22 19:47:52,295 DEBUG   HandlerThread:2391 [handler.py:handle_request():144] handle_request: defer
+2023-02-22 19:47:52,295 INFO    HandlerThread:2391 [handler.py:handle_request_defer():170] handle defer: 4
+2023-02-22 19:47:52,295 DEBUG   SenderThread:2391 [sender.py:send_request():361] send_request: defer
+2023-02-22 19:47:52,296 INFO    SenderThread:2391 [sender.py:send_request_defer():581] handle sender defer: 4
+2023-02-22 19:47:52,296 INFO    SenderThread:2391 [sender.py:transition_state():585] send defer: 5
+2023-02-22 19:47:52,296 DEBUG   HandlerThread:2391 [handler.py:handle_request():144] handle_request: defer
+2023-02-22 19:47:52,296 INFO    HandlerThread:2391 [handler.py:handle_request_defer():170] handle defer: 5
+2023-02-22 19:47:52,296 DEBUG   SenderThread:2391 [sender.py:send():334] send: summary
+2023-02-22 19:47:52,297 INFO    SenderThread:2391 [sender.py:_save_file():1319] saving file wandb-summary.json with policy end
+2023-02-22 19:47:52,297 DEBUG   SenderThread:2391 [sender.py:send_request():361] send_request: defer
+2023-02-22 19:47:52,297 INFO    SenderThread:2391 [sender.py:send_request_defer():581] handle sender defer: 5
+2023-02-22 19:47:52,298 INFO    SenderThread:2391 [sender.py:transition_state():585] send defer: 6
+2023-02-22 19:47:52,298 DEBUG   HandlerThread:2391 [handler.py:handle_request():144] handle_request: defer
+2023-02-22 19:47:52,298 INFO    HandlerThread:2391 [handler.py:handle_request_defer():170] handle defer: 6
+2023-02-22 19:47:52,298 DEBUG   SenderThread:2391 [sender.py:send_request():361] send_request: defer
+2023-02-22 19:47:52,298 INFO    SenderThread:2391 [sender.py:send_request_defer():581] handle sender defer: 6
+2023-02-22 19:47:52,304 DEBUG   HandlerThread:2391 [handler.py:handle_request():144] handle_request: status_report
+2023-02-22 19:47:52,362 INFO    Thread-13 :2391 [dir_watcher.py:_on_file_created():275] file/dir created: /mnt/workspace/graph_NN/neurograph/multirun/2023-02-22/19-47-47/0/wandb/run-20230222_194750-r8xezocx/files/wandb-summary.json
+2023-02-22 19:47:52,362 INFO    Thread-13 :2391 [dir_watcher.py:_on_file_created():275] file/dir created: /mnt/workspace/graph_NN/neurograph/multirun/2023-02-22/19-47-47/0/wandb/run-20230222_194750-r8xezocx/files/output.log
+2023-02-22 19:47:52,363 INFO    Thread-13 :2391 [dir_watcher.py:_on_file_created():275] file/dir created: /mnt/workspace/graph_NN/neurograph/multirun/2023-02-22/19-47-47/0/wandb/run-20230222_194750-r8xezocx/files/wandb-metadata.json
+2023-02-22 19:47:52,363 INFO    Thread-13 :2391 [dir_watcher.py:_on_file_created():275] file/dir created: /mnt/workspace/graph_NN/neurograph/multirun/2023-02-22/19-47-47/0/wandb/run-20230222_194750-r8xezocx/files/requirements.txt
+2023-02-22 19:47:52,730 INFO    Thread-16 :2391 [upload_job.py:push():143] Uploaded file /tmp/tmpqs04dwfvwandb/0rjwz3e5-wandb-metadata.json
+2023-02-22 19:47:53,240 DEBUG   HandlerThread:2391 [handler.py:handle_request():144] handle_request: poll_exit
+2023-02-22 19:47:54,359 INFO    Thread-13 :2391 [dir_watcher.py:_on_file_modified():292] file/dir modified: /mnt/workspace/graph_NN/neurograph/multirun/2023-02-22/19-47-47/0/wandb/run-20230222_194750-r8xezocx/files/output.log
+2023-02-22 19:47:57,571 INFO    SenderThread:2391 [sender.py:transition_state():585] send defer: 7
+2023-02-22 19:47:57,572 DEBUG   SenderThread:2391 [sender.py:send_request():361] send_request: poll_exit
+2023-02-22 19:47:57,572 DEBUG   HandlerThread:2391 [handler.py:handle_request():144] handle_request: defer
+2023-02-22 19:47:57,572 INFO    HandlerThread:2391 [handler.py:handle_request_defer():170] handle defer: 7
+2023-02-22 19:47:57,573 DEBUG   HandlerThread:2391 [handler.py:handle_request():144] handle_request: status_report
+2023-02-22 19:47:57,573 DEBUG   SenderThread:2391 [sender.py:send_request():361] send_request: defer
+2023-02-22 19:47:57,574 INFO    SenderThread:2391 [sender.py:send_request_defer():581] handle sender defer: 7
+2023-02-22 19:47:58,191 INFO    SenderThread:2391 [sender.py:transition_state():585] send defer: 8
+2023-02-22 19:47:58,192 DEBUG   HandlerThread:2391 [handler.py:handle_request():144] handle_request: defer
+2023-02-22 19:47:58,192 INFO    HandlerThread:2391 [handler.py:handle_request_defer():170] handle defer: 8
+2023-02-22 19:47:58,192 DEBUG   SenderThread:2391 [sender.py:send_request():361] send_request: defer
+2023-02-22 19:47:58,193 INFO    SenderThread:2391 [sender.py:send_request_defer():581] handle sender defer: 8
+2023-02-22 19:47:58,193 INFO    SenderThread:2391 [sender.py:transition_state():585] send defer: 9
+2023-02-22 19:47:58,193 DEBUG   HandlerThread:2391 [handler.py:handle_request():144] handle_request: defer
+2023-02-22 19:47:58,194 INFO    HandlerThread:2391 [handler.py:handle_request_defer():170] handle defer: 9
+2023-02-22 19:47:58,194 DEBUG   SenderThread:2391 [sender.py:send_request():361] send_request: defer
+2023-02-22 19:47:58,194 INFO    SenderThread:2391 [sender.py:send_request_defer():581] handle sender defer: 9
+2023-02-22 19:47:58,194 INFO    SenderThread:2391 [dir_watcher.py:finish():362] shutting down directory watcher
+2023-02-22 19:47:58,242 DEBUG   HandlerThread:2391 [handler.py:handle_request():144] handle_request: keepalive
+2023-02-22 19:47:58,361 INFO    SenderThread:2391 [dir_watcher.py:_on_file_modified():292] file/dir modified: /mnt/workspace/graph_NN/neurograph/multirun/2023-02-22/19-47-47/0/wandb/run-20230222_194750-r8xezocx/files/config.yaml
+2023-02-22 19:47:58,361 INFO    SenderThread:2391 [dir_watcher.py:_on_file_modified():292] file/dir modified: /mnt/workspace/graph_NN/neurograph/multirun/2023-02-22/19-47-47/0/wandb/run-20230222_194750-r8xezocx/files/output.log
+2023-02-22 19:47:58,362 INFO    SenderThread:2391 [dir_watcher.py:finish():392] scan: /mnt/workspace/graph_NN/neurograph/multirun/2023-02-22/19-47-47/0/wandb/run-20230222_194750-r8xezocx/files
+2023-02-22 19:47:58,362 INFO    SenderThread:2391 [dir_watcher.py:finish():406] scan save: /mnt/workspace/graph_NN/neurograph/multirun/2023-02-22/19-47-47/0/wandb/run-20230222_194750-r8xezocx/files/output.log output.log
+2023-02-22 19:47:58,362 INFO    SenderThread:2391 [dir_watcher.py:finish():406] scan save: /mnt/workspace/graph_NN/neurograph/multirun/2023-02-22/19-47-47/0/wandb/run-20230222_194750-r8xezocx/files/requirements.txt requirements.txt
+2023-02-22 19:47:58,368 INFO    SenderThread:2391 [dir_watcher.py:finish():406] scan save: /mnt/workspace/graph_NN/neurograph/multirun/2023-02-22/19-47-47/0/wandb/run-20230222_194750-r8xezocx/files/wandb-metadata.json wandb-metadata.json
+2023-02-22 19:47:58,368 INFO    SenderThread:2391 [dir_watcher.py:finish():406] scan save: /mnt/workspace/graph_NN/neurograph/multirun/2023-02-22/19-47-47/0/wandb/run-20230222_194750-r8xezocx/files/config.yaml config.yaml
+2023-02-22 19:47:58,375 INFO    SenderThread:2391 [dir_watcher.py:finish():406] scan save: /mnt/workspace/graph_NN/neurograph/multirun/2023-02-22/19-47-47/0/wandb/run-20230222_194750-r8xezocx/files/wandb-summary.json wandb-summary.json
+2023-02-22 19:47:58,381 INFO    SenderThread:2391 [sender.py:transition_state():585] send defer: 10
+2023-02-22 19:47:58,381 DEBUG   HandlerThread:2391 [handler.py:handle_request():144] handle_request: defer
+2023-02-22 19:47:58,382 INFO    HandlerThread:2391 [handler.py:handle_request_defer():170] handle defer: 10
+2023-02-22 19:47:58,386 DEBUG   SenderThread:2391 [sender.py:send_request():361] send_request: defer
+2023-02-22 19:47:58,386 INFO    SenderThread:2391 [sender.py:send_request_defer():581] handle sender defer: 10
+2023-02-22 19:47:58,387 INFO    SenderThread:2391 [file_pusher.py:finish():160] shutting down file pusher
+2023-02-22 19:47:59,004 INFO    Thread-17 :2391 [upload_job.py:push():143] Uploaded file /mnt/workspace/graph_NN/neurograph/multirun/2023-02-22/19-47-47/0/wandb/run-20230222_194750-r8xezocx/files/output.log
+2023-02-22 19:47:59,098 INFO    Thread-20 :2391 [upload_job.py:push():143] Uploaded file /mnt/workspace/graph_NN/neurograph/multirun/2023-02-22/19-47-47/0/wandb/run-20230222_194750-r8xezocx/files/wandb-summary.json
+2023-02-22 19:48:03,243 DEBUG   HandlerThread:2391 [handler.py:handle_request():144] handle_request: keepalive
+2023-02-22 19:48:03,388 DEBUG   HandlerThread:2391 [handler.py:handle_request():144] handle_request: status_report
+2023-02-22 19:48:04,019 INFO    Thread-18 :2391 [upload_job.py:push():143] Uploaded file /mnt/workspace/graph_NN/neurograph/multirun/2023-02-22/19-47-47/0/wandb/run-20230222_194750-r8xezocx/files/requirements.txt
+2023-02-22 19:48:04,028 INFO    Thread-19 :2391 [upload_job.py:push():143] Uploaded file /mnt/workspace/graph_NN/neurograph/multirun/2023-02-22/19-47-47/0/wandb/run-20230222_194750-r8xezocx/files/config.yaml
+2023-02-22 19:48:04,229 INFO    Thread-12 (_thread_body):2391 [sender.py:transition_state():585] send defer: 11
+2023-02-22 19:48:04,230 DEBUG   HandlerThread:2391 [handler.py:handle_request():144] handle_request: defer
+2023-02-22 19:48:04,230 INFO    HandlerThread:2391 [handler.py:handle_request_defer():170] handle defer: 11
+2023-02-22 19:48:04,230 DEBUG   SenderThread:2391 [sender.py:send_request():361] send_request: defer
+2023-02-22 19:48:04,231 INFO    SenderThread:2391 [sender.py:send_request_defer():581] handle sender defer: 11
+2023-02-22 19:48:04,231 INFO    SenderThread:2391 [file_pusher.py:join():165] waiting for file pusher
+2023-02-22 19:48:04,231 INFO    SenderThread:2391 [sender.py:transition_state():585] send defer: 12
+2023-02-22 19:48:04,231 DEBUG   HandlerThread:2391 [handler.py:handle_request():144] handle_request: defer
+2023-02-22 19:48:04,231 INFO    HandlerThread:2391 [handler.py:handle_request_defer():170] handle defer: 12
+2023-02-22 19:48:04,232 DEBUG   SenderThread:2391 [sender.py:send_request():361] send_request: defer
+2023-02-22 19:48:04,232 INFO    SenderThread:2391 [sender.py:send_request_defer():581] handle sender defer: 12
+2023-02-22 19:48:04,410 INFO    SenderThread:2391 [sender.py:transition_state():585] send defer: 13
+2023-02-22 19:48:04,411 DEBUG   HandlerThread:2391 [handler.py:handle_request():144] handle_request: defer
+2023-02-22 19:48:04,411 INFO    HandlerThread:2391 [handler.py:handle_request_defer():170] handle defer: 13
+2023-02-22 19:48:04,411 DEBUG   SenderThread:2391 [sender.py:send_request():361] send_request: defer
+2023-02-22 19:48:04,411 INFO    SenderThread:2391 [sender.py:send_request_defer():581] handle sender defer: 13
+2023-02-22 19:48:04,412 INFO    SenderThread:2391 [sender.py:transition_state():585] send defer: 14
+2023-02-22 19:48:04,412 DEBUG   HandlerThread:2391 [handler.py:handle_request():144] handle_request: defer
+2023-02-22 19:48:04,413 DEBUG   SenderThread:2391 [sender.py:send():334] send: final
+2023-02-22 19:48:04,413 INFO    HandlerThread:2391 [handler.py:handle_request_defer():170] handle defer: 14
+2023-02-22 19:48:04,413 DEBUG   SenderThread:2391 [sender.py:send():334] send: footer
+2023-02-22 19:48:04,413 DEBUG   SenderThread:2391 [sender.py:send_request():361] send_request: defer
+2023-02-22 19:48:04,414 INFO    SenderThread:2391 [sender.py:send_request_defer():581] handle sender defer: 14
+2023-02-22 19:48:04,415 DEBUG   HandlerThread:2391 [handler.py:handle_request():144] handle_request: poll_exit
+2023-02-22 19:48:04,415 DEBUG   SenderThread:2391 [sender.py:send_request():361] send_request: poll_exit
+2023-02-22 19:48:04,416 DEBUG   HandlerThread:2391 [handler.py:handle_request():144] handle_request: server_info
+2023-02-22 19:48:04,416 DEBUG   SenderThread:2391 [sender.py:send_request():361] send_request: server_info
+2023-02-22 19:48:04,420 DEBUG   HandlerThread:2391 [handler.py:handle_request():144] handle_request: get_summary
+2023-02-22 19:48:04,421 DEBUG   HandlerThread:2391 [handler.py:handle_request():144] handle_request: sampled_history
+2023-02-22 19:48:05,500 INFO    MainThread:2391 [wandb_run.py:_footer_history_summary_info():3427] rendering history
+2023-02-22 19:48:05,501 INFO    MainThread:2391 [wandb_run.py:_footer_history_summary_info():3459] rendering summary
+2023-02-22 19:48:05,501 INFO    MainThread:2391 [wandb_run.py:_footer_sync_info():3383] logging synced files
+2023-02-22 19:48:05,502 DEBUG   HandlerThread:2391 [handler.py:handle_request():144] handle_request: shutdown
+2023-02-22 19:48:05,502 INFO    HandlerThread:2391 [handler.py:finish():841] shutting down handler
+2023-02-22 19:48:06,416 INFO    WriterThread:2391 [datastore.py:close():299] close: /mnt/workspace/graph_NN/neurograph/multirun/2023-02-22/19-47-47/0/wandb/run-20230222_194750-r8xezocx/run-r8xezocx.wandb
+2023-02-22 19:48:06,500 INFO    SenderThread:2391 [sender.py:finish():1491] shutting down sender
+2023-02-22 19:48:06,501 INFO    SenderThread:2391 [file_pusher.py:finish():160] shutting down file pusher
+2023-02-22 19:48:06,501 INFO    SenderThread:2391 [file_pusher.py:join():165] waiting for file pusher

@@ -51,12 +51,23 @@ class MLPConfig:
         MLPlayer(out_size=32, dropout=0.5, act_func='LeakyReLU', act_func_params=dict(negative_slope=0.2)),
     ])
     
+
 @dataclass
-class standartGNNConfig:
+class ModelConfig:
+    name: str  # see neurograph.models/
+    n_classes: int  # must match with loss
+
+    # required for correct init of models
+    # see `train.train.init_model`
+    data_type: str
+
+@dataclass
+class standartGNNConfig(ModelConfig):
     name: str = 'baseGNN'  # see neurograph.models/
     n_classes: int = 2  # must match with loss
     num_layers: int = 2
-    layer_module: nn.Module =GCNConv
+    layer_module: str = "GCNConv"
+    data_type: str ="graph"
     hidden_dim: int = 32  # TODO: support list
     use_abs_weight: bool = True
     use_weighted_edges: bool =False
@@ -70,18 +81,11 @@ class standartGNNConfig:
     # TODO: add adding self-loops
     # gcn spefic args
 
-    mlp_config: MLPConfig = field(default_factory=MLPConfig)
-
-@dataclass
-class ModelConfig:
-    name: str  # see neurograph.models/
-    n_classes: int  # must match with loss
-
-    # required for correct init of models
-    # see `train.train.init_model`
-    data_type: str
-
-
+    mlp_config: MLPConfig = field(default_factory=lambda: MLPConfig(
+        layers = [
+        ]
+    ))
+    
 @dataclass
 class bgbGCNConfig(ModelConfig):
     name: str = 'bgbGCN'  # see neurograph.models
@@ -160,7 +164,7 @@ class TransformerConfig(ModelConfig):
 
 @dataclass
 class TrainConfig:
-    device: str = 'gpu'
+    device: str = 'cuda'
     epochs: int = 1
     batch_size: int = 8
     valid_batch_size: int = 8
