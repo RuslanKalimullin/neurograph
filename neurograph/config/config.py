@@ -70,7 +70,7 @@ class standartGNNConfig(ModelConfig):
     data_type: str ="graph"
     hidden_dim: int = 32  # TODO: support list
     use_abs_weight: bool = True
-    use_weighted_edges: bool =False
+    use_weighted_edges: bool =True
     final_node_dim: int =32
     pooling: str ='mean'
     # TODO: use it inside convolutions
@@ -165,7 +165,7 @@ class TransformerConfig(ModelConfig):
 @dataclass
 class TrainConfig:
     device: str = 'cuda'
-    epochs: int = 1
+    epochs: int = 100
     batch_size: int = 8
     valid_batch_size: int = 8
     optim: str = 'Adam'

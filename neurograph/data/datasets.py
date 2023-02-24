@@ -83,20 +83,87 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
     init_node_features: str = 'conn_profile'
     data_type: str = 'graph'
 
+    def process(self):
+        # load data list
+        data_list, subj_ids, y = self.load_datalist()
+
+        self.num_nodes = data_list[0].num_nodes
+
+        y.to_csv(self.processed_paths[3])
+
+        # collate DataList and save to disk
+        data, slices = self.collate(data_list)
+        torch.save((data, slices), self.processed_paths[0])
+
+        # save subj_ids as a txt file
+        with open(self.processed_paths[1], 'w') as f:
+            f.write('\n'.join(subj_ids))
+
+        # load fold splits
+        id_folds, num_folds = self.load_folds()
+        id2idx = {s: i for i, s in enumerate(subj_ids)}
+
+        # map each subj_id to idx in `data_list`
+        folds = {'train': []}
+        for i in range(num_folds):
+            train_ids, valid_ids = id_folds[i]['train'], id_folds[i]['valid']
+            one_fold = {
+                'train': [id2idx[subj_id] for subj_id in train_ids],
+                'valid': [id2idx[subj_id] for subj_id in valid_ids],
+            }
+            folds['train'].append(one_fold)
+        folds['test'] = [id2idx[subj_id] for subj_id in id_folds['test']]
+
+        with open(self.processed_paths[2], 'w') as f_folds:
+            json.dump(folds, f_folds)
+
+    def load_datalist(self) -> tuple[list[Data], list[str], pd.DataFrame]:
+        targets, label2idx, idx2label = self.load_targets()
+
+        # subj_id -> CM, time series matrices, ROI names
+        cms, ts, roi_map = self.load_cms(self.cm_path)
+
+        # prepare data list from cms and targets
+        datalist = []
+        subj_ids = []
+        for subj_id, cm in cms.items():
+            try:
+                # try to process a graph
+                datalist.append(prepare_graph(cm, subj_id, targets, self.abs_thr, self.pt_thr))
+                subj_ids.append(subj_id)
+            except KeyError:
+                # ignore if subj_id is not in targets
+                pass
+        y = targets.loc[subj_ids].copy()
+        return datalist, subj_ids, y
+
+    # TODO: move to base class?
+    def get_cv_loaders(self, batch_size=8, valid_batch_size=None):
+        valid_batch_size = valid_batch_size if valid_batch_size else batch_size
+        for fold in self.folds['train']:
+            train_idx, valid_idx = fold['train'], fold['valid']
+            yield {
+                'train': pygDataLoader(self[train_idx], batch_size=batch_size, shuffle=True),
+                'valid': pygDataLoader(self[valid_idx], batch_size=valid_batch_size, shuffle=False),
+            }
+
+    # TODO: move to base class?
+    def get_test_loader(self, batch_size: int) -> pygDataLoader:
+        test_idx = self.folds['test']
+        return pygDataLoader(self[test_idx], batch_size=batch_size, shuffle=False)
+
+    def _validate(self):
+        if self.atlas not in self.available_atlases:
+            raise ValueError('Unknown atlas')
+        if self.experiment_type not in self.available_experiments:
+            raise ValueError(f'Unknown experiment type: {self.experiment_type}')
+        if self.pt_thr is not None and self.abs_thr is not None:
+            raise ValueError('Both proportional threshold `pt` and absolute threshold `thr` are not None! Choose one!')
+
     @property
-    def cm_path(self):
+    def xcm_path(self):
         # raw_dir specific to graph datasets :(
         return osp.join(self.raw_dir, self.atlas)
-
-    def get_cv_loaders(
-        self,
-        batch_size=8,
-        valid_batch_size=None,
-    ) -> Generator[dict[str, pygDataLoader], None, None]:
-        raise NotImplementedError
-
-    def get_test_loader(self, batch_size: int) -> pygDataLoader:
-        raise NotImplementedError
 
     def __repr__(self):
         return f'{self.__class__.__name__}: atlas={self.atlas}, experiment_type={self.experiment_type}, pt_thr={self.pt_thr}, abs_thr={self.abs_thr}, size={len(self)}'

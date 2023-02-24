@@ -8,26 +8,30 @@ import numpy as np
 import pandas as pd
 import torch
 from pathlib import Path
+from scipy.io import loadmat
+
 from .datasets import NeuroDataset, NeuroGraphDataset, NeuroDenseDataset
 from .utils import load_cms, prepare_graph
 
 
-class CobreTrait:
-    """ Common fields and methods for all Cobre datasets """
-    name = 'cobre'
+class ABIDETrait:
+    """ Common fields and methods for all ABIDE datasets """
+    name = 'abide'
     available_atlases = {'aal', 'msdl'}
     available_experiments = {'fmri', 'dti'}
-    splits_file = 'cobre_splits.json'
-    target_file = 'meta_data.tsv'
-    subj_id_col = 'Subjectid'
-    target_col = 'Dx'
+    splits_file = 'abide_splits.json'
+    target_file = 'Phenotypic_V1_0b_preprocessed1.csv'
+    subj_id_col = 'SUB_ID'
+    target_col = 'DX_GROUP'
+    con_matrix_suffix='_cc200_correlation.mat'
+    embed_sufix='*.1D'
 
     global_dir: str  # just for type checks
 
     def load_targets(self) -> tuple[pd.DataFrame, dict[str, int], dict[int, str]]:
         """ Load and process *cobre* targets """
 
-        target = pd.read_csv(osp.join(self.global_dir, self.target_file), sep='\t')
+        target = pd.read_csv(osp.join(self.global_dir, self.target_file))
         target = target[[self.subj_id_col, self.target_col]]
 
         # check that there are no different labels assigned to the same ID
@@ -39,9 +43,6 @@ class CobreTrait:
         # set subj_id as index
         target.set_index(self.subj_id_col, inplace=True)
 
-        # leave only Schizo and Control
-        target = target[target[self.target_col].isin(('No_Known_Disorder', 'Schizophrenia_Strict'))].copy()
-
         # label encoding
         label2idx: dict[str, int] = {x: i for i, x in enumerate(target[self.target_col].unique())}
         idx2label: dict[int, str] = {i: x for x, i in label2idx.items()}
@@ -51,7 +52,7 @@ class CobreTrait:
 
 
 # NB: trait must go first
-class CobreGraphDataset(CobreTrait, NeuroGraphDataset):
+class ABIDEGraphDataset(ABIDETrait, NeuroGraphDataset):
     def __init__(
         self,
         root: str,
@@ -125,7 +126,7 @@ class CobreGraphDataset(CobreTrait, NeuroGraphDataset):
             f'{prefix}_targets.csv',
         ]
     
-    def load_cms(self,path: str | Path,) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray], dict[int, str]]:
+    def load_cms(self, path: str | Path,) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray], dict[int, str]]:
 
         """ Load connectivity matrices, fMRI time series
             and mapping node idx -> ROI name.
@@ -140,19 +141,16 @@ class CobreGraphDataset(CobreTrait, NeuroGraphDataset):
         # ROI names, extacted from CMs
         roi_map: dict[int, str] = {}
 
-        for p in path.glob('*.csv'):
-            name = p.stem.split('_')[0].replace('sub-', '')
-            x = pd.read_csv(p).drop('Unnamed: 0', axis=1)
-
-            values = x.values.astype(np.float32)
-            if p.stem.endswith('_embed'):
-                ts[name] = values
-            else:
+        for p in path.iterdir():
+            if p.is_dir():
+                name = p.name
+                values = loadmat(p / f"{name}{self.con_matrix_suffix}")['connectivity'].astype(np.float32)
+                embed_name =list(p.glob(self.embed_sufix))[0]
+                values_embed = pd.read_csv(embed_name,delimiter="\t").astype(np.float32)
+                ts[name] = values_embed
                 data[name] = values
-                if not roi_map:
-                    roi_map = {i: c for i, c in enumerate(x.columns)}
 
         return data, ts, roi_map
 
-class CobreDenseDataset(CobreTrait, NeuroDenseDataset):
+class ABIDEDenseDataset(ABIDETrait, NeuroDenseDataset):
     pass
