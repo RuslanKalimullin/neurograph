@@ -1,0 +1,26 @@
+name: 'Transformer' 
+n_classes: 2
+num_layers: 1
+hidden_dim: 8 
+num_heads: 2
+attn_dropout: 0.2
+mlp_dropout: 0.2
+
+# hidden layer in transformer block mlp
+mlp_hidden_multiplier: 0.5
+
+data_type: 'dense'
+
+return_attn: False
+# transformer block MLP parameters
+mlp_act_func: 'GELU'
+mlp_act_func_params: null
+
+pooling: 'concat'
+
+# final MLP layer config
+head_config:
+    act_func: null
+    act_func_params: null
+    layers:
+        - {out_size: 4, dropout: 0.5, act_func: 'GELU', act_func_params: null}

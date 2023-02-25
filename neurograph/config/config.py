@@ -1,7 +1,7 @@
 import hydra
 from pathlib import Path
 from typing import Any, Optional, Sequence
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig, OmegaConf, MISSING
 from hydra.core.config_store import ConfigStore
 from dataclasses import dataclass, field
 
@@ -162,7 +162,6 @@ class TrainConfig:
             'verbose': True,
         }
     )
-
     # select best model on valid based on what metric
     select_best_metric: str = 'loss'
     loss: str = 'CrossEntropyLoss' #'BCEWithLogitsLoss'
@@ -170,7 +169,6 @@ class TrainConfig:
         # reduction sum is necessary here
         default_factory=lambda: {'reduction': 'sum'}
     )
-
     # if BCE is used
     prob_thr: float = 0.5
 
@@ -187,8 +185,8 @@ class LogConfig:
 @dataclass
 class Config:
     ''' Config schema w/ default values (see dataclasses above) '''
-    model: ModelConfig
     seed: int = 1380
+    model: Any = MISSING
     dataset: DatasetConfig = field(default_factory=DatasetConfig)
     train: TrainConfig = field(default_factory=TrainConfig)
     log: LogConfig = field(default_factory=LogConfig)
