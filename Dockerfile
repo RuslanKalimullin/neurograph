@@ -4,7 +4,7 @@ FROM nvidia/cuda:11.4.0-runtime-ubuntu18.04 as base
 
 # Install base utilities
 RUN apt-get update && \
-    apt-get install -y build-essential wget vim  && \
+    apt-get install -y build-essential wget vim git && \
     apt-get clean && \
     # best practice to keep the Docker image lean
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
