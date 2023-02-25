@@ -2,8 +2,8 @@
 # neurograph
 
 ## install
-
-python=3.10
+### Basic requirements
+python=3.10, torch=1.12.1, cuda=11.3
 
 ### pip
 In order to install all dependencies via pip in some virtual env, run:
@@ -14,7 +14,7 @@ In order to install all dependencies via pip in some virtual env, run:
 ./graph-tool_install.sh  # via conda
 
 # install Pytorch Geometric
-./pyg_cpu.sh  # or ./pyg_cuda.sh
+./install_pyg.sh cu113 # or ./pyg_cpu.sh cpu
 
 # install other requirements
 pip install -U -r requirements.txt

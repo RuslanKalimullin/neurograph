@@ -22,7 +22,7 @@ COPY ./install_pyg.sh /tmp
 RUN /tmp/install_pyg.sh cu113
 
 COPY ./requirements.txt /tmp
-RUN python -m pip install -r /tmp/requirements.txt
+RUN python -m pip install -U -r /tmp/requirements.txt
 
 COPY . app
 RUN pip install -e /app
