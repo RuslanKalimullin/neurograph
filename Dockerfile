@@ -17,12 +17,15 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-py310_23.1.0-1-L
 # Put conda in path so we can use conda activate
 ENV PATH=$CONDA_DIR/bin:$PATH
 
-# Install requirements
-COPY ./pyg_cpu.sh /tmp
-RUN /tmp/pyg_cpu.sh
+# Install requirements (change cuda to cpu if you want to)
+COPY ./install_pyg.sh /tmp
+RUN /tmp/install_pyg.sh cu113
 
 COPY ./requirements.txt /tmp
 RUN python -m pip install -r /tmp/requirements.txt
+
+COPY . app
+RUN pip install -e /app
 
 # Deal with pesky Python 3 encoding issue
 ENV LANG C.UTF-8
