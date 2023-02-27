@@ -1,7 +1,7 @@
 import hydra
 from pathlib import Path
 from typing import Any, Optional, Sequence
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig, OmegaConf, MISSING
 from hydra.core.config_store import ConfigStore
 from dataclasses import dataclass, field
 from torch import nn
@@ -160,7 +160,12 @@ class TransformerConfig(ModelConfig):
 
 @dataclass
 class TrainConfig:
+<<<<<<< HEAD
     device: str = 'gpu'
+=======
+    device: str = 'cpu'
+    num_threads: Optional[int] = None
+>>>>>>> 5b9562eb56d77a1f65053570108014a90f4b4ced
     epochs: int = 1
     batch_size: int = 8
     valid_batch_size: int = 8
@@ -181,15 +186,13 @@ class TrainConfig:
             'verbose': True,
         }
     )
-
     # select best model on valid based on what metric
     select_best_metric: str = 'loss'
-    loss: str = 'CrossEntropyLoss' #'BCEWithLogitsLoss'
+    loss: str = 'CrossEntropyLoss'  #'BCEWithLogitsLoss'
     loss_args: Optional[dict[str, Any]] = field(
         # reduction sum is necessary here
         default_factory=lambda: {'reduction': 'sum'}
     )
-
     # if BCE is used
     prob_thr: float = 0.5
 
@@ -198,7 +201,7 @@ class TrainConfig:
 class LogConfig:
     # how often print training metrics
     test_step: int = 1
-    wandb_project: str = 'mri_gnn_2'
+    wandb_project: str = 'mri_gnn'
     wandb_name: Optional[str] = None
     wandb_mode: Optional[str] = None  # 'disabled' for testing
 
@@ -206,8 +209,8 @@ class LogConfig:
 @dataclass
 class Config:
     ''' Config schema w/ default values (see dataclasses above) '''
-    model: ModelConfig
     seed: int = 1380
+    model: Any = MISSING
     dataset: DatasetConfig = field(default_factory=DatasetConfig)
     train: TrainConfig = field(default_factory=TrainConfig)
     log: LogConfig = field(default_factory=LogConfig)

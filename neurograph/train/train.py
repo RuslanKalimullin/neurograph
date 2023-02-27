@@ -138,6 +138,7 @@ def train_one_split(
         for data in train_loader:
             optimizer.zero_grad()
             data, y = handle_batch(data, device)
+            model.to(device)
             out = model(data)
 
             if isinstance(loss_f, BCEWithLogitsLoss):
@@ -206,6 +207,7 @@ def evaluate(model, loader, loss_f, cfg: Config):
     y_pred_list, true_list = [], []
     for data in loader:
         data, y = handle_batch(data, device)
+        model.to(device)
         out = model(data)
         y_pred_list.append(out)
         true_list.append(y)
