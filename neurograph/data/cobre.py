@@ -124,7 +124,7 @@ class CobreGraphDataset(CobreTrait, NeuroGraphDataset):
             f'{prefix}_folds.json',
             f'{prefix}_targets.csv',
         ]
-    
+
     def load_cms(self,path: str | Path,) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray], dict[int, str]]:
 
         """ Load connectivity matrices, fMRI time series
@@ -153,6 +153,7 @@ class CobreGraphDataset(CobreTrait, NeuroGraphDataset):
                     roi_map = {i: c for i, c in enumerate(x.columns)}
 
         return data, ts, roi_map
+
 
 class CobreDenseDataset(CobreTrait, NeuroDenseDataset):
     pass
