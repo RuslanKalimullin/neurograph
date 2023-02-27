@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from shutil import rmtree
 import os.path as osp
 import json
+import logging
 from typing import Any, Generator, Optional
 
 import numpy as np
@@ -83,20 +84,169 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
     init_node_features: str = 'conn_profile'
     data_type: str = 'graph'
 
+    def __init__(
+        self,
+        root: str,
+        atlas: str = 'aal',
+        experiment_type: str = 'fmri',
+        init_node_features: str = 'conn_profile',
+        abs_thr: Optional[float] = None,
+        pt_thr: Optional[float] = None,
+        no_cache = False,
+    ):
+        """
+        Args:
+            root (str, optional): root dir where dataset should be saved
+            atlas (str): atlas name
+            thr (float, optional): threshold used for pruning edges #TODO
+            k (int, optional): Number of neighbors used to compute a threshold for pruning
+                When k is used, thr must be None!
+            no_cache (bool): if True, delete processed files and run processing from scratch
+        """
+
+        self.atlas = atlas
+        self.experiment_type = experiment_type
+        self.init_node_features = init_node_features
+        self.abs_thr = abs_thr
+        self.pt_thr = pt_thr
+
+        self._validate()
+
+        # root: experiment specific files (CMs and time series matrices)
+        self.root = osp.join(root, self.name, experiment_type)
+        # global_dir: dir with meta info and cv_splits
+        self.global_dir = osp.join(root, self.name)
+
+        if no_cache:
+            rmtree(self.processed_dir, ignore_errors=True)
+
+        super().__init__(self.root)
+        # TODO: understand what is going on here
+        # weird bug; we need to call `_process` manually
+        self._process()
+
+        # load preprocessed graphs
+        self.data, self.slices = torch.load(self.processed_paths[0])
+
+        # load dataframes w/ subj_ids and targets
+        self.target_df = pd.read_csv(self.processed_paths[3])
+
+        with open(self.processed_paths[1]) as f_ids:
+            self.subj_ids = [l.rstrip() for l in f_ids.readlines()]
+
+        # load cv splits
+        with open(self.processed_paths[2]) as f_folds:
+            self.folds = json.load(f_folds)
+
+        # get some graph attrs (used for initializing models)
+        num_nodes = self.slices['x'].diff().unique()
+        assert len(num_nodes) == 1, 'You have different number of nodes in graphs!'
+        self.num_nodes = num_nodes.item()
+
+    @property
+    def processed_file_names(self):
+        thr = ''
+        if self.abs_thr:
+            thr = f'abs={self.abs_thr}'
+        if self.pt_thr:
+            thr = f'pt={self.pt_thr}'
+
+        prefix = '_'.join(s for s in [self.atlas, self.experiment_type, thr] if s)
+        return [
+            f'{prefix}_data.pt',
+            f'{prefix}_subj_ids.txt',
+            f'{prefix}_folds.json',
+            f'{prefix}_targets.csv',
+        ]
+
+    def process(self):
+        # load data list
+        data_list, subj_ids, y = self.load_datalist()
+
+        self.num_nodes = data_list[0].num_nodes
+
+        y.to_csv(self.processed_paths[3])
+
+        # collate DataList and save to disk
+        data, slices = self.collate(data_list)
+        torch.save((data, slices), self.processed_paths[0])
+
+        # save subj_ids as a txt file
+        with open(self.processed_paths[1], 'w') as f:
+            f.write('\n'.join(subj_ids))
+
+        # load fold splits
+        id_folds, num_folds = self.load_folds()
+        id2idx = {s: i for i, s in enumerate(subj_ids)}
+
+        logging.debug("id2idx: ", id2idx)
+        # map each subj_id to idx in `data_list`
+        folds = {'train': []}
+        for i in range(num_folds):
+            train_ids, valid_ids = id_folds[i]['train'], id_folds[i]['valid']
+            logging.debug("train_ids: ", train_ids)
+            one_fold = {
+                'train': [id2idx[subj_id] for subj_id in train_ids],
+                'valid': [id2idx[subj_id] for subj_id in valid_ids],
+            }
+            folds['train'].append(one_fold)
+        folds['test'] = [id2idx[subj_id] for subj_id in id_folds['test']]
+
+        with open(self.processed_paths[2], 'w') as f_folds:
+            json.dump(folds, f_folds)
+
     @property
     def cm_path(self):
         # raw_dir specific to graph datasets :(
         return osp.join(self.raw_dir, self.atlas)
 
-    def get_cv_loaders(
-        self,
-        batch_size=8,
-        valid_batch_size=None,
-    ) -> Generator[dict[str, pygDataLoader], None, None]:
-        raise NotImplementedError
+    def load_datalist(self) -> tuple[list[Data], list[str], pd.DataFrame]:
+        targets, label2idx, idx2label = self.load_targets()
 
+        # subj_id -> CM, time series matrices, ROI names
+        cms, ts, roi_map = self.load_cms(self.cm_path)
+        # prepare data list from cms and targets
+        datalist = []
+        subj_ids = []
+        for subj_id, cm in cms.items():
+            try:
+                # try to process a graph
+                datalist.append(prepare_graph(cm, subj_id, targets, self.abs_thr, self.pt_thr))
+                subj_ids.append(subj_id)
+            except KeyError:
+                # ignore if subj_id is not in targets
+                pass
+        y = targets.loc[subj_ids].copy()
+
+        return datalist, subj_ids, y
+
+    # TODO: move to base class?
+    def get_cv_loaders(self, batch_size=8, valid_batch_size=None):
+        valid_batch_size = valid_batch_size if valid_batch_size else batch_size
+        for fold in self.folds['train']:
+            train_idx, valid_idx = fold['train'], fold['valid']
+            yield {
+                'train': pygDataLoader(self[train_idx], batch_size=batch_size, shuffle=True),
+                'valid': pygDataLoader(self[valid_idx], batch_size=valid_batch_size, shuffle=False),
+            }
+
+    # TODO: move to base class?
     def get_test_loader(self, batch_size: int) -> pygDataLoader:
-        raise NotImplementedError
+        test_idx = self.folds['test']
+        return pygDataLoader(self[test_idx], batch_size=batch_size, shuffle=False)
+
+    def _validate(self):
+        if self.atlas not in self.available_atlases:
+            raise ValueError('Unknown atlas')
+        if self.experiment_type not in self.available_experiments:
+            raise ValueError(f'Unknown experiment type: {self.experiment_type}')
+        if self.pt_thr is not None and self.abs_thr is not None:
+            raise ValueError('Both proportional threshold `pt` and absolute threshold `thr` are not None! Choose one!')
+
+    @property
+    def xcm_path(self):
+        # raw_dir specific to graph datasets :(
+        return osp.join(self.raw_dir, self.atlas)
 
     def __repr__(self):
         return f'{self.__class__.__name__}: atlas={self.atlas}, experiment_type={self.experiment_type}, pt_thr={self.pt_thr}, abs_thr={self.abs_thr}, size={len(self)}'

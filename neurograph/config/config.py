@@ -1,10 +1,9 @@
 import hydra
 from pathlib import Path
 from typing import Any, Optional, Sequence
-from omegaconf import DictConfig, OmegaConf, MISSING
+from omegaconf import MISSING
 from hydra.core.config_store import ConfigStore
 from dataclasses import dataclass, field
-
 import neurograph
 from neurograph.data import available_datasets
 
@@ -60,6 +59,30 @@ class ModelConfig:
     # see `train.train.init_model`
     data_type: str
 
+@dataclass
+class standartGNNConfig(ModelConfig):
+    name: str = 'baseGNN'  # see neurograph.models/
+    n_classes: int = 2  # must match with loss
+    num_layers: int = 2
+    layer_module: str = 'GCNConv'
+    data_type: str = 'graph'
+    hidden_dim: int = 32  # TODO: support list
+    use_abs_weight: bool = True
+    use_weighted_edges: bool =False
+    final_node_dim: int =32
+    pooling: str ='mean'
+    # TODO: use it inside convolutions
+    dropout: float = 0.2
+    use_batchnorm: bool = True
+    # gat spefic args
+    num_heads: int = 2
+    # TODO: add adding self-loops
+    # gcn spefic args
+
+    mlp_config: MLPConfig = field(default_factory=lambda: MLPConfig(
+        layers = [
+        ]
+    ))
 
 @dataclass
 class bgbGCNConfig(ModelConfig):
@@ -206,3 +229,4 @@ cs.store(name='base_config', node=Config)
 cs.store(group='model', name='bgbGAT', node=bgbGATConfig)
 cs.store(group='model', name='bgbGCN', node=bgbGCNConfig)
 cs.store(group='model', name='transformer', node=TransformerConfig)
+cs.store(group='model', name='baseGNN', node=standartGNNConfig)
