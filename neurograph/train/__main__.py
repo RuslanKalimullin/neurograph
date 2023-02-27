@@ -6,6 +6,7 @@ from typing import Any, Mapping
 
 import git
 import hydra
+import torch
 import wandb
 from omegaconf import OmegaConf
 from torch_geometric import seed_everything
@@ -44,6 +45,9 @@ def dataset_factory(ds_cfg: DatasetConfig) -> NeuroDenseDataset | NeuroGraphData
 @hydra.main(version_base=None, config_path='../config', config_name="config")
 def main(cfg: Config):
     seed_everything(cfg.seed)
+    if cfg.train.num_threads:
+        torch.set_num_threads(cfg.train.num_threads)
+
     validate_config(cfg)
 
     logging.info(f'Config: \n{OmegaConf.to_yaml(cfg)}')
