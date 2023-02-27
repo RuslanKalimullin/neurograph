@@ -70,7 +70,7 @@ class standartGNNConfig(ModelConfig):
     data_type: str ="graph"
     hidden_dim: int = 32  # TODO: support list
     use_abs_weight: bool = True
-    use_weighted_edges: bool =True
+    use_weighted_edges: bool =False
     final_node_dim: int =32
     pooling: str ='mean'
     # TODO: use it inside convolutions

@@ -33,7 +33,7 @@ class ABIDETrait:
 
         target = pd.read_csv(osp.join(self.global_dir, self.target_file))
         target = target[[self.subj_id_col, self.target_col]]
-
+        target[self.subj_id_col]=target[self.subj_id_col].astype(str)
         # check that there are no different labels assigned to the same ID
         max_labels_per_id = target.groupby(self.subj_id_col)[self.target_col].nunique().max()
         assert max_labels_per_id == 1, 'Diffrent targets assigned to the same id!'
@@ -91,6 +91,7 @@ class ABIDEGraphDataset(ABIDETrait, NeuroGraphDataset):
 
         # here `self.process` is called
         super().__init__(self.root)
+        self.process()
 
         # load preprocessed graphs
         self.data, self.slices = torch.load(self.processed_paths[0])

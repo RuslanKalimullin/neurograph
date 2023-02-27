@@ -102,11 +102,12 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
         # load fold splits
         id_folds, num_folds = self.load_folds()
         id2idx = {s: i for i, s in enumerate(subj_ids)}
-
+        print("id2idx: ", id2idx)
         # map each subj_id to idx in `data_list`
         folds = {'train': []}
         for i in range(num_folds):
             train_ids, valid_ids = id_folds[i]['train'], id_folds[i]['valid']
+            print("train_ids: ", train_ids)
             one_fold = {
                 'train': [id2idx[subj_id] for subj_id in train_ids],
                 'valid': [id2idx[subj_id] for subj_id in valid_ids],
@@ -117,12 +118,16 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
         with open(self.processed_paths[2], 'w') as f_folds:
             json.dump(folds, f_folds)
 
+    @property
+    def cm_path(self):
+        # raw_dir specific to graph datasets :(
+        return osp.join(self.raw_dir, self.atlas)
+    
     def load_datalist(self) -> tuple[list[Data], list[str], pd.DataFrame]:
         targets, label2idx, idx2label = self.load_targets()
 
         # subj_id -> CM, time series matrices, ROI names
         cms, ts, roi_map = self.load_cms(self.cm_path)
-
         # prepare data list from cms and targets
         datalist = []
         subj_ids = []
