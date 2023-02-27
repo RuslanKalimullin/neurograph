@@ -8,6 +8,7 @@ from .config import (
     ModelConfig,
     bgbGATConfig,
     bgbGCNConfig,
+    standartGNNConfig,
     TransformerConfig,
     TrainConfig,
     LogConfig,

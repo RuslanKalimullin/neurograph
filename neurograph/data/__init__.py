@@ -3,10 +3,12 @@ import logging
 from typing import Type
 
 import neurograph.data.cobre as cobre
+import neurograph.data.abide as abide
+
 from neurograph.data.datasets import NeuroDataset, NeuroDenseDataset, NeuroGraphDataset
 
 # later we add other datasets
-datasets = [cobre]
+datasets = [cobre,abide]
 
 # TODO: refactor this, this is too complicated for such a simple thing
 available_datasets: dict[tuple[str, str], Type[NeuroDataset]] = {

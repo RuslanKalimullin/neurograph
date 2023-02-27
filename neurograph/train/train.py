@@ -122,7 +122,7 @@ def train_one_split(
         Params:
         loaders: dict, must have keys 'train' and 'valid'
     '''
-
+    model.to(device)
     model.train()
     train_loader = loaders['train']
     valid_loader = loaders['valid']
