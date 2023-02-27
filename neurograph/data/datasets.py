@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from shutil import rmtree
 import os.path as osp
 import json
+import logging
 from typing import Any, Generator, Optional
 
 import numpy as np
@@ -83,6 +84,81 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
     init_node_features: str = 'conn_profile'
     data_type: str = 'graph'
 
+    def __init__(
+        self,
+        root: str,
+        atlas: str = 'aal',
+        experiment_type: str = 'fmri',
+        init_node_features: str = 'conn_profile',
+        abs_thr: Optional[float] = None,
+        pt_thr: Optional[float] = None,
+        no_cache = False,
+    ):
+        """
+        Args:
+            root (str, optional): root dir where dataset should be saved
+            atlas (str): atlas name
+            thr (float, optional): threshold used for pruning edges #TODO
+            k (int, optional): Number of neighbors used to compute a threshold for pruning
+                When k is used, thr must be None!
+            no_cache (bool): if True, delete processed files and run processing from scratch
+        """
+
+        self.atlas = atlas
+        self.experiment_type = experiment_type
+        self.init_node_features = init_node_features
+        self.abs_thr = abs_thr
+        self.pt_thr = pt_thr
+
+        self._validate()
+
+        # root: experiment specific files (CMs and time series matrices)
+        self.root = osp.join(root, self.name, experiment_type)
+        # global_dir: dir with meta info and cv_splits
+        self.global_dir = osp.join(root, self.name)
+
+        if no_cache:
+            rmtree(self.processed_dir, ignore_errors=True)
+
+        super().__init__(self.root)
+        # TODO: understand what is going on here
+        # weird bug; we need to call `_process` manually
+        self._process()
+
+        # load preprocessed graphs
+        self.data, self.slices = torch.load(self.processed_paths[0])
+
+        # load dataframes w/ subj_ids and targets
+        self.target_df = pd.read_csv(self.processed_paths[3])
+
+        with open(self.processed_paths[1]) as f_ids:
+            self.subj_ids = [l.rstrip() for l in f_ids.readlines()]
+
+        # load cv splits
+        with open(self.processed_paths[2]) as f_folds:
+            self.folds = json.load(f_folds)
+
+        # get some graph attrs (used for initializing models)
+        num_nodes = self.slices['x'].diff().unique()
+        assert len(num_nodes) == 1, 'You have different number of nodes in graphs!'
+        self.num_nodes = num_nodes.item()
+
+    @property
+    def processed_file_names(self):
+        thr = ''
+        if self.abs_thr:
+            thr = f'abs={self.abs_thr}'
+        if self.pt_thr:
+            thr = f'pt={self.pt_thr}'
+
+        prefix = '_'.join(s for s in [self.atlas, self.experiment_type, thr] if s)
+        return [
+            f'{prefix}_data.pt',
+            f'{prefix}_subj_ids.txt',
+            f'{prefix}_folds.json',
+            f'{prefix}_targets.csv',
+        ]
+
     def process(self):
         # load data list
         data_list, subj_ids, y = self.load_datalist()
@@ -102,12 +178,13 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
         # load fold splits
         id_folds, num_folds = self.load_folds()
         id2idx = {s: i for i, s in enumerate(subj_ids)}
-        print("id2idx: ", id2idx)
+
+        logging.debug("id2idx: ", id2idx)
         # map each subj_id to idx in `data_list`
         folds = {'train': []}
         for i in range(num_folds):
             train_ids, valid_ids = id_folds[i]['train'], id_folds[i]['valid']
-            print("train_ids: ", train_ids)
+            logging.debug("train_ids: ", train_ids)
             one_fold = {
                 'train': [id2idx[subj_id] for subj_id in train_ids],
                 'valid': [id2idx[subj_id] for subj_id in valid_ids],
