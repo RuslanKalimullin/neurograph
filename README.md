@@ -2,8 +2,8 @@
 # neurograph
 
 ## install
-
-python=3.10
+### Basic requirements
+python=3.10, torch=1.12.1, cuda=11.3
 
 ### pip
 In order to install all dependencies via pip in some virtual env, run:
@@ -14,7 +14,7 @@ In order to install all dependencies via pip in some virtual env, run:
 ./graph-tool_install.sh  # via conda
 
 # install Pytorch Geometric
-./pyg_cpu.sh  # or ./pyg_cuda.sh
+./install_pyg.sh cu113 # or ./pyg_cpu.sh cpu
 
 # install other requirements
 pip install -U -r requirements.txt
@@ -34,8 +34,9 @@ By default, neurograph expects that your datasets are stored in `datasets` folde
 # how to use it
 Neurograph uses `hydra` for managing different configurations. See default config in `config/config.py` and `config/config.yaml`
 
+Run gridsearch for bgbGAT, bgbGCN:
+
 ```bash
-# Run bgbGAT, bgbGCN
 !python -m neurograph.train --multirun \
   dataset.data_path='<path_to_data>' \
   +model=bgbGAT  # bgbGCN \
@@ -47,7 +48,29 @@ Neurograph uses `hydra` for managing different configurations. See default confi
   train.scheduler=null
 ```
 
+Run gridsearch for vanilla transformers:
+```bash
+python -m neurograph.train --multirun \
+ dataset.data_path='<path_to_data>' \
+ dataset.data_type=dense \
+ +model=transformer8,transformer16,transformer32,transformer64,transformer116 \ 
+ model.num_layers=1,2 \
+ model.num_heads=1,2,4 \
+ model.pooling=concat,mean \
+ dataset.feature_type=conn_profile,timeseries \
+ train.scheduler=null
+```
+
 Results will be logged into wandb
+
+## Docker
+```bash
+# build an image
+docker build -t neurograph .
+
+# run it as a container and do your stuff inside
+docker run -it --rm --network host --gpus=0,1 -v $(pwd):/app neurograph /bin/bash
+```
 
 ## acronyms
 * PyG = pytorch_geometric

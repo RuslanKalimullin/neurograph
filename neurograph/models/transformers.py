@@ -153,7 +153,6 @@ class Transformer(nn.Module):
             fcn_dim = model_cfg.hidden_dim
         else:
             raise ValueError('Unknown pooling type!')
-
         self.fcn = BasicMLP(in_size=fcn_dim, out_size=num_classes, config=model_cfg.head_config)
 
     def forward(self, batch):

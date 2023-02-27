@@ -1,0 +1,9 @@
+defaults:
+    - base_transformer
+
+hidden_dim: 64 
+head_config:
+    act_func: null
+    act_func_params: null
+    layers:
+        - {out_size: 32, dropout: 0.5, act_func: 'GELU', act_func_params: null}
