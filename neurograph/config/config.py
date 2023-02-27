@@ -164,22 +164,9 @@ class TransformerConfig(ModelConfig):
 
 @dataclass
 class TrainConfig:
-<<<<<<< HEAD
-<<<<<<< HEAD
-    device: str = 'gpu'
-=======
     device: str = 'cpu'
     num_threads: Optional[int] = None
->>>>>>> 5b9562eb56d77a1f65053570108014a90f4b4ced
-=======
-    device: str = 'cuda'
-    epochs: int = 100
-=======
-    device: str = 'cpu'
-    num_threads: Optional[int] = None
->>>>>>> gcn_base
     epochs: int = 1
->>>>>>> 5b9562eb56d77a1f65053570108014a90f4b4ced
     batch_size: int = 8
     valid_batch_size: int = 8
     optim: str = 'Adam'
