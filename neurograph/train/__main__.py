@@ -25,7 +25,7 @@ from neurograph.train.train import train
 def dataset_factory(ds_cfg: DatasetConfig) -> NeuroDenseDataset | NeuroGraphDataset:
     if ds_cfg.data_type == 'graph':
         return graph_datasets[ds_cfg.name](
-            root=ds_cfg.data_path,
+            root=str(ds_cfg.data_path),
             atlas=ds_cfg.atlas,
             experiment_type=ds_cfg.experiment_type,
             pt_thr=ds_cfg.pt_thr,
