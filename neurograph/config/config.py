@@ -164,7 +164,7 @@ class TrainConfig:
     )
     # select best model on valid based on what metric
     select_best_metric: str = 'loss'
-    loss: str = 'CrossEntropyLoss' #'BCEWithLogitsLoss'
+    loss: str = 'CrossEntropyLoss'  #'BCEWithLogitsLoss'
     loss_args: Optional[dict[str, Any]] = field(
         # reduction sum is necessary here
         default_factory=lambda: {'reduction': 'sum'}
@@ -177,7 +177,7 @@ class TrainConfig:
 class LogConfig:
     # how often print training metrics
     test_step: int = 1
-    wandb_project: str = 'mri_gnn_2'
+    wandb_project: str = 'mri_gnn'
     wandb_name: Optional[str] = None
     wandb_mode: Optional[str] = None  # 'disabled' for testing
 

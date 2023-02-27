@@ -49,6 +49,15 @@ Neurograph uses `hydra` for managing different configurations. See default confi
 
 Results will be logged into wandb
 
+## Docker
+```bash
+# build an image
+docker build -t neurograph .
+
+# run it as a container and do your stuff inside
+docker run -it --rm --network host --gpus=0,1 -v $(pwd):/app neurograph /bin/bash
+```
+
 ## acronyms
 * PyG = pytorch_geometric
 * CM = connectivity matrix
