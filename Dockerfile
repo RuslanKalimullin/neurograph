@@ -34,5 +34,8 @@ ENV MPLLOCALFREETYPE 1
 
 WORKDIR /app
 
+# 'fix' issues w/ git
+RUN git config --global --add safe.directory /app' 
+
 # Export port for Jupyter Notebook
 EXPOSE 8888
