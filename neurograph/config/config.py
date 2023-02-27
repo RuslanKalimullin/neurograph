@@ -1,11 +1,9 @@
 import hydra
 from pathlib import Path
 from typing import Any, Optional, Sequence
-from omegaconf import DictConfig, OmegaConf, MISSING
+from omegaconf import MISSING
 from hydra.core.config_store import ConfigStore
 from dataclasses import dataclass, field
-from torch import nn
-from torch_geometric.nn import GCNConv
 import neurograph
 from neurograph.data import available_datasets
 
@@ -50,7 +48,7 @@ class MLPConfig:
         MLPlayer(out_size=256, dropout=0.5, act_func='LeakyReLU', act_func_params=dict(negative_slope=0.2)),
         MLPlayer(out_size=32, dropout=0.5, act_func='LeakyReLU', act_func_params=dict(negative_slope=0.2)),
     ])
-    
+
 
 @dataclass
 class ModelConfig:
@@ -66,8 +64,8 @@ class standartGNNConfig(ModelConfig):
     name: str = 'baseGNN'  # see neurograph.models/
     n_classes: int = 2  # must match with loss
     num_layers: int = 2
-    layer_module: str = "GCNConv"
-    data_type: str ="graph"
+    layer_module: str = 'GCNConv'
+    data_type: str = 'graph'
     hidden_dim: int = 32  # TODO: support list
     use_abs_weight: bool = True
     use_weighted_edges: bool =False
@@ -85,7 +83,7 @@ class standartGNNConfig(ModelConfig):
         layers = [
         ]
     ))
-    
+
 @dataclass
 class bgbGCNConfig(ModelConfig):
     name: str = 'bgbGCN'  # see neurograph.models
@@ -164,14 +162,9 @@ class TransformerConfig(ModelConfig):
 
 @dataclass
 class TrainConfig:
-<<<<<<< HEAD
-    device: str = 'cuda'
-    epochs: int = 100
-=======
     device: str = 'cpu'
-    num_threads: Optional[int] = None
     epochs: int = 1
->>>>>>> 5b9562eb56d77a1f65053570108014a90f4b4ced
+
     batch_size: int = 8
     valid_batch_size: int = 8
     optim: str = 'Adam'
