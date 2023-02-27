@@ -109,22 +109,6 @@ class CobreGraphDataset(CobreTrait, NeuroGraphDataset):
         assert len(num_nodes) == 1, 'You have different number of nodes in graphs!'
         self.num_nodes = num_nodes.item()
 
-    @property
-    def processed_file_names(self):
-        thr = ''
-        if self.abs_thr:
-            thr = f'abs={self.abs_thr}'
-        if self.pt_thr:
-            thr = f'pt={self.pt_thr}'
-
-        prefix = '_'.join(s for s in [self.atlas, self.experiment_type, thr] if s)
-        return [
-            f'{prefix}_data.pt',
-            f'{prefix}_subj_ids.txt',
-            f'{prefix}_folds.json',
-            f'{prefix}_targets.csv',
-        ]
-
     def load_cms(self,path: str | Path,) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray], dict[int, str]]:
 
         """ Load connectivity matrices, fMRI time series

@@ -83,6 +83,22 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
     init_node_features: str = 'conn_profile'
     data_type: str = 'graph'
 
+    @property
+    def processed_file_names(self):
+        thr = ''
+        if self.abs_thr:
+            thr = f'abs={self.abs_thr}'
+        if self.pt_thr:
+            thr = f'pt={self.pt_thr}'
+
+        prefix = '_'.join(s for s in [self.atlas, self.experiment_type, thr] if s)
+        return [
+            f'{prefix}_data.pt',
+            f'{prefix}_subj_ids.txt',
+            f'{prefix}_folds.json',
+            f'{prefix}_targets.csv',
+        ]
+
     def process(self):
         # load data list
         data_list, subj_ids, y = self.load_datalist()
