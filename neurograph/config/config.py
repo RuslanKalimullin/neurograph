@@ -59,7 +59,6 @@ class ModelConfig:
     # see `train.train.init_model`
     data_type: str
 
-
 @dataclass
 class standartGNNConfig(ModelConfig):
     name: str = 'baseGNN'  # see neurograph.models/
@@ -84,7 +83,6 @@ class standartGNNConfig(ModelConfig):
         layers = [
         ]
     ))
-
 
 @dataclass
 class bgbGCNConfig(ModelConfig):
