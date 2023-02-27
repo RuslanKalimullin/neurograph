@@ -122,7 +122,7 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
     def cm_path(self):
         # raw_dir specific to graph datasets :(
         return osp.join(self.raw_dir, self.atlas)
-    
+
     def load_datalist(self) -> tuple[list[Data], list[str], pd.DataFrame]:
         targets, label2idx, idx2label = self.load_targets()
 
@@ -140,6 +140,7 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
                 # ignore if subj_id is not in targets
                 pass
         y = targets.loc[subj_ids].copy()
+
         return datalist, subj_ids, y
 
     # TODO: move to base class?
