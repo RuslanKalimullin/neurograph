@@ -34,8 +34,9 @@ By default, neurograph expects that your datasets are stored in `datasets` folde
 # how to use it
 Neurograph uses `hydra` for managing different configurations. See default config in `config/config.py` and `config/config.yaml`
 
+Run gridsearch for bgbGAT, bgbGCN:
+
 ```bash
-# Run bgbGAT, bgbGCN
 !python -m neurograph.train --multirun \
   dataset.data_path='<path_to_data>' \
   +model=bgbGAT  # bgbGCN \
@@ -45,6 +46,19 @@ Neurograph uses `hydra` for managing different configurations. See default confi
   dataset.pt_thr=0.25,0.5,0.75,null \
   train.epochs=20 \
   train.scheduler=null
+```
+
+Run gridsearch for vanilla transformers:
+```bash
+python -m neurograph.train --multirun \
+ dataset.data_path='<path_to_data>' \
+ dataset.data_type=dense \
+ +model=transformer8,transformer16,transformer32,transformer64,transformer116 \ 
+ model.num_layers=1,2 \
+ model.num_heads=1,2,4 \
+ model.pooling=concat,mean \
+ dataset.feature_type=conn_profile,timeseries \
+ train.scheduler=null
 ```
 
 Results will be logged into wandb
