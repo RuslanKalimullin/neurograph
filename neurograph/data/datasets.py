@@ -219,7 +219,7 @@ class NeuroDenseDataset(thDataset, NeuroDataset):
         self.num_nodes = self.data.shape[1]
 
     def load_data(self) -> tuple[torch.Tensor, list[str], torch.Tensor]:
-        cms, ts, _ = load_cms(self.cm_path)
+        cms, ts, _ = self.load_cms(self.cm_path)
         targets, *_ = self.load_targets()
 
         if self.feature_type == 'timeseries':

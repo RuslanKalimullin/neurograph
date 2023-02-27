@@ -49,6 +49,32 @@ class ABIDETrait:
         target[self.target_col] = target[self.target_col].map(label2idx)
 
         return target, label2idx, idx2label
+    
+    def load_cms(self, path: str | Path,) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray], dict[int, str]]:
+
+        """ Load connectivity matrices, fMRI time series
+            and mapping node idx -> ROI name.
+
+            Maps sibj_id to CM and ts
+        """
+
+        path = Path(path)
+
+        data = {}
+        ts = {}
+        # ROI names, extacted from CMs
+        roi_map: dict[int, str] = {}
+
+        for p in path.iterdir():
+            if p.is_dir():
+                name = p.name
+                values = loadmat(p / f"{name}{self.con_matrix_suffix}")['connectivity'].astype(np.float32)
+                embed_name =list(p.glob(self.embed_sufix))[0]
+                values_embed = pd.read_csv(embed_name,delimiter="\t").astype(np.float32)
+                ts[name] = values_embed
+                data[name] = values
+
+        return data, ts, roi_map
 
 
 # NB: trait must go first
@@ -126,32 +152,6 @@ class ABIDEGraphDataset(ABIDETrait, NeuroGraphDataset):
             f'{prefix}_folds.json',
             f'{prefix}_targets.csv',
         ]
-    
-    def load_cms(self, path: str | Path,) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray], dict[int, str]]:
-
-        """ Load connectivity matrices, fMRI time series
-            and mapping node idx -> ROI name.
-
-            Maps sibj_id to CM and ts
-        """
-
-        path = Path(path)
-
-        data = {}
-        ts = {}
-        # ROI names, extacted from CMs
-        roi_map: dict[int, str] = {}
-
-        for p in path.iterdir():
-            if p.is_dir():
-                name = p.name
-                values = loadmat(p / f"{name}{self.con_matrix_suffix}")['connectivity'].astype(np.float32)
-                embed_name =list(p.glob(self.embed_sufix))[0]
-                values_embed = pd.read_csv(embed_name,delimiter="\t").astype(np.float32)
-                ts[name] = values_embed
-                data[name] = values
-
-        return data, ts, roi_map
 
 class ABIDEDenseDataset(ABIDETrait, NeuroDenseDataset):
     pass
