@@ -70,6 +70,9 @@ docker build -t neurograph .
 
 # run it as a container and do your stuff inside
 docker run -it --rm --network host --gpus=0,1 -v $(pwd):/app neurograph /bin/bash
+
+# or run a particular gridsearch e.g.
+docker run --rm --network host --gpus=0,1 -v $(pwd):/app --env WANDB_API_KEY=<YOUR_WANDB_API_KEY> neurograph bash -c 'python -m neurograph.train --multirun log.wandb_project=mri_docker_test +model=transformer8,transformer16 ++model.num_layers=1 model.num_heads=1,8 dataset.data_type=dense train.scheduler=null'
 ```
 
 ## acronyms
