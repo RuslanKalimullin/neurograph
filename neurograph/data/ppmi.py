@@ -8,11 +8,12 @@ from .datasets import NeuroDataset, NeuroGraphDataset, NeuroDenseDataset
 from .utils import load_cms, prepare_graph
 
 
-class CobreTrait:
-    """ Common fields and methods for all Cobre datasets """
-    name = 'cobre'
-    available_atlases = {'aal', 'msdl'}
+class PPMITrait:
+    """ Common fields and methods for all PPMI datasets """
+    name = 'ppmi'
+    available_atlases = {'aal'}
     available_experiments = {'fmri', 'dti'}
+    # TODO
     splits_file = 'cobre_splits.json'
     target_file = 'meta_data.tsv'
     subj_id_col = 'Subjectid'
@@ -20,6 +21,7 @@ class CobreTrait:
 
     global_dir: str  # just for type checks
 
+    #TODO
     def load_targets(self) -> tuple[pd.DataFrame, dict[str, int], dict[int, str]]:
         """ Load and process *cobre* targets """
 
@@ -47,7 +49,8 @@ class CobreTrait:
 
 
 # NB: trait must go first
-class CobreGraphDataset(CobreTrait, NeuroGraphDataset):
+class PPMIGraphDataset(PPMITrait, NeuroGraphDataset):
+    #TODO
     def load_cms(self,path: str | Path,) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray], dict[int, str]]:
 
         """ Load connectivity matrices, fMRI time series
@@ -78,5 +81,6 @@ class CobreGraphDataset(CobreTrait, NeuroGraphDataset):
         return data, ts, roi_map
 
 
-class CobreDenseDataset(CobreTrait, NeuroDenseDataset):
+class PPMIDenseDataset(PPMITrait, NeuroDenseDataset):
     pass
+

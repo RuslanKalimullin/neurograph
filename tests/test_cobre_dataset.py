@@ -6,17 +6,17 @@ from neurograph.data.cobre import CobreDenseDataset, CobreGraphDataset
 
 @pytest.fixture(scope='session')
 def cobre_ds_no_thr():
-    return CobreGraphDataset(root=get_config().dataset.data_path)
+    return CobreGraphDataset(root=get_config().dataset.data_path, no_cache=True)
 
 
 @pytest.fixture(scope='session')
 def cobre_ds_abs_thr():
-    return CobreGraphDataset(root=get_config().dataset.data_path, abs_thr=0.3)
+    return CobreGraphDataset(root=get_config().dataset.data_path, abs_thr=0.3, no_cache=True)
 
 
 @pytest.fixture(scope='session')
 def cobre_ds_pt_thr():
-    return CobreGraphDataset(root=get_config().dataset.data_path, pt_thr=0.5)
+    return CobreGraphDataset(root=get_config().dataset.data_path, pt_thr=0.5, no_cache=True)
 
 
 @pytest.fixture(scope='session')
