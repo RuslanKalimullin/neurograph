@@ -48,10 +48,7 @@ class CobreTrait:
         target[self.target_col] = target[self.target_col].map(label2idx)
 
         return target, label2idx, idx2label
-
-
-# NB: trait must go first
-class CobreGraphDataset(CobreTrait, NeuroGraphDataset):
+    
     def load_cms(self,path: str | Path,) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray], dict[int, str]]:
 
         """ Load connectivity matrices, fMRI time series
@@ -80,6 +77,11 @@ class CobreGraphDataset(CobreTrait, NeuroGraphDataset):
                     roi_map = {i: c for i, c in enumerate(x.columns)}
 
         return data, ts, roi_map
+
+
+# NB: trait must go first
+class CobreGraphDataset(CobreTrait, NeuroGraphDataset):
+    pass
 
 
 class CobreDenseDataset(CobreTrait, NeuroDenseDataset):
