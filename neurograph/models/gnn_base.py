@@ -19,15 +19,16 @@ from neurograph.models.mlp import BasicMLP
 from neurograph.models.utils import concat_pool
 from neurograph.models.available_modules import available_pg_modules
 
+
 def build_gnn_block(
     input_dim: int,
     hidden_dim: int,
-    layer_module: nn.Module,
+    layer_module: str,
     proj_dim: Optional[int] = None,
     use_batchnorm: bool = True,
-    use_weighted_edges: bool =True,
-    dropout: float = 0.0
-    ):
+    use_weighted_edges: bool = True,
+    dropout: float = 0.0,
+):
     if use_weighted_edges:
         return pygSequential(
             'x, edge_index, edge_attr',
@@ -39,9 +40,9 @@ def build_gnn_block(
                     'x, edge_index, edge_attr -> x'
                 ),
                 nn.LeakyReLU(negative_slope = 0.2),
-                nn.Dropout(p=dropout),
                 nn.BatchNorm1d(hidden_dim) if use_batchnorm else nn.Identity(),
-            ]   
+                nn.Dropout(p=dropout)
+            ]
         )
     else:
         return pygSequential(
@@ -54,9 +55,9 @@ def build_gnn_block(
                     'x, edge_index -> x'
                 ),
                 nn.LeakyReLU(negative_slope = 0.2),
-                nn.Dropout(p=dropout),
                 nn.BatchNorm1d(hidden_dim) if use_batchnorm else nn.Identity(),
-            ]   
+                nn.Dropout(p=dropout)
+            ]
         )
 
 
@@ -73,19 +74,19 @@ class baseGNN(torch.nn.Module):
         self.num_nodes = num_nodes
         self.pooling = model_cfg.pooling
         self.use_abs_weight = model_cfg.use_abs_weight
-        self.use_weighted_edges=model_cfg.use_weighted_edges
+        self.use_weighted_edges = model_cfg.use_weighted_edges
 
         num_classes = model_cfg.n_classes
         hidden_dim = model_cfg.hidden_dim
         num_layers = model_cfg.num_layers
-        layer_module =model_cfg.layer_module
+        layer_module = model_cfg.layer_module
         dropout = model_cfg.dropout
         use_batchnorm = model_cfg.use_batchnorm
-        
+
 
         gcn_input_dim = input_dim
         common_args: dict[str, Any] = dict(
-            dropout=dropout
+            dropout=dropout,
         )
         for i in range(num_layers):
             conv = build_gnn_block(
@@ -103,10 +104,10 @@ class baseGNN(torch.nn.Module):
 
         if self.pooling == "concat":
             # gat block return embeddings of`inter_dim` size
-            
+
             fcn_dim = model_cfg.final_node_dim * num_nodes
         elif self.pooling == 'sum' or self.pooling == 'mean':
-        
+
             fcn_dim = model_cfg.final_node_dim
 
         self.fcn = BasicMLP(in_size=fcn_dim, out_size=num_classes, config=model_cfg.mlp_config)
@@ -116,12 +117,13 @@ class baseGNN(torch.nn.Module):
         z = x
         if self.use_abs_weight:
             edge_attr = torch.abs(edge_attr)
+
         for i, conv in enumerate(self.convs):
             # batch_size * num_nodes, hidden
             if self.use_weighted_edges:
                 z = conv(z, edge_index, edge_attr)
             else:
-                z = conv(z, edge_index)    
+                z = conv(z, edge_index)
 
         if self.pooling == "concat":
             z = concat_pool(z, self.num_nodes)
