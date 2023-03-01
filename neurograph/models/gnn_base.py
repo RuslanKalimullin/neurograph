@@ -40,8 +40,8 @@ def build_gnn_block(
                     'x, edge_index, edge_attr -> x'
                 ),
                 nn.LeakyReLU(negative_slope = 0.2),
-                nn.Dropout(p=dropout),
                 nn.BatchNorm1d(hidden_dim) if use_batchnorm else nn.Identity(),
+                nn.Dropout(p=dropout)
             ]
         )
     else:
@@ -55,8 +55,8 @@ def build_gnn_block(
                     'x, edge_index -> x'
                 ),
                 nn.LeakyReLU(negative_slope = 0.2),
-                nn.Dropout(p=dropout),
                 nn.BatchNorm1d(hidden_dim) if use_batchnorm else nn.Identity(),
+                nn.Dropout(p=dropout)
             ]
         )
 

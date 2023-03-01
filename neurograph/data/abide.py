@@ -49,10 +49,7 @@ class ABIDETrait:
         target[self.target_col] = target[self.target_col].map(label2idx)
 
         return target, label2idx, idx2label
-
-
-# NB: trait must go first
-class ABIDEGraphDataset(ABIDETrait, NeuroGraphDataset):
+    
     def load_cms(self, path: str | Path,) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray], dict[int, str]]:
 
         """ Load connectivity matrices, fMRI time series
@@ -79,6 +76,10 @@ class ABIDEGraphDataset(ABIDETrait, NeuroGraphDataset):
 
         return data, ts, roi_map
 
+
+# NB: trait must go first
+class ABIDEGraphDataset(ABIDETrait, NeuroGraphDataset):
+    pass
 
 class ABIDEDenseDataset(ABIDETrait, NeuroDenseDataset):
     pass
