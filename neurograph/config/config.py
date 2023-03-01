@@ -21,6 +21,8 @@ class DatasetConfig:
     pt_thr: Optional[float] = None
     # dense specific
     feature_type: str = 'conn_profile'  #'timeseries'
+    # DTI specific
+    normalize: Optional[str] = None  # or global_max
 
 
 @dataclass

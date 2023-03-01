@@ -62,6 +62,7 @@ def prepare_graph(
     targets: pd.DataFrame,
     abs_thr: Optional[float] = None,
     pt_thr: Optional[float] = None,
+    normalize=None,
 ) -> Data:
 
     """
@@ -73,11 +74,19 @@ def prepare_graph(
         Combine CM, subj_id and target to a pyg.Data object
         `targets` must be indexed by subj_id
     """
+
+    cm = cm.astype(np.float32)
+    if normalize:
+        if normalize == 'global_max':
+            cm = cm / cm.max()
+        else:
+            raise ValueError(f'Unknown `normalize` arg! Given {normalize}')
+
     # convert CM edge_index, edge_attr (and sparsify if thr are given)
     edge_index, edge_attr = cm_to_edges(cm, abs_thr=abs_thr, pt_thr=pt_thr)
 
     # compute initial node embeddings -> just original weights
-    x = torch.from_numpy(cm)
+    x = torch.from_numpy(cm).float()
 
     # get labels from DF via subject_id
     y = torch.LongTensor(targets.loc[subj_id].values)
@@ -160,7 +169,7 @@ def generate_splits(subj_ids: list | np.ndarray, y: np.ndarray, seed: int = 1380
 
     # split train into cv folds
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=seed)
-    folds: dict[str, list] = {}
+    folds: dict[str, list] = {'train': []}
     for i, (train_fold, valid_fold) in enumerate(cv.split(train, y_train)):
         folds['train'].append({
             'train': list(train[train_fold]),

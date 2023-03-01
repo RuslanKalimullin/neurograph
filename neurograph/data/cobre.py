@@ -20,6 +20,38 @@ class CobreTrait:
 
     global_dir: str  # just for type checks
 
+    def load_cms(
+        self,
+        path: str | Path,
+    ) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray], dict[int, str]]:
+
+        """ Load connectivity matrices, fMRI time series
+            and mapping node idx -> ROI name.
+
+            Maps sibj_id to CM and ts
+        """
+
+        path = Path(path)
+
+        data = {}
+        ts = {}
+        # ROI names, extacted from CMs
+        roi_map: dict[int, str] = {}
+
+        for p in path.glob('*.csv'):
+            name = p.stem.split('_')[0].replace('sub-', '')
+            x = pd.read_csv(p).drop('Unnamed: 0', axis=1)
+
+            values = x.values.astype(np.float32)
+            if p.stem.endswith('_embed'):
+                ts[name] = values
+            else:
+                data[name] = values
+                if not roi_map:
+                    roi_map = {i: c for i, c in enumerate(x.columns)}
+
+        return data, ts, roi_map
+
     def load_targets(self) -> tuple[pd.DataFrame, dict[str, int], dict[int, str]]:
         """ Load and process *cobre* targets """
 
@@ -48,34 +80,7 @@ class CobreTrait:
 
 # NB: trait must go first
 class CobreGraphDataset(CobreTrait, NeuroGraphDataset):
-    def load_cms(self,path: str | Path,) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray], dict[int, str]]:
-
-        """ Load connectivity matrices, fMRI time series
-            and mapping node idx -> ROI name.
-
-            Maps sibj_id to CM and ts
-        """
-
-        path = Path(path)
-
-        data = {}
-        ts = {}
-        # ROI names, extacted from CMs
-        roi_map: dict[int, str] = {}
-
-        for p in path.glob('*.csv'):
-            name = p.stem.split('_')[0].replace('sub-', '')
-            x = pd.read_csv(p).drop('Unnamed: 0', axis=1)
-
-            values = x.values.astype(np.float32)
-            if p.stem.endswith('_embed'):
-                ts[name] = values
-            else:
-                data[name] = values
-                if not roi_map:
-                    roi_map = {i: c for i, c in enumerate(x.columns)}
-
-        return data, ts, roi_map
+    pass
 
 
 class CobreDenseDataset(CobreTrait, NeuroDenseDataset):
