@@ -1,65 +1,70 @@
 import pytest
 from functools import reduce
 from neurograph.config import get_config
-from neurograph.data.cobre import CobreDenseDataset, CobreGraphDataset
+from neurograph.data.ppmi import PPMIDenseDataset, PPMIGraphDataset
 
 
 @pytest.fixture(scope='session')
-def cobre_ds_no_thr():
-    return CobreGraphDataset(root=get_config().dataset.data_path, no_cache=True)
-
-
-@pytest.fixture(scope='session')
-def cobre_ds_abs_thr():
-    return CobreGraphDataset(root=get_config().dataset.data_path, abs_thr=0.3, no_cache=True)
-
-
-@pytest.fixture(scope='session')
-def cobre_ds_pt_thr():
-    return CobreGraphDataset(root=get_config().dataset.data_path, pt_thr=0.5, no_cache=True)
-
-
-@pytest.fixture(scope='session')
-def cobre_dense_ts():
-    return CobreDenseDataset(
-        root=get_config().dataset.data_path,
-        atlas='aal',
-        experiment_type='fmri',
-        feature_type='timeseries',
+def ppmi_ds_no_thr():
+    return PPMIGraphDataset(root=get_config().dataset.data_path, experiment_type='dti',
+        normalize='global_max',
+        no_cache=True,
     )
 
 
 @pytest.fixture(scope='session')
-def cobre_dense_connprofile():
-    return CobreDenseDataset(
+def ppmi_ds_abs_thr():
+    return PPMIGraphDataset(root=get_config().dataset.data_path, experiment_type='dti', abs_thr=0.3,
+        normalize='global_max',
+        no_cache=True,
+    )
+
+
+@pytest.fixture(scope='session')
+def ppmi_ds_pt_thr():
+    return PPMIGraphDataset(
         root=get_config().dataset.data_path,
-        atlas='aal',
-        experiment_type='fmri',
+        experiment_type='dti',
+        pt_thr=0.5,
+        normalize='global_max',
+        no_cache=True,
+    )
+
+
+@pytest.fixture(scope='session')
+def ppmi_dense_connprofile():
+    return PPMIDenseDataset(
+        root=get_config().dataset.data_path,
+        experiment_type='dti',
+        normalize='global_max',
         feature_type='conn_profile',
     )
 
 
-def test_cobre_no_thr(cobre_ds_no_thr):
-    g = cobre_ds_no_thr
-    assert g[0].edge_index.shape[1] == cobre_ds_no_thr.num_nodes ** 2
+def test_ppmi_no_thr(ppmi_ds_no_thr):
+    g = ppmi_ds_no_thr
+    assert g[0].edge_index.shape[1] == ppmi_ds_no_thr.num_nodes ** 2
 
 
-def test_cobre_abs_thr(cobre_ds_abs_thr):
-    g = cobre_ds_abs_thr[0]
-    assert 0 < g.edge_index.shape[1] < cobre_ds_abs_thr.num_nodes ** 2
+def test_ppmi_abs_thr(ppmi_ds_abs_thr):
+    g = ppmi_ds_abs_thr[0]
+    assert 0 < g.edge_index.shape[1] < ppmi_ds_abs_thr.num_nodes ** 2
     assert g.edge_attr.min().abs() >= 0.5
 
 
-def test_cobre_pt_thr(cobre_ds_pt_thr):
-    g = cobre_ds_pt_thr[0]
-    p = cobre_ds_pt_thr.pt_thr * (cobre_ds_pt_thr.num_nodes ** 2)
-    assert p // 2 < g.edge_index.shape[1]
+def test_ppmi_pt_thr(ppmi_ds_pt_thr):
+    g = ppmi_ds_pt_thr[0]
+    p = ppmi_ds_pt_thr.pt_thr * (ppmi_ds_pt_thr.num_nodes ** 2)
+    # Since we have a lot of 0s in DTI matrix,
+    # while filtering by some threshold, we remove all zeros
+
+    #assert p // 2 < g.edge_index.shape[1]
     assert g.edge_index.shape[1] <= int(p)
 
 
-def test_cobre_target(cobre_ds_no_thr):
-    target, label2idx, idx2label = cobre_ds_no_thr.load_targets()
-    target = target[cobre_ds_no_thr.target_col]
+def test_ppmi_target(ppmi_ds_no_thr):
+    target, label2idx, idx2label = ppmi_ds_no_thr.load_targets()
+    target = target[ppmi_ds_no_thr.target_col]
 
     assert len(idx2label) == 2
     assert target.nunique() == 2
@@ -67,8 +72,11 @@ def test_cobre_target(cobre_ds_no_thr):
 
     assert target.index.isnull().sum() == 0
 
-@pytest.mark.parametrize('ds', ['cobre_ds_no_thr', 'cobre_dense_ts'])
-def test_cobre_folds(ds, request):
+
+@pytest.mark.parametrize('ds', [
+    'ppmi_ds_no_thr', 'ppmi_ds_abs_thr', 'ppmi_ds_pt_thr',
+])
+def test_ppmi_folds(ds, request):
     # workaround for parameterizing tests w/ fixtures
     ds = request.getfixturevalue(ds)
     folds = ds.folds
@@ -92,7 +100,7 @@ def test_cobre_folds(ds, request):
     assert set(folds['test']) & all_train == set(), 'Intersection between test and train'
 
 
-def test_cobre_loaders(cobre_ds_no_thr):
+def test_ppmi_loaders(ppmi_ds_no_thr):
     def get_subj_from_loader(loader):
         ids = []
         for x in loader:
@@ -102,7 +110,7 @@ def test_cobre_loaders(cobre_ds_no_thr):
         return set_ids
 
     all_valids = []
-    for split in cobre_ds_no_thr.get_cv_loaders():
+    for split in ppmi_ds_no_thr.get_cv_loaders():
         # get loaders
         train, valid = split['train'], split['valid']
         t_ids = get_subj_from_loader(train)
@@ -116,19 +124,13 @@ def test_cobre_loaders(cobre_ds_no_thr):
     assert reduce(set.intersection, all_valids) == set(), 'Non empty intersection between valids'
 
 
-def test_cobre_test_loader(cobre_ds_no_thr):
-    loader = cobre_ds_no_thr.get_test_loader(8)
-
+def test_ppmi_test_loader(ppmi_ds_no_thr):
+    loader = ppmi_ds_no_thr.get_test_loader(8)
     for b in loader:
-        print(b)
+        assert b
 
 
-def test_cobre_dense_ts(cobre_dense_ts):
-    assert cobre_dense_ts.data.shape[1] == 116
-    assert cobre_dense_ts.data.shape[2] == 150
-
-
-def test_cobre_dense_connprofile(cobre_dense_connprofile):
-    assert cobre_dense_connprofile.data.shape[1] == 116
-    assert cobre_dense_connprofile.data.shape[2] == 116
+def test_ppmi_dense_connprofile(ppmi_dense_connprofile):
+    assert ppmi_dense_connprofile.data.shape[1] == 112
+    assert ppmi_dense_connprofile.data.shape[2] == 112
 

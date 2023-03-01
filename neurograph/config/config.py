@@ -21,6 +21,8 @@ class DatasetConfig:
     pt_thr: Optional[float] = None
     # dense specific
     feature_type: str = 'conn_profile'  #'timeseries'
+    # DTI specific
+    normalize: Optional[str] = None  # or global_max
 
 
 @dataclass
@@ -45,8 +47,8 @@ class MLPConfig:
     act_func: Optional[str] = None
     act_func_params: Optional[dict] = None
     layers: list[MLPlayer] = field(default_factory=lambda : [
-        MLPlayer(out_size=256, dropout=0.5, act_func='LeakyReLU', act_func_params=dict(negative_slope=0.2)),
-        MLPlayer(out_size=32, dropout=0.5, act_func='LeakyReLU', act_func_params=dict(negative_slope=0.2)),
+        MLPlayer(out_size=32, dropout=0.6, act_func='LeakyReLU', act_func_params=dict(negative_slope=0.2)),
+        MLPlayer(out_size=32, dropout=0.6, act_func='LeakyReLU', act_func_params=dict(negative_slope=0.2)),
     ])
 
 
@@ -72,17 +74,14 @@ class standartGNNConfig(ModelConfig):
     final_node_dim: int =32
     pooling: str ='mean'
     # TODO: use it inside convolutions
-    dropout: float = 0.2
+    dropout: float = 0.5
     use_batchnorm: bool = True
     # gat spefic args
     num_heads: int = 2
     # TODO: add adding self-loops
     # gcn spefic args
 
-    mlp_config: MLPConfig = field(default_factory=lambda: MLPConfig(
-        layers = [
-        ]
-    ))
+    mlp_config: MLPConfig = field(default_factory=MLPConfig)
 
 @dataclass
 class bgbGCNConfig(ModelConfig):
@@ -172,8 +171,8 @@ class TrainConfig:
     optim: str = 'Adam'
     optim_args: Optional[dict[str, Any]] = field(
         default_factory=lambda: {
-            'lr': 1e-3,
-            'weight_decay': 1e-4,
+            'lr': 1e-4,
+            'weight_decay': 1e-1,
         }
     )
     scheduler: Optional[str] = 'ReduceLROnPlateau'
@@ -187,7 +186,7 @@ class TrainConfig:
         }
     )
     # select best model on valid based on what metric
-    select_best_metric: str = 'loss'
+    select_best_metric: str = 'acc'
     loss: str = 'CrossEntropyLoss'  #'BCEWithLogitsLoss'
     loss_args: Optional[dict[str, Any]] = field(
         # reduction sum is necessary here

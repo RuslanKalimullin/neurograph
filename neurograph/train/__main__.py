@@ -30,6 +30,7 @@ def dataset_factory(ds_cfg: DatasetConfig) -> NeuroDenseDataset | NeuroGraphData
             experiment_type=ds_cfg.experiment_type,
             pt_thr=ds_cfg.pt_thr,
             abs_thr=ds_cfg.abs_thr,
+            normalize=ds_cfg.normalize,
         )
     elif ds_cfg.data_type == 'dense':
         return dense_datasets[ds_cfg.name](
@@ -37,6 +38,7 @@ def dataset_factory(ds_cfg: DatasetConfig) -> NeuroDenseDataset | NeuroGraphData
             atlas=ds_cfg.atlas,
             experiment_type=ds_cfg.experiment_type,
             feature_type=ds_cfg.feature_type,
+            normalize=ds_cfg.normalize,
         )
     else:
         raise ValueError(f'Unknown dataset data_type! Options: dense, graph')
