@@ -70,9 +70,9 @@ class standartGNNConfig(ModelConfig):
     use_abs_weight: bool = True
     use_weighted_edges: bool =False
     final_node_dim: int =32
-    pooling: str ='mean'
+    pooling: str ='concat'
     # TODO: use it inside convolutions
-    dropout: float = 0.5
+    dropout: float = 0.3
     use_batchnorm: bool = True
     # gat spefic args
     num_heads: int = 2
@@ -137,8 +137,8 @@ class TransformerConfig(ModelConfig):
     num_layers: int = 1
     hidden_dim: int = 116
     num_heads: int = 4
-    attn_dropout: float = 0.4
-    mlp_dropout: float = 0.4
+    attn_dropout: float = 0.5
+    mlp_dropout: float = 0.5
     # hidden layer in transformer block mlp
     mlp_hidden_multiplier: float = 0.2
 
@@ -152,16 +152,15 @@ class TransformerConfig(ModelConfig):
     pooling: str = 'concat'
 
     # final MLP layer config
-    head_config: MLPConfig = field(default_factory=lambda: MLPConfig(
+    head_config:  MLPConfig = field(default_factory=lambda: MLPConfig(
         layers = [
             MLPlayer(out_size=4, dropout=0.5, act_func='GELU',),
         ]
     ))
 
-
 @dataclass
 class TrainConfig:
-    device: str = 'cuda'
+    device: str = 'cuda:1'
     num_threads: Optional[int] = None
     epochs: int = 1
     batch_size: int = 8
@@ -170,7 +169,7 @@ class TrainConfig:
     optim_args: Optional[dict[str, Any]] = field(
         default_factory=lambda: {
             'lr': 1e-4,
-            'weight_decay': 1e-1,
+            'weight_decay': 1e-2,
         }
     )
     scheduler: Optional[str] = 'ReduceLROnPlateau'
@@ -198,7 +197,7 @@ class TrainConfig:
 class LogConfig:
     # how often print training metrics
     test_step: int = 1
-    wandb_project: str = 'mri_gnn'
+    wandb_project: str = 'mri_abide'
     wandb_name: Optional[str] = None
     wandb_mode: Optional[str] = None  # 'disabled' for testing
 
