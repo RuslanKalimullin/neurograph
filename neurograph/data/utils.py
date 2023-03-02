@@ -55,6 +55,19 @@ def load_cms(
     return data, ts, roi_map
 
 
+def normalize_cm(cm: np.ndarray, normalize_type: Optional[str] = None) -> np.ndarray:
+    cm = cm.astype(np.float32)
+    if normalize_type:
+        if normalize_type == 'global_max':
+            cm = cm / cm.max()
+        elif normalize_type == 'log':
+            cm = np.log(cm, where=0<cm, out=0.*cm)
+        else:
+            raise ValueError(f'Unknown `normalize` arg! Given {normalize_type}')
+
+    return cm
+
+
 @square_check
 def prepare_graph(
     cm: np.ndarray,
@@ -74,13 +87,7 @@ def prepare_graph(
         Combine CM, subj_id and target to a pyg.Data object
         `targets` must be indexed by subj_id
     """
-
-    cm = cm.astype(np.float32)
-    if normalize:
-        if normalize == 'global_max':
-            cm = cm / cm.max()
-        else:
-            raise ValueError(f'Unknown `normalize` arg! Given {normalize}')
+    cm = normalize_cm(cm, normalize)
 
     # convert CM edge_index, edge_attr (and sparsify if thr are given)
     edge_index, edge_attr = cm_to_edges(cm, abs_thr=abs_thr, pt_thr=pt_thr)

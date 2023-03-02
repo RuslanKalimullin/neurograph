@@ -7,7 +7,7 @@ from neurograph.data.ppmi import PPMIDenseDataset, PPMIGraphDataset
 @pytest.fixture(scope='session')
 def ppmi_ds_no_thr():
     return PPMIGraphDataset(root=get_config().dataset.data_path, experiment_type='dti',
-        normalize='global_max',
+        normalize='log',
         no_cache=True,
     )
 
@@ -15,7 +15,7 @@ def ppmi_ds_no_thr():
 @pytest.fixture(scope='session')
 def ppmi_ds_abs_thr():
     return PPMIGraphDataset(root=get_config().dataset.data_path, experiment_type='dti', abs_thr=0.3,
-        normalize='global_max',
+        normalize='log',
         no_cache=True,
     )
 
@@ -26,7 +26,7 @@ def ppmi_ds_pt_thr():
         root=get_config().dataset.data_path,
         experiment_type='dti',
         pt_thr=0.5,
-        normalize='global_max',
+        normalize='log',
         no_cache=True,
     )
 

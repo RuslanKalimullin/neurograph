@@ -9,14 +9,13 @@ from typing import Any, Generator, Optional
 import numpy as np
 import pandas as pd
 import torch
+from torch.utils.data import DataLoader as thDataLoader
 from torch.utils.data import Dataset as thDataset
 from torch.utils.data import Subset
-from torch.utils.data import DataLoader as thDataLoader
 from torch_geometric.data import Data, InMemoryDataset
 from torch_geometric.loader import DataLoader as pygDataLoader
 
-#from .utils import load_cms
-from .utils import prepare_graph
+from .utils import prepare_graph, normalize_cm
 
 
 class NeuroDataset(ABC):
@@ -70,7 +69,7 @@ class NeuroDataset(ABC):
         logging.debug("id2idx: ", id2idx)
 
         # map each `subj_id` to idx in `data_list` in folds
-        folds = {'train': []}
+        folds: dict[str, Any] = {'train': []}
         if 'train' in id_folds:
             for fold in id_folds['train']:
                 train_ids, valid_ids = fold['train'], fold['valid']
@@ -207,7 +206,7 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
         if self.pt_thr:
             thr = f'pt={self.pt_thr}'
 
-        prefix = '_'.join(s for s in [self.atlas, self.experiment_type, thr] if s)
+        prefix = '_'.join(s for s in [self.atlas, self.experiment_type, thr, self.normalize] if s)
         return [
             f'{prefix}_data.pt',
             f'{prefix}_subj_ids.txt',
@@ -352,11 +351,7 @@ class NeuroDenseDataset(thDataset, NeuroDataset):
         for subj_id, m in matrix_dict.items():
             try:
                 # prepare connectivity_matrix
-                if normalize:
-                    if normalize == 'global_max':
-                        m = m / m.max()
-                    else:
-                        raise ValueError(f'Unknown `normalize` arg! Given {normalize}')
+                m = normalize_cm(m, normalize)
 
                 # prepare label and append to datalist
                 label = targets.loc[subj_id]
