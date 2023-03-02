@@ -69,7 +69,7 @@ class NeuroDataset(ABC):
         logging.debug("id2idx: ", id2idx)
 
         # map each `subj_id` to idx in `data_list` in folds
-        folds = {'train': []}
+        folds: dict[str, Any] = {'train': []}
         if 'train' in id_folds:
             for fold in id_folds['train']:
                 train_ids, valid_ids = fold['train'], fold['valid']

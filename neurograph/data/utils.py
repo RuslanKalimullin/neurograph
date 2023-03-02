@@ -55,7 +55,7 @@ def load_cms(
     return data, ts, roi_map
 
 
-def normalize_cm(cm: np.ndarray, normalize_type: Optional[str] = None):
+def normalize_cm(cm: np.ndarray, normalize_type: Optional[str] = None) -> np.ndarray:
     cm = cm.astype(np.float32)
     if normalize_type:
         if normalize_type == 'global_max':
@@ -63,7 +63,7 @@ def normalize_cm(cm: np.ndarray, normalize_type: Optional[str] = None):
         elif normalize_type == 'log':
             cm = np.log(cm, where=0<cm, out=0.*cm)
         else:
-            raise ValueError(f'Unknown `normalize` arg! Given {normalize}')
+            raise ValueError(f'Unknown `normalize` arg! Given {normalize_type}')
 
     return cm
 
