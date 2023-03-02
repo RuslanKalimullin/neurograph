@@ -60,7 +60,7 @@ python -m neurograph.train --multirun dataset.data_type=dense +model=transformer
 ### PPMI
 Since PPMI has only DTI data we need to change some default params. Also, DTI data usually needs some normalization since connectivity matrices contain a number of detected tract between different ROI
 ```bash
-python -m <other params> dataset.name=ppmi dataset.experiment_type=dti dataset.normalize=global_max 
+python -m <other params> dataset.name=ppmi dataset.experiment_type=dti dataset.normalize=log
 ```
 
 Results will be logged into wandb
