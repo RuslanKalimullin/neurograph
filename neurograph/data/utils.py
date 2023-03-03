@@ -187,7 +187,7 @@ def generate_splits(subj_ids: list | np.ndarray, y: np.ndarray, seed: int = 1380
     return folds
 
 
-def get_subj_ids_from_folds(id_folds):
+def get_subj_ids_from_folds(id_folds) -> list[str]:
     subj_ids = []
 
     if set(id_folds.keys()) == set(['train', 'test']):
@@ -205,4 +205,4 @@ def get_subj_ids_from_folds(id_folds):
 
     subj_ids.extend(id_folds['test'])
 
-    return set(subj_ids)
+    return list(set(subj_ids))

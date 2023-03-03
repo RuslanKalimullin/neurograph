@@ -3,6 +3,7 @@ from .gcn import bgbGCN
 from .mlp import BasicMLP
 from .transformers import Transformer
 from .gnn_base import baseGNN
+from .dummy import DummyMultimodalDense2Model
 #graph_model_classes = {
 #    'bgbGAT': bgbGAT,
 #    'bgbGCN': bgbGCN,

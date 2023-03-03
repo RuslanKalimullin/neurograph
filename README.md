@@ -37,25 +37,25 @@ Neurograph uses `hydra` for managing different configurations. See default confi
 ### COBRE
 Cobre dataset is used by default
 
+#### Unimodal experiments
 
 Run gridsearch for bgbGAT, bgbGCN:
-
+add +model=bgbGAT or +model=bgbGCN
 ```bash
-!python -m neurograph.train --multirun \
-  dataset.data_path='<path_to_data>' \
-  +model=bgbGAT  # bgbGCN \
-  model.num_layers=1,2 \
-  model.num_heads=1,2,4 \
-  model.hidden_dim=8,12,16 \
-  dataset.pt_thr=0.25,0.5,0.75,null \
-  train.epochs=20 \
-  train.scheduler=null
+python -m neurograph.train --multirun +model=bgbGAT model.num_layers=1,2 model.num_heads=1,2,4 model.hidden_dim=8,12,16 +dataset=base_dataset dataset.pt_thr=0.25,0.5,0.75,null train.epochs=20 train.scheduler=null
 ```
 
 Run gridsearch for vanilla transformers:
 ```bash
-python -m neurograph.train --multirun dataset.data_type=dense +model=transformer8,transformer16,transformer32,transformer64,transformer116 model.num_layers=1,2 model.num_heads=1,2,4 model.pooling=concat,mean dataset.feature_type=conn_profile,timeseries train.scheduler=null train.device="cuda:0" train.epochs=100
+python -m neurograph.train --multirun dataset.data_type=dense +model=transformer8,transformer16,transformer32,transformer64,transformer116 model.num_layers=1,2 model.num_heads=1,2,4 model.pooling=concat,mean +dataset=base_dataset dataset.feature_type=conn_profile,timeseries train.scheduler=null train.device="cuda:0" train.epochs=100
 ```
+
+
+#### Multimodal experiments
+To run multimodal experiments you need to specify a different dataset config:
+```+dataset=base_multimodal_dataset```
+
+and use corresponding MM model
 
 ### PPMI
 Since PPMI has only DTI data we need to change some default params. Also, DTI data usually needs some normalization since connectivity matrices contain a number of detected tract between different ROI
@@ -81,6 +81,7 @@ docker run --rm --network host --gpus=0,1 -v $(pwd):/app --env WANDB_API_KEY=<YO
 * PyG = pytorch_geometric
 * CM = connectivity matrix
 * MP = message passing
+* MM = multimodal
 
 * subset = train, valid or test part of a whole dataset or of one fold in cross-validation
 

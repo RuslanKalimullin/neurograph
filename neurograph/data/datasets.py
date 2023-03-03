@@ -304,6 +304,32 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
         return f'{self.__class__.__name__}: atlas={self.atlas}, experiment_type={self.experiment_type}, pt_thr={self.pt_thr}, abs_thr={self.abs_thr}, size={len(self)}'
 
 
+class MultimodalGraphDataset(NeuroGraphDataset):
+    experiment_type: str = 'fmri_dti'
+    data_type: str = 'multimodal_graph'
+
+    # TODO
+    def __init__(
+        self,
+        root,
+        atlas: str = 'aal',
+        normalize='global_max',
+        fusion = 'concat', # binary_dti
+    ):
+
+        self.cm_path_fmri = osp.join(self.raw_dir, self.atlas)
+        self.cm_path_dti = osp.join(self.raw_dir, self.atlas)
+
+    def process(self):
+        id_folds, _ = self.load_folds()
+        subj_ids = get_subj_ids_from_folds(id_folds)
+
+        data_fmri, _, y_fmri = self.load_datalist(cm_path=self.cm_path_fmri, subj_ids=subj_ids)
+        data_dti, _, y_dti = self.load_datalist(cm_path=self.cm_path_dti, subj_ids=subj_ids)
+
+        assert y_fmri == y_dti, 'Unequal targets for fmri and dti. Check splits json file'
+
+
 class NeuroDenseDataset(thDataset, NeuroDataset):
     data_type: str = 'dense'
 
@@ -405,31 +431,115 @@ class NeuroDenseDataset(thDataset, NeuroDataset):
         return thDataLoader(Subset(self, test_idx), batch_size=batch_size, shuffle=False)
 
 
-class MultimodalGraphDataset(NeuroGraphDataset):
-    experiment_type: str = 'fmri_dti'
-    data_type: str = 'multimodal_graph'
+class MutlimodalDense2Dataset(NeuroDenseDataset):
+    """ Returns TWO embeddings from fMRI and DTI, hence it's ``MultimodalDenseDataset2"""
+    data_type: str = 'multimodal_dense_2'  # this is "tag" used in config
+    name: str  # comes from corresponding Trait
 
-    # TODO
     def __init__(
         self,
-        root,
+        root: str,
         atlas: str = 'aal',
-        normalize='global_max',
-        fusion = 'concat', # binary_dti
+        fmri_feature_type: str = 'timeseries',  # or 'conn_profile'
+        normalize: Optional[str] = None,  # global_max, log
     ):
+        self.atlas = atlas
+        self.fmri_feature_type = fmri_feature_type
+        # DTI
+        self.normalize = normalize
 
-        self.cm_path_fmri = osp.join(self.raw_dir, self.atlas)
-        self.cm_path_dti = osp.join(self.raw_dir, self.atlas)
+        # root: experiment specific files (CMs and time series matrices)
+        # NB: for multimodal dataset `root` and `global_dir` are equal, it's required for compatibility
+        self.root = osp.join(root, self.name)
+        # global_dir: dir with meta info and cv_splits; used to load targets
+        self.global_dir = osp.join(root, self.name)
 
-    def process(self):
+        # path to CM and time series
+        self.cm_path_fmri = osp.join(self.root, 'fmri', 'raw', self.atlas)
+        self.cm_path_dti = osp.join(self.root, 'dti', 'raw', self.atlas)
+
+        # extract subj_ids from splits
         id_folds, _ = self.load_folds()
-        subj_ids = get_subj_ids_from_folds(id_folds)
+        self.subj_ids = get_subj_ids_from_folds(id_folds)
 
-        data_fmri, _, y_fmri = self.load_datalist(cm_path=self.cm_path_fmri, subj_ids=subj_ids)
-        data_dti, _, y_dti = self.load_datalist(cm_path=self.cm_path_dti, subj_ids=subj_ids)
+        # load and process folds data w/ subj_ids; TODO: remove redundancy
+        self.folds = self.load_and_process_folds(self.subj_ids)
 
-        assert y_fmri == y_dti, 'Unequal targets for fmri and dti. Check splits json file'
+        # load two datalists
+        self.data_fmri, _, y_fmri = self.process(
+            self.cm_path_fmri,
+            self.subj_ids,
+            self.fmri_feature_type,
+        )
+        # conn_profile is the only option for DTI
+        self.data_dti, _, y_dti = self.process(
+            self.cm_path_dti,
+            self.subj_ids,
+            'conn_profile',
+        )
 
+        assert self.data_fmri.shape[0] == self.data_dti.shape[0], 'Diffrent datalists lenght for modalities'
+        assert torch.all(y_fmri == y_dti), 'Unequal targets for fmri and dti. Check splits json file'
+
+        self.y = y_fmri.reshape(-1)  # reshape to 1d tensor
+
+        self.num_fmri_features = self.data_fmri.shape[-1]
+        self.num_dti_features = self.data_dti.shape[-1]
+
+        # used for concat pooling
+        self.num_fmri_nodes = self.data_fmri.shape[1]
+        self.num_dti_nodes = self.data_dti.shape[1]
+
+    def process(self, cm_path, subj_ids, feature_type) -> tuple[torch.Tensor, list[str], torch.Tensor]:
+        # load_cms and load_target come from corresponding Trait
+        cms, ts, _ = self.load_cms(cm_path)
+        targets, *_ = self.load_targets()
+
+        if feature_type == 'timeseries':
+            return self.prepare_tensors(ts, targets, subj_ids, self.normalize)
+        elif feature_type == 'conn_profile':
+            return self.prepare_tensors(cms, targets, subj_ids, self.normalize)
+        else:
+            raise ValueError(f'Unknown fMRI feature_type: {self.fmri_feature_type}')
+
+    @staticmethod
+    def prepare_tensors(
+        matrix_dict: dict[str, np.ndarray],
+        targets: pd.DataFrame,
+        subj_ids: list[str],
+        normalize=None,
+    ) -> tuple[torch.Tensor, list[str], torch.Tensor]:
+
+        """ Transform connection matrix / time series into tensors
+         Args:
+             matrix_dict: mapping subj_id -> CM or time series
+             targets: pd.DataFrame indexed by subject_id
+             ...
+        """
+        datalist = []
+        for subj_id in subj_ids:
+            try:
+                # prepare connectivity_matrix
+                m = matrix_dict[subj_id]
+                m = normalize_cm(m, normalize)
+
+                # prepare label and append to datalist
+                label = targets.loc[subj_id]
+                datalist.append(torch.FloatTensor(m).t().unsqueeze(0))
+            except KeyError:
+                raise KeyError('CM subj_id not present in loaded targets')
+
+        # NB: we use LongTensor here
+        y = torch.LongTensor(targets.loc[subj_ids].copy().values)
+        data = torch.cat(datalist, dim=0)
+        # subj_ids returned for compatibility (for less refactoring later)
+        return data, subj_ids, y
+
+    def __len__(self):
+        return self.data_fmri.shape[0]
+
+    def __getitem__(self, idx: int):
+        return self.data_fmri[idx], self.data_dti[idx], self.y[idx]
 
 class ListDataset(InMemoryDataset):
     """ Basic dataset for ad-hoc experiments """
