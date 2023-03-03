@@ -3,8 +3,9 @@ from typing import Optional
 
 import torch
 import torch.nn as nn
-from transformers import Transformer,TransformerBlock,MSA
-from neurograph.config import MultiModalTransformerConfig, MSAOutput
+from .transformers import *
+from neurograph.config import MultiModalTransformerConfig
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -45,7 +46,7 @@ class MSACrossAttention(MSA):
         return q, k, v
 
 
-    def forward(self, x1: torch.Tensor, x2: torch.Tensor) -> MSAOutput:
+    def forward(self, x1: torch.Tensor, x2: torch.Tensor) -> MSACrossAttentionOutput:
             b, n, d = x1.shape
             h = self.num_heads
 
@@ -94,13 +95,13 @@ class HierarchicalAttentionBlock(nn.Module):
         msa_cfg: MSAConfig,
         mlp_cfg: MLPConfig,
     ):
-    self.head1 =TransformerBlock(input_dim,msa_cfg, mlp_cfg)
-    self.head2 =TransformerBlock(input_dim,msa_cfg, mlp_cfg)
+        self.head1 =TransformerBlock(input_dim,msa_cfg, mlp_cfg)
+        self.head2 =TransformerBlock(input_dim,msa_cfg, mlp_cfg)
 
     def forward(self, x1: torch.Tensor, x2: torch.Tensor):
-        z1 =self.head1(x1)
-        z2 =self.head2(x2)
-        return torch.cat((z1, z2), dim=1)
+            z1 =self.head1(x1)
+            z2 =self.head2(x2)
+            return torch.cat((z1, z2), dim=2)
 
 class FFN(nn.Module):
     def __init__(self,
@@ -117,13 +118,13 @@ class FFN(nn.Module):
         self.ln_head = nn.LayerNorm([self.hidden_dim])
 
     def forward(self, x, z1):
-        # https://arxiv.org/pdf/2002.04745.pdf
-        z1 = self.ln1(x)
-        s1 = x + z1.x  # sum_1
+            # https://arxiv.org/pdf/2002.04745.pdf
+            z1 = self.ln1(x)
+            s1 = x + z1.x  # sum_1
 
-        z2 = self.ln2(s1)
-        s2 = s1 + self.mlp(z2)  # sum_2
-        return s2
+            z2 = self.ln2(s1)
+            s2 = s1 + self.mlp(z2)  # sum_2
+            return s2
 
 
 class CrossAttentionBlock(TransformerBlock):
@@ -138,52 +139,66 @@ class CrossAttentionBlock(TransformerBlock):
             out_size=self.hidden_dim,
             config=mlp_cfg,
         )
-         self.head2 = FFN(
+        self.head2 = FFN(
             in_size=self.hidden_dim,
             out_size=self.hidden_dim,
             config=mlp_cfg,
         )
         
 
-
     def forward(self, x1: torch.Tensor, x2: torch.Tensor): 
          z1,z2 =self.msa(x1,x2)
          z1= self.head1(x1,z1)
          z2= self.head2(x2,z1)
-         return torch.cat((z1, z2), dim=1)
+         return torch.cat((z1, z2), dim=2)
       
 
 class MultiModalTransformer(Transformer):
 
     def __init__(self,
-        input_dim: int,
-        num_nodes: int,  # used for concat pooling
+        input_dim_1: int,
+        input_dim_2: int,
+        num_nodes_1: int,  # used for concat pooling
+        num_nodes_2: int,
         model_cfg: MultiModalTransformerConfig):
+
         self.attn_type=model_cfg.attn_type
+        self.make_projection =model_cfg.make_projection
+
+        transformer_hidden_dim = input_dim_1+input_dim_2
+
+        if self.make_projection:
+            transformer_hidden_dim = model_cfg.hidden_dim
 
         if self.attn_type=="concat":
-            super().__init__(input_dim*2,num_nodes,model_cfg)
+            super().__init__(transformer_hidden_dim, num_nodes_1,model_cfg)
         else:
-           super().__init__(input_dim,num_nodes,model_cfg)     
+            super().__init__(transformer_hidden_dim, num_nodes_1,model_cfg)
+
+        if self.make_projection:
+            self.lin_proj1 = nn.Linear(input_dim_1, model_cfg.hidden_dim // 2)
+            self.lin_proj2 = nn.Linear(input_dim_2, model_cfg.hidden_dim // 2)    
 
         attn_block_params =[model_cfg.hidden_dim, self.build_msa_cfg(model_cfg), self.build_mlp_cfg(model_cfg)]
 
         if self.attn_type == "hierarchical":
             self.mm_block = HierarchicalAttentionBlock(*attn_block_params)
         elif self.attn_type == "cross-attention":
-            self.mm_block = CrossAttentionBlock(*attn_block_params)   
-
+            self.mm_block = CrossAttentionBlock(*attn_block_params)
 
     def forward(self, batch):
         x_fmri, x_dti, y = batch
-        assert x_fmri.shape[1] == x_dti.shape[1]
+        if self.make_projection:
+            x_fmri=self.lin_proj1(x_fmri)
+            x_dti =self.lin_proj2(x_dti)
 
         if self.attn_type=="concat":
-            x =torch.cat((x_fmri, x_dti), dim=1)
-            super().forward((x,y))
+            x =torch.cat((x_fmri, x_dti), dim=2)
         elif self.attn_type in ["hierarchical", "cross-attention"]:
             x =self.mm_block(x_fmri, x_dti)
-            super().forward((x,y))
+        else:
+            raise ValueError(f'Invalid attn_type')    
+        return super().forward((x,y))
 
 
 

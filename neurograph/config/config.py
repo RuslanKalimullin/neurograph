@@ -191,12 +191,13 @@ class TransformerConfig(ModelConfig):
 class MultiModalTransformerConfig(ModelConfig):
     # name is a class name; used for initializing a model
     name: str  = 'MultiModalTransformer'  # TODO: remove, refactor ModelConfig class?
-    attn_type: str ='cross_attention'
+    attn_type: str ='concat'
     projection_dim: int  =64
     n_classes: int = 2
     num_layers: int = 1
-    hidden_dim: int = 116
-    num_heads: int = 4
+    hidden_dim: int = 32
+    num_heads: int = 2
+    make_projection:  bool =False
     attn_dropout: float = 0.5
     mlp_dropout: float = 0.5
     # hidden layer in transformer block mlp
@@ -257,7 +258,7 @@ class TrainConfig:
 class LogConfig:
     # how often print training metrics
     test_step: int = 1
-    wandb_project: str = 'mri_ppmi'
+    wandb_project: str = 'mri_multimodal'
     wandb_name: Optional[str] = None
     wandb_mode: Optional[str] = None  # 'disabled' for testing
 
@@ -294,3 +295,4 @@ cs.store(group='model', name='bgbGCN', node=bgbGCNConfig)
 cs.store(group='model', name='transformer', node=TransformerConfig)
 cs.store(group='model', name='baseGNN', node=standartGNNConfig)
 cs.store(group='model', name='dummy_mm2', node=DummyMultimodalDense2Config)
+cs.store(group='model', name='mm_transformer', node=MultiModalTransformerConfig)

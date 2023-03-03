@@ -7,6 +7,7 @@ from .config import (
     DatasetConfig,
     UnimodalDatasetConfig,
     MultimodalDatasetConfig,
+    MultiModalTransformerConfig,
     ModelConfig,
     bgbGATConfig,
     bgbGCNConfig,
