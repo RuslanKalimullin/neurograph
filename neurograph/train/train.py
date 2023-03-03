@@ -138,7 +138,6 @@ def train_one_split(
         for data in train_loader:
             optimizer.zero_grad()
             data, y = handle_batch(data, device)
-            model.to(device)
             out = model(data)
 
             if isinstance(loss_f, BCEWithLogitsLoss):
