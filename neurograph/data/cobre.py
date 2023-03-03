@@ -1,12 +1,8 @@
-from abc import ABC
-from shutil import rmtree
 import os.path as osp
-import json
 from typing import Generator, Optional
 
 import numpy as np
 import pandas as pd
-import torch
 from pathlib import Path
 from .datasets import NeuroDataset, NeuroGraphDataset, NeuroDenseDataset
 from .utils import load_cms, prepare_graph
@@ -24,32 +20,10 @@ class CobreTrait:
 
     global_dir: str  # just for type checks
 
-    def load_targets(self) -> tuple[pd.DataFrame, dict[str, int], dict[int, str]]:
-        """ Load and process *cobre* targets """
-
-        target = pd.read_csv(osp.join(self.global_dir, self.target_file), sep='\t')
-        target = target[[self.subj_id_col, self.target_col]]
-
-        # check that there are no different labels assigned to the same ID
-        max_labels_per_id = target.groupby(self.subj_id_col)[self.target_col].nunique().max()
-        assert max_labels_per_id == 1, 'Diffrent targets assigned to the same id!'
-
-        # remove duplicates by subj_id
-        target.drop_duplicates(subset=[self.subj_id_col], inplace=True)
-        # set subj_id as index
-        target.set_index(self.subj_id_col, inplace=True)
-
-        # leave only Schizo and Control
-        target = target[target[self.target_col].isin(('No_Known_Disorder', 'Schizophrenia_Strict'))].copy()
-
-        # label encoding
-        label2idx: dict[str, int] = {x: i for i, x in enumerate(target[self.target_col].unique())}
-        idx2label: dict[int, str] = {i: x for x, i in label2idx.items()}
-        target[self.target_col] = target[self.target_col].map(label2idx)
-
-        return target, label2idx, idx2label
-    
-    def load_cms(self,path: str | Path,) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray], dict[int, str]]:
+    def load_cms(
+        self,
+        path: str | Path,
+    ) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray], dict[int, str]]:
 
         """ Load connectivity matrices, fMRI time series
             and mapping node idx -> ROI name.
@@ -77,6 +51,31 @@ class CobreTrait:
                     roi_map = {i: c for i, c in enumerate(x.columns)}
 
         return data, ts, roi_map
+
+    def load_targets(self) -> tuple[pd.DataFrame, dict[str, int], dict[int, str]]:
+        """ Load and process *cobre* targets """
+
+        target = pd.read_csv(osp.join(self.global_dir, self.target_file), sep='\t')
+        target = target[[self.subj_id_col, self.target_col]]
+
+        # check that there are no different labels assigned to the same ID
+        max_labels_per_id = target.groupby(self.subj_id_col)[self.target_col].nunique().max()
+        assert max_labels_per_id == 1, 'Diffrent targets assigned to the same id!'
+
+        # remove duplicates by subj_id
+        target.drop_duplicates(subset=[self.subj_id_col], inplace=True)
+        # set subj_id as index
+        target.set_index(self.subj_id_col, inplace=True)
+
+        # leave only Schizo and Control
+        target = target[target[self.target_col].isin(('No_Known_Disorder', 'Schizophrenia_Strict'))].copy()
+
+        # label encoding
+        label2idx: dict[str, int] = {x: i for i, x in enumerate(target[self.target_col].unique())}
+        idx2label: dict[int, str] = {i: x for x, i in label2idx.items()}
+        target[self.target_col] = target[self.target_col].map(label2idx)
+
+        return target, label2idx, idx2label
 
 
 # NB: trait must go first

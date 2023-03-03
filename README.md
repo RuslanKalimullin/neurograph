@@ -34,6 +34,10 @@ By default, neurograph expects that your datasets are stored in `datasets` folde
 # how to use it
 Neurograph uses `hydra` for managing different configurations. See default config in `config/config.py` and `config/config.yaml`
 
+### COBRE
+Cobre dataset is used by default
+
+
 Run gridsearch for bgbGAT, bgbGCN:
 
 ```bash
@@ -50,15 +54,13 @@ Run gridsearch for bgbGAT, bgbGCN:
 
 Run gridsearch for vanilla transformers:
 ```bash
-python -m neurograph.train --multirun \
- dataset.data_path='<path_to_data>' \
- dataset.data_type=dense \
- +model=transformer8,transformer16,transformer32,transformer64,transformer116 \ 
- model.num_layers=1,2 \
- model.num_heads=1,2,4 \
- model.pooling=concat,mean \
- dataset.feature_type=conn_profile,timeseries \
- train.scheduler=null
+python -m neurograph.train --multirun dataset.data_type=dense +model=transformer8,transformer16,transformer32,transformer64,transformer116 model.num_layers=1,2 model.num_heads=1,2,4 model.pooling=concat,mean dataset.feature_type=conn_profile,timeseries train.scheduler=null train.device="cuda:0" train.epochs=100
+```
+
+### PPMI
+Since PPMI has only DTI data we need to change some default params. Also, DTI data usually needs some normalization since connectivity matrices contain a number of detected tract between different ROI
+```bash
+python -m <other params> dataset.name=ppmi dataset.experiment_type=dti dataset.normalize=log
 ```
 
 Results will be logged into wandb

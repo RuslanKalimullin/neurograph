@@ -21,6 +21,8 @@ class DatasetConfig:
     pt_thr: Optional[float] = None
     # dense specific
     feature_type: str = 'conn_profile'  #'timeseries'
+    # DTI specific
+    normalize: Optional[str] = None  # or global_max
 
 
 @dataclass
@@ -119,7 +121,7 @@ class bgbGATConfig(ModelConfig):
     final_node_dim: int = 8  # final node_dim after prepool
     use_abs_weight: bool = True
     # TODO: use it inside convolutions
-    dropout: float = 0.3
+    dropout: float = 0.0
     use_batchnorm: bool = True
     # gat spefic args
     num_heads: int = 2
@@ -160,7 +162,7 @@ class TransformerConfig(ModelConfig):
 
 @dataclass
 class TrainConfig:
-    device: str = 'cuda:1'
+    device: str = 'cuda:0'
     num_threads: Optional[int] = None
     epochs: int = 1
     batch_size: int = 8
@@ -169,7 +171,7 @@ class TrainConfig:
     optim_args: Optional[dict[str, Any]] = field(
         default_factory=lambda: {
             'lr': 1e-4,
-            'weight_decay': 1e-2,
+            'weight_decay': 1e-3,
         }
     )
     scheduler: Optional[str] = 'ReduceLROnPlateau'
@@ -183,7 +185,7 @@ class TrainConfig:
         }
     )
     # select best model on valid based on what metric
-    select_best_metric: str = 'acc'
+    select_best_metric: str = 'f1_macro'
     loss: str = 'CrossEntropyLoss'  #'BCEWithLogitsLoss'
     loss_args: Optional[dict[str, Any]] = field(
         # reduction sum is necessary here
@@ -197,7 +199,7 @@ class TrainConfig:
 class LogConfig:
     # how often print training metrics
     test_step: int = 1
-    wandb_project: str = 'mri_abide'
+    wandb_project: str = 'mri_ppmi'
     wandb_name: Optional[str] = None
     wandb_mode: Optional[str] = None  # 'disabled' for testing
 

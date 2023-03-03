@@ -1,20 +1,21 @@
-from abc import ABC, abstractmethod
-from shutil import rmtree
 import os.path as osp
 import json
 import logging
+from abc import ABC, abstractmethod
+from pathlib import Path
+from shutil import rmtree
 from typing import Any, Generator, Optional
 
 import numpy as np
 import pandas as pd
 import torch
+from torch.utils.data import DataLoader as thDataLoader
 from torch.utils.data import Dataset as thDataset
 from torch.utils.data import Subset
-from torch.utils.data import DataLoader as thDataLoader
 from torch_geometric.data import Data, InMemoryDataset
 from torch_geometric.loader import DataLoader as pygDataLoader
 
-from .utils import load_cms, prepare_graph
+from .utils import prepare_graph, normalize_cm
 
 
 class NeuroDataset(ABC):
@@ -32,7 +33,7 @@ class NeuroDataset(ABC):
     splits_file: str
     target_file: str
 
-    # TODO: is it redundant
+    # TODO: is it redundant?
     data_type: str
 
     # needed for type checks
@@ -44,6 +45,8 @@ class NeuroDataset(ABC):
         with open(osp.join(self.global_dir, self.splits_file)) as f:
             _folds = json.load(f)
 
+        # for cobre splits we have a weird format of splits
+        # so we need some extra steps
         folds = {}
         num_folds = -1
         for k, v in _folds.items():
@@ -54,6 +57,45 @@ class NeuroDataset(ABC):
             else:
                 folds[k] = v
         return folds, num_folds + 1
+
+    def load_and_process_folds(self, subj_ids: list[str]) -> dict[str, Any]:
+        """ After reading matrices and subject_ids, pass subject_ids here """
+
+        # load fold splits from json file
+        id_folds, num_folds = self.load_folds()
+
+        # map `subj_id` to `idx` in data_list
+        id2idx = {s: i for i, s in enumerate(subj_ids)}
+        logging.debug("id2idx: ", id2idx)
+
+        # map each `subj_id` to idx in `data_list` in folds
+        folds: dict[str, Any] = {'train': []}
+        if 'train' in id_folds:
+            for fold in id_folds['train']:
+                train_ids, valid_ids = fold['train'], fold['valid']
+                logging.debug("train_ids: ", train_ids)
+
+                one_fold = {
+                    'train': [id2idx[subj_id] for subj_id in train_ids],
+                    'valid': [id2idx[subj_id] for subj_id in valid_ids],
+                }
+                folds['train'].append(one_fold)
+        else:
+            # special case of cobre
+            # TODO: remove
+            for i in range(num_folds):
+                train_ids, valid_ids = id_folds[i]['train'], id_folds[i]['valid']
+                logging.debug("train_ids: ", train_ids)
+
+                one_fold = {
+                    'train': [id2idx[subj_id] for subj_id in train_ids],
+                    'valid': [id2idx[subj_id] for subj_id in valid_ids],
+                }
+                folds['train'].append(one_fold)
+
+        folds['test'] = [id2idx[subj_id] for subj_id in id_folds['test']]
+
+        return folds
 
     @abstractmethod
     def get_cv_loaders(
@@ -70,6 +112,12 @@ class NeuroDataset(ABC):
 
     @abstractmethod
     def load_targets(self) -> tuple[pd.DataFrame, dict[str, int], dict[int, str]]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def load_cms(
+        self, path: str | Path,
+    ) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray], dict[int, str]]:
         raise NotImplementedError
 
 
@@ -93,6 +141,7 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
         abs_thr: Optional[float] = None,
         pt_thr: Optional[float] = None,
         no_cache = False,
+        normalize: Optional[str] = None,  # 'global_max'
     ):
         """
         Args:
@@ -109,6 +158,7 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
         self.init_node_features = init_node_features
         self.abs_thr = abs_thr
         self.pt_thr = pt_thr
+        self.normalize = normalize
 
         self._validate()
 
@@ -144,6 +194,11 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
         self.num_nodes = num_nodes.item()
 
     @property
+    def cm_path(self):
+        # raw_dir specific to graph datasets :(
+        return osp.join(self.raw_dir, self.atlas)
+
+    @property
     def processed_file_names(self):
         thr = ''
         if self.abs_thr:
@@ -151,7 +206,7 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
         if self.pt_thr:
             thr = f'pt={self.pt_thr}'
 
-        prefix = '_'.join(s for s in [self.atlas, self.experiment_type, thr] if s)
+        prefix = '_'.join(s for s in [self.atlas, self.experiment_type, thr, self.normalize] if s)
         return [
             f'{prefix}_data.pt',
             f'{prefix}_subj_ids.txt',
@@ -173,49 +228,33 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
 
         # save subj_ids as a txt file
         with open(self.processed_paths[1], 'w') as f:
-            f.write('\n'.join(subj_ids))
+            f.write('\n'.join([str(x) for x in subj_ids]))
 
-        # load fold splits
-        id_folds, num_folds = self.load_folds()
-        id2idx = {s: i for i, s in enumerate(subj_ids)}
-
-        logging.debug("id2idx: ", id2idx)
-        # map each subj_id to idx in `data_list`
-        folds = {'train': []}
-        for i in range(num_folds):
-            train_ids, valid_ids = id_folds[i]['train'], id_folds[i]['valid']
-            logging.debug("train_ids: ", train_ids)
-            one_fold = {
-                'train': [id2idx[subj_id] for subj_id in train_ids],
-                'valid': [id2idx[subj_id] for subj_id in valid_ids],
-            }
-            folds['train'].append(one_fold)
-        folds['test'] = [id2idx[subj_id] for subj_id in id_folds['test']]
+        # process folds (map subj_id to idx in datalist)
+        folds = self.load_and_process_folds(subj_ids)
 
         with open(self.processed_paths[2], 'w') as f_folds:
             json.dump(folds, f_folds)
 
-    @property
-    def cm_path(self):
-        # raw_dir specific to graph datasets :(
-        return osp.join(self.raw_dir, self.atlas)
-
     def load_datalist(self) -> tuple[list[Data], list[str], pd.DataFrame]:
+        # load mapping subject_id -> label
         targets, label2idx, idx2label = self.load_targets()
 
         # subj_id -> CM, time series matrices, ROI names
         cms, ts, roi_map = self.load_cms(self.cm_path)
+
         # prepare data list from cms and targets
         datalist = []
         subj_ids = []
         for subj_id, cm in cms.items():
             try:
                 # try to process a graph
-                datalist.append(prepare_graph(cm, subj_id, targets, self.abs_thr, self.pt_thr))
+                datalist.append(prepare_graph(cm, subj_id, targets, self.abs_thr, self.pt_thr, self.normalize))
                 subj_ids.append(subj_id)
             except KeyError:
                 # ignore if subj_id is not in targets
                 pass
+        # select labels by subject ids
         y = targets.loc[subj_ids].copy()
 
         return datalist, subj_ids, y
@@ -243,11 +282,6 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
         if self.pt_thr is not None and self.abs_thr is not None:
             raise ValueError('Both proportional threshold `pt` and absolute threshold `thr` are not None! Choose one!')
 
-    @property
-    def xcm_path(self):
-        # raw_dir specific to graph datasets :(
-        return osp.join(self.raw_dir, self.atlas)
-
     def __repr__(self):
         return f'{self.__class__.__name__}: atlas={self.atlas}, experiment_type={self.experiment_type}, pt_thr={self.pt_thr}, abs_thr={self.abs_thr}, size={len(self)}'
 
@@ -261,10 +295,12 @@ class NeuroDenseDataset(thDataset, NeuroDataset):
         atlas: str = 'aal',
         experiment_type: str = 'fmri',
         feature_type: str = 'timeseries',  # or 'conn_profile'
+        normalize: Optional[str] = None,  # global_max
     ):
         self.atlas = atlas
         self.experiment_type = experiment_type
         self.feature_type = feature_type
+        self.normalize = normalize
 
         # root: experiment specific files (CMs and time series matrices)
         self.root = osp.join(root, self.name, experiment_type)
@@ -276,21 +312,8 @@ class NeuroDenseDataset(thDataset, NeuroDataset):
         self.data, self.subj_ids, self.y = self.load_data()
         self.y = self.y.reshape(-1)  # reshape to 1d tensor
 
-        # load folds data w/ subj_ids
-        id_folds, num_folds = self.load_folds()
-        # map subj_id to idx
-        id2idx = {s: i for i, s in enumerate(self.subj_ids)}
-
-        # compute folds where each subj_id is mapped to idx in `data`
-        self.folds: dict[str, Any] = {'train': []}
-        for i in range(num_folds):
-            train_ids, valid_ids = id_folds[i]['train'], id_folds[i]['valid']
-            one_fold = {
-                'train': [id2idx[subj_id] for subj_id in train_ids],
-                'valid': [id2idx[subj_id] for subj_id in valid_ids],
-            }
-            self.folds['train'].append(one_fold)
-        self.folds['test'] = [id2idx[subj_id] for subj_id in id_folds['test']]
+        # load and process folds data w/ subj_ids
+        self.folds = self.load_and_process_folds(self.subj_ids)
 
         self.num_features = self.data.shape[-1]
         # used for concat pooling
@@ -302,9 +325,9 @@ class NeuroDenseDataset(thDataset, NeuroDataset):
 
         if self.feature_type == 'timeseries':
             # prepare list of subj_ids and corresponding tensors
-            return self.prepare_data(ts, targets)
+            return self.prepare_data(ts, targets, self.normalize)
         elif self.feature_type == 'conn_profile':
-            return self.prepare_data(cms, targets)
+            return self.prepare_data(cms, targets, self.normalize)
         else:
             raise ValueError(f'Unknown feature_type: {self.feature_type}')
 
@@ -318,6 +341,7 @@ class NeuroDenseDataset(thDataset, NeuroDataset):
     def prepare_data(
         matrix_dict: dict[str, np.ndarray],
         targets: pd.DataFrame,
+        normalize=None,
     ) -> tuple[torch.Tensor, list[str], torch.Tensor]:
         # matrix_dict: mapping subj_id -> CM of time series
         # targets: pd.DataFrame indexed by subject_id
@@ -326,12 +350,19 @@ class NeuroDenseDataset(thDataset, NeuroDataset):
         subj_ids = []
         for subj_id, m in matrix_dict.items():
             try:
+                # prepare connectivity_matrix
+                m = normalize_cm(m, normalize)
+
+                # prepare label and append to datalist
                 label = targets.loc[subj_id]
-                datalist.append(torch.tensor(m).t().unsqueeze(0))
+                datalist.append(torch.FloatTensor(m).t().unsqueeze(0))
+
+                # append to subj_ids
                 subj_ids.append(subj_id)
             except KeyError:
                 # ignore if subj_id is not in targets
                 pass
+
         # NB: we use LongTensor here
         y = torch.LongTensor(targets.loc[subj_ids].copy().values)
         data = torch.cat(datalist, dim=0)
