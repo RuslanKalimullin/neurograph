@@ -15,7 +15,7 @@ from torch.utils.data import Subset
 from torch_geometric.data import Data, InMemoryDataset
 from torch_geometric.loader import DataLoader as pygDataLoader
 
-from .utils import prepare_graph, normalize_cm
+from .utils import get_subj_ids_from_folds, prepare_graph, normalize_cm
 
 
 class NeuroDataset(ABC):
@@ -141,11 +141,11 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
         abs_thr: Optional[float] = None,
         pt_thr: Optional[float] = None,
         no_cache = False,
-        normalize: Optional[str] = None,  # 'global_max'
+        normalize: Optional[str] = None,  # 'global_max', 'log', 'binary_dti'
     ):
         """
         Args:
-            root (str, optional): root dir where dataset should be saved
+            root (str, optional): root dir where datasets should be saved
             atlas (str): atlas name
             thr (float, optional): threshold used for pruning edges #TODO
             k (int, optional): Number of neighbors used to compute a threshold for pruning
@@ -163,7 +163,8 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
         self._validate()
 
         # root: experiment specific files (CMs and time series matrices)
-        self.root = osp.join(root, self.name, experiment_type)
+        self.experiments_dir = osp.join(root, self.name)
+        self.root = osp.join(self.experiments_dir, experiment_type)
         # global_dir: dir with meta info and cv_splits
         self.global_dir = osp.join(root, self.name)
 
@@ -192,11 +193,6 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
         num_nodes = self.slices['x'].diff().unique()
         assert len(num_nodes) == 1, 'You have different number of nodes in graphs!'
         self.num_nodes = num_nodes.item()
-
-    @property
-    def cm_path(self):
-        # raw_dir specific to graph datasets :(
-        return osp.join(self.raw_dir, self.atlas)
 
     @property
     def processed_file_names(self):
@@ -236,12 +232,27 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
         with open(self.processed_paths[2], 'w') as f_folds:
             json.dump(folds, f_folds)
 
-    def load_datalist(self) -> tuple[list[Data], list[str], pd.DataFrame]:
+    def load_datalist(
+        self,
+        cm_path=None,
+        subj_ids=None,
+        ignore_missing_subjects=True,
+    ) -> tuple[list[Data], list[str], pd.DataFrame]:
+        if cm_path is None:
+            cm_path = self.cm_path
+
         # load mapping subject_id -> label
         targets, label2idx, idx2label = self.load_targets()
 
         # subj_id -> CM, time series matrices, ROI names
-        cms, ts, roi_map = self.load_cms(self.cm_path)
+        cms, ts, roi_map = self.load_cms(cm_path)
+
+        # filter by subj_ids from splits
+        if subj_ids is not None:
+            cms = {subj_id: cms[subj_id] for subj_id in subj_ids}
+            # for DTI data we don't have timeseries data
+            if ts:
+                ts = {subj_id: ts[subj_id] for subj_id in subj_ids}
 
         # prepare data list from cms and targets
         datalist = []
@@ -251,15 +262,18 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
                 # try to process a graph
                 datalist.append(prepare_graph(cm, subj_id, targets, self.abs_thr, self.pt_thr, self.normalize))
                 subj_ids.append(subj_id)
-            except KeyError:
+            except KeyError as e:
                 # ignore if subj_id is not in targets
-                pass
+                if ignore_missing_subjects:
+                    pass
+                else:
+                    raise KeyError('CM subj_id not present in loaded targets') from e
+
         # select labels by subject ids
         y = targets.loc[subj_ids].copy()
 
         return datalist, subj_ids, y
 
-    # TODO: move to base class?
     def get_cv_loaders(self, batch_size=8, valid_batch_size=None):
         valid_batch_size = valid_batch_size if valid_batch_size else batch_size
         for fold in self.folds['train']:
@@ -269,10 +283,14 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
                 'valid': pygDataLoader(self[valid_idx], batch_size=valid_batch_size, shuffle=False),
             }
 
-    # TODO: move to base class?
     def get_test_loader(self, batch_size: int) -> pygDataLoader:
         test_idx = self.folds['test']
         return pygDataLoader(self[test_idx], batch_size=batch_size, shuffle=False)
+
+    @property
+    def cm_path(self):
+        # raw_dir specific to graph datasets :(
+        return osp.join(self.raw_dir, self.atlas)
 
     def _validate(self):
         if self.atlas not in self.available_atlases:
@@ -385,6 +403,32 @@ class NeuroDenseDataset(thDataset, NeuroDataset):
     def get_test_loader(self, batch_size: int) -> thDataLoader:
         test_idx = self.folds['test']
         return thDataLoader(Subset(self, test_idx), batch_size=batch_size, shuffle=False)
+
+
+class MultimodalGraphDataset(NeuroGraphDataset):
+    experiment_type: str = 'fmri_dti'
+    data_type: str = 'multimodal_graph'
+
+    # TODO
+    def __init__(
+        self,
+        root,
+        atlas: str = 'aal',
+        normalize='global_max',
+        fusion = 'concat', # binary_dti
+    ):
+
+        self.cm_path_fmri = osp.join(self.raw_dir, self.atlas)
+        self.cm_path_dti = osp.join(self.raw_dir, self.atlas)
+
+    def process(self):
+        id_folds, _ = self.load_folds()
+        subj_ids = get_subj_ids_from_folds(id_folds)
+
+        data_fmri, _, y_fmri = self.load_datalist(cm_path=self.cm_path_fmri, subj_ids=subj_ids)
+        data_dti, _, y_dti = self.load_datalist(cm_path=self.cm_path_dti, subj_ids=subj_ids)
+
+        assert y_fmri == y_dti, 'Unequal targets for fmri and dti. Check splits json file'
 
 
 class ListDataset(InMemoryDataset):

@@ -185,3 +185,24 @@ def generate_splits(subj_ids: list | np.ndarray, y: np.ndarray, seed: int = 1380
     folds['test'] = list(test)
 
     return folds
+
+
+def get_subj_ids_from_folds(id_folds):
+    subj_ids = []
+
+    if set(id_folds.keys()) == set(['train', 'test']):
+        train_folds = id_folds['train']
+    else:
+        # special case of old splits when we don't have 'train' key,
+        # but have integer keys for each train fold
+        train_idx = sorted([k for k in id_folds.keys() if isinstance(k, int)])
+        train_folds = [id_folds[i] for i in train_idx]
+
+    for fold in train_folds:
+        train_ids, valid_ids = fold['train'], fold['valid']
+        subj_ids.extend(train_ids)
+        subj_ids.extend(valid_ids)
+
+    subj_ids.extend(id_folds['test'])
+
+    return set(subj_ids)

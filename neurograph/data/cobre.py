@@ -83,5 +83,9 @@ class CobreGraphDataset(CobreTrait, NeuroGraphDataset):
     pass
 
 
+class CobreMultimodalGraphDataset(CobreTrait, NeuroGraphDataset):
+    pass
+
+
 class CobreDenseDataset(CobreTrait, NeuroDenseDataset):
     pass
