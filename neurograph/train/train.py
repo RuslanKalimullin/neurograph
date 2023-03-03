@@ -16,7 +16,7 @@ from torch_geometric.data import Batch as pygBatch, Data as pygData
 from torch_geometric.loader import DataLoader as pygDataLoader
 import wandb
 
-from neurograph.config import Config, ModelConfig
+from neurograph.config import Config, ModelConfig, UnimodalDatasetConfig, MultimodalDatasetConfig
 from neurograph.data import NeuroDataset, NeuroGraphDataset
 import neurograph.models
 from neurograph.models.available_modules import (
@@ -39,7 +39,7 @@ def train(ds: NeuroDataset, cfg: Config):
     ''' Run cross-validation, report metrics on valids and test '''
 
     # metrics  # TODO put into dataclass or dict
-    logging.info(f'Model architecture:\n{init_model(ds, cfg.model)})')
+    logging.info(f'Model architecture:\n{init_model(ds, cfg)})')
 
     # get test loader beforehand
     test_loader = ds.get_test_loader(cfg.train.valid_batch_size)
@@ -97,10 +97,19 @@ def handle_batch(
     # TODO: create DataDense dataclass (analogue of pyg.Data) and
     # define custom collate_fn for DenseDataset DataLoaders
     # so we have the same interface with PyG
+
+    # it's ugly but it works
     if isinstance(batch, list) or isinstance(batch, tuple):
-        x, y = batch
-        x, y = x.to(device), y.to(device)
-        batch = (x, y)
+        if len(batch) == 2:
+            x, y = batch
+            x, y = x.to(device), y.to(device)
+            batch = (x, y)
+        elif len(batch) == 3:
+            x1, x2, y = batch
+            x1, x2, y = x1.to(device), x2.to(device), y.to(device)
+            batch = (x1, x2, y)
+        else:
+            raise ValueError('Unknown batch composition! expect len=2,3')
     else:
         batch = batch.to(device)
         y = batch.y
@@ -194,7 +203,6 @@ def train_one_split(
     return best_valid_metrics, best_model
 
 
-# TODO: add support for both CE and BCE
 @torch.inference_mode()
 def evaluate(model, loader, loss_f, cfg: Config):
     ''' compute metrics on a subset e.g. train, valid or test'''
@@ -233,7 +241,7 @@ def evaluate(model, loader, loss_f, cfg: Config):
 
 def init_model_optim_loss(ds: NeuroDataset, cfg: Config):
     # create model instance
-    model = init_model(ds, cfg.model)
+    model = init_model(ds, cfg)
     # set optimizer
     optimizer = available_optimizers[cfg.train.optim](
         model.parameters(),
@@ -264,10 +272,22 @@ def init_model_optim_loss(ds: NeuroDataset, cfg: Config):
     return model, optimizer, scheduler, loss_f
 
 
-def init_model(dataset: NeuroDataset, model_cfg: ModelConfig):
+# TODO: dataset fix type hints
+def init_model(dataset: NeuroDataset, cfg: Config):
+    model_cfg: ModelConfig = cfg.model
     available_models = {name: obj for name, obj in inspect.getmembers(neurograph.models)}
 
     ModelKlass = available_models[model_cfg.name]
+
+    # TODO: add more checks for model types (uni, multi; graph, dense)
+    if cfg.dataset.data_type.startswith('multimodal_'):
+        return ModelKlass(
+            input_dim_1=dataset.num_fmri_features,
+            input_dim_2=dataset.num_dti_features,
+            num_nodes_1=dataset.num_fmri_nodes,
+            num_nodes_2=dataset.num_dti_nodes,
+            model_cfg=model_cfg,
+        )
 
     return ModelKlass(
         input_dim=dataset.num_features,

@@ -5,24 +5,38 @@ from omegaconf import MISSING
 from hydra.core.config_store import ConfigStore
 from dataclasses import dataclass, field
 import neurograph
-from neurograph.data import available_datasets
+
+DEFAULT_DATA_PATH = Path(neurograph.__file__).resolve().parent.parent / 'datasets'
 
 
 @dataclass
 class DatasetConfig:
+    data_type: str
     name: str = 'cobre'
-    data_type: str = 'graph'  # or 'dense'
-    experiment_type: str = 'fmri' # TODO: support list for multimodal experiments
     atlas: str = 'aal'
-    data_path: Path = Path(neurograph.__file__).resolve().parent.parent / 'datasets'
+    # for DTI
+    normalize: Optional[str] = None
+
+    data_path: Path = DEFAULT_DATA_PATH
+
+
+@dataclass
+class UnimodalDatasetConfig(DatasetConfig):
+    data_type: str = 'graph'  # or 'dense'
+    experiment_type: str = 'fmri'
     # graph specific
     #init_node_features: str = 'conn_profile'  # TODO
     abs_thr: Optional[float] = None
     pt_thr: Optional[float] = None
     # dense specific
     feature_type: str = 'conn_profile'  #'timeseries'
-    # DTI specific
-    normalize: Optional[str] = None  # or global_max
+
+
+@dataclass
+class MultimodalDatasetConfig(DatasetConfig):
+    data_type: str = 'multimodal_dense_2'  # only option rn
+    fmri_feature_type: str = 'conn_profile'
+    normalize: Optional[str] = 'global_max'
 
 
 @dataclass
@@ -59,7 +73,19 @@ class ModelConfig:
 
     # required for correct init of models
     # see `train.train.init_model`
+
     data_type: str
+
+
+@dataclass
+class DummyMultimodalDense2Config:
+    name: str = 'DummyMultimodalDense2Model'
+    n_classes: int = 2
+    hidden: int = 8
+    dropout: float = 0.2
+    act_func: Optional[str] = 'ReLU'
+    act_func_params: Optional[dict] = None
+
 
 @dataclass
 class standartGNNConfig(ModelConfig):
@@ -82,6 +108,7 @@ class standartGNNConfig(ModelConfig):
     # gcn spefic args
 
     mlp_config: MLPConfig = field(default_factory=MLPConfig)
+
 
 @dataclass
 class bgbGCNConfig(ModelConfig):
@@ -240,7 +267,8 @@ class Config:
     ''' Config schema w/ default values (see dataclasses above) '''
     seed: int = 1380
     model: Any = MISSING
-    dataset: DatasetConfig = field(default_factory=DatasetConfig)
+#    dataset: DatasetConfig = field(default_factory=DatasetConfig)
+    dataset: Any = MISSING
     train: TrainConfig = field(default_factory=TrainConfig)
     log: LogConfig = field(default_factory=LogConfig)
 
@@ -255,7 +283,14 @@ def validate_config(cfg: Config):
 # register default config as `base_config`
 cs = ConfigStore.instance()
 cs.store(name='base_config', node=Config)
+
+# base dataset configs
+cs.store(group='dataset', name='base_dataset', node=UnimodalDatasetConfig)
+cs.store(group='dataset', name='base_multimodal_dataset', node=MultimodalDatasetConfig)
+
+# base model configs
 cs.store(group='model', name='bgbGAT', node=bgbGATConfig)
 cs.store(group='model', name='bgbGCN', node=bgbGCNConfig)
 cs.store(group='model', name='transformer', node=TransformerConfig)
 cs.store(group='model', name='baseGNN', node=standartGNNConfig)
+cs.store(group='model', name='dummy_mm2', node=DummyMultimodalDense2Config)

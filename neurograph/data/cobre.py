@@ -4,7 +4,7 @@ from typing import Generator, Optional
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from .datasets import NeuroDataset, NeuroGraphDataset, NeuroDenseDataset
+from .datasets import NeuroDataset, NeuroGraphDataset, NeuroDenseDataset, MutlimodalDense2Dataset
 from .utils import load_cms, prepare_graph
 
 
@@ -83,5 +83,13 @@ class CobreGraphDataset(CobreTrait, NeuroGraphDataset):
     pass
 
 
+#class CobreMultimodalGraphDataset(CobreTrait, NeuroGraphDataset):
+#    pass
+
+
 class CobreDenseDataset(CobreTrait, NeuroDenseDataset):
+    pass
+
+
+class CobreMultimodalDense2Dataset(CobreTrait, MutlimodalDense2Dataset):
     pass

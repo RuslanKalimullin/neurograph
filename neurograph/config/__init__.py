@@ -5,6 +5,8 @@ from .config import (
     MLPConfig,
     MLPlayer,
     DatasetConfig,
+    UnimodalDatasetConfig,
+    MultimodalDatasetConfig,
     ModelConfig,
     bgbGATConfig,
     bgbGCNConfig,

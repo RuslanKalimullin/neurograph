@@ -1,28 +1,31 @@
-import pytest
 from functools import reduce
+
+import pytest
 from neurograph.config import get_config
 from neurograph.data.cobre import CobreDenseDataset, CobreGraphDataset
+
+from .conftest import data_path
 
 
 @pytest.fixture(scope='session')
 def cobre_ds_no_thr():
-    return CobreGraphDataset(root=get_config().dataset.data_path, no_cache=True)
+    return CobreGraphDataset(root=data_path, no_cache=True)
 
 
 @pytest.fixture(scope='session')
 def cobre_ds_abs_thr():
-    return CobreGraphDataset(root=get_config().dataset.data_path, abs_thr=0.3, no_cache=True)
+    return CobreGraphDataset(root=data_path, abs_thr=0.3, no_cache=True)
 
 
 @pytest.fixture(scope='session')
 def cobre_ds_pt_thr():
-    return CobreGraphDataset(root=get_config().dataset.data_path, pt_thr=0.5, no_cache=True)
+    return CobreGraphDataset(root=data_path, pt_thr=0.5, no_cache=True)
 
 
 @pytest.fixture(scope='session')
 def cobre_dense_ts():
     return CobreDenseDataset(
-        root=get_config().dataset.data_path,
+        root=data_path,
         atlas='aal',
         experiment_type='fmri',
         feature_type='timeseries',
@@ -32,7 +35,7 @@ def cobre_dense_ts():
 @pytest.fixture(scope='session')
 def cobre_dense_connprofile():
     return CobreDenseDataset(
-        root=get_config().dataset.data_path,
+        root=data_path,
         atlas='aal',
         experiment_type='fmri',
         feature_type='conn_profile',
