@@ -152,7 +152,7 @@ def build_gcn_block(
             nn.Linear(hidden_dim, proj_dim),
             nn.LeakyReLU(negative_slope = 0.2),
             nn.BatchNorm1d(proj_dim) if use_batchnorm else nn.Identity(),
-            nn.Dropout(p=0.5),
+            nn.Dropout(p=dropout)
         ]
     )
 

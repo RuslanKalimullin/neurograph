@@ -2,17 +2,11 @@ import math
 from typing import Any, Union, Tuple, Optional
 
 import torch
-from torch_geometric.nn import global_add_pool, global_mean_pool, MessagePassing
-from torch.nn import Parameter
+from torch_geometric.nn import global_add_pool, global_mean_pool
 import numpy as np
-from torch.nn import functional as F
-from torch_geometric.nn.inits import glorot, zeros
 from typing import Tuple
-from torch import Tensor
-from torch_geometric.nn import GCNConv
 from torch_geometric.nn import Sequential as pygSequential
 from torch import nn
-import torch_geometric
 
 from neurograph.config import Config, ModelConfig, bgbGCNConfig,standartGNNConfig
 from neurograph.models.mlp import BasicMLP
@@ -104,11 +98,11 @@ class baseGNN(torch.nn.Module):
 
         if self.pooling == "concat":
             # gat block return embeddings of`inter_dim` size
-
-            fcn_dim = model_cfg.final_node_dim * num_nodes
+            print("num_nodes", num_nodes)
+            fcn_dim = hidden_dim * num_nodes
         elif self.pooling == 'sum' or self.pooling == 'mean':
 
-            fcn_dim = model_cfg.final_node_dim
+            fcn_dim = hidden_dim
 
         self.fcn = BasicMLP(in_size=fcn_dim, out_size=num_classes, config=model_cfg.mlp_config)
 

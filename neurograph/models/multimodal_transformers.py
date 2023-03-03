@@ -102,7 +102,29 @@ class HierarchicalAttentionBlock(nn.Module):
         z2 =self.head2(x2)
         return torch.cat((z1, z2), dim=1)
 
-class 
+class FFN(nn.Module):
+    def __init__(self,
+        input_dim: int,
+        msa_cfg: MSAConfig,
+        mlp_cfg: MLPConfig):
+
+        self.head = BasicMLP(
+                in_size=self.hidden_dim,
+                out_size=self.hidden_dim,
+                config=mlp_cfg,
+            )
+        self.ln_head = nn.LayerNorm([self.hidden_dim])
+        self.ln_head = nn.LayerNorm([self.hidden_dim])
+
+    def forward(self, x, z1):
+        # https://arxiv.org/pdf/2002.04745.pdf
+        z1 = self.ln1(x)
+        s1 = x + z1.x  # sum_1
+
+        z2 = self.ln2(s1)
+        s2 = s1 + self.mlp(z2)  # sum_2
+        return s2
+
 
 class CrossAttentionBlock(TransformerBlock):
     def __init__(self,
@@ -111,20 +133,24 @@ class CrossAttentionBlock(TransformerBlock):
         mlp_cfg: MLPConfig):
 
         self.msa = MSACrossAttention(input_dim, msa_cfg)
-
-        ## TODO in separate class
-
-        self.head1 = BasicMLP(
+        self.head1 = FFN(
             in_size=self.hidden_dim,
             out_size=self.hidden_dim,
             config=mlp_cfg,
         )
-        self.ln_head1 = nn.LayerNorm([self.hidden_dim])
-        self.ln_head2 = nn.LayerNorm([self.hidden_dim])
+         self.head2 = FFN(
+            in_size=self.hidden_dim,
+            out_size=self.hidden_dim,
+            config=mlp_cfg,
+        )
+        
 
 
     def forward(self, x1: torch.Tensor, x2: torch.Tensor): 
-         z1,z2 =self.msa(x1,x2)  
+         z1,z2 =self.msa(x1,x2)
+         z1= self.head1(x1,z1)
+         z2= self.head2(x2,z1)
+         return torch.cat((z1, z2), dim=1)
       
 
 class MultiModalTransformer(Transformer):
@@ -137,12 +163,15 @@ class MultiModalTransformer(Transformer):
 
         if self.attn_type=="concat":
             super().__init__(input_dim*2,num_nodes,model_cfg)
+        else:
+           super().__init__(input_dim,num_nodes,model_cfg)     
 
         attn_block_params =[model_cfg.hidden_dim, self.build_msa_cfg(model_cfg), self.build_mlp_cfg(model_cfg)]
 
-        self.mm_block = HierarchicalAttentionBlock(*attn_block_params)
-                            if self.attn_type == "hierarchical"  else  
-                            CrossAttentionBlock(*attn_block_params)   
+        if self.attn_type == "hierarchical":
+            self.mm_block = HierarchicalAttentionBlock(*attn_block_params)
+        elif self.attn_type == "cross-attention":
+            self.mm_block = CrossAttentionBlock(*attn_block_params)   
 
 
     def forward(self, batch):
@@ -152,7 +181,9 @@ class MultiModalTransformer(Transformer):
         if self.attn_type=="concat":
             x =torch.cat((x_fmri, x_dti), dim=1)
             super().forward((x,y))
-        elif self.att_type =="hierarchical":
+        elif self.attn_type in ["hierarchical", "cross-attention"]:
+            x =self.mm_block(x_fmri, x_dti)
+            super().forward((x,y))
 
 
 

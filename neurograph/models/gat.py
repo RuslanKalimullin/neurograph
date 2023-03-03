@@ -161,6 +161,7 @@ def build_gat_block(
             nn.Linear(hidden_dim * num_heads, proj_dim),
             nn.LeakyReLU(negative_slope = 0.2),
             nn.BatchNorm1d(proj_dim) if use_batchnorm else nn.Identity(),
+            nn.Dropout(p=dropout)
         ]
     )
 
