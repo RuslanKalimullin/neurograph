@@ -161,6 +161,37 @@ class TransformerConfig(ModelConfig):
     ))
 
 @dataclass
+class MultiModalTransformerConfig(ModelConfig):
+    # name is a class name; used for initializing a model
+    name: str  = 'MultiModalTransformer'  # TODO: remove, refactor ModelConfig class?
+    attn_type: str ='cross_attention'
+    projection_dim: int  =64
+    n_classes: int = 2
+    num_layers: int = 1
+    hidden_dim: int = 116
+    num_heads: int = 4
+    attn_dropout: float = 0.5
+    mlp_dropout: float = 0.5
+    # hidden layer in transformer block mlp
+    mlp_hidden_multiplier: float = 0.2
+
+    data_type: str = 'dense'
+
+    return_attn: bool = False
+    # transformer block MLP parameters
+    mlp_act_func: Optional[str] = 'GELU'
+    mlp_act_func_params: Optional[dict] = None
+
+    pooling: str = 'concat'
+
+    # final MLP layer config
+    head_config:  MLPConfig = field(default_factory=lambda: MLPConfig(
+        layers = [
+            MLPlayer(out_size=4, dropout=0.5, act_func='GELU',),
+        ]
+    ))
+
+@dataclass
 class TrainConfig:
     device: str = 'cuda:0'
     num_threads: Optional[int] = None
