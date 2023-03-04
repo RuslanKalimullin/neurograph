@@ -67,7 +67,7 @@ class MSACrossAttention(MSA):
             scores2 = torch.softmax(raw_scores2 * self.factor, dim=-1)
 
             # save attention matrices for each head
-            saved_scores = None
+            saved_scores1,saved_scores2  = None, None
             if self.return_attn:
                 saved_scores1 = scores1.clone()
                 saved_scores2 = scores2.clone()
@@ -81,7 +81,7 @@ class MSACrossAttention(MSA):
             out2 = torch.einsum('bhij,bjhp->bihp', scores2, v2)
 
             # 'concat' each head output
-            return MSAOutput(x1=out1.reshape(b, n, -1),
+            return MSACrossAttentionOutput(x1=out1.reshape(b, n, -1),
                              x2=out1.reshape(b, n, -1),
                              attn1=saved_scores1,
                              attn2=saved_scores2)
@@ -91,12 +91,14 @@ class MSACrossAttention(MSA):
 class HierarchicalAttentionBlock(nn.Module):
     def __init__(
         self,
-        input_dim: int,
+        input_dim_1: int,
+        input_dim_2: int,
         msa_cfg: MSAConfig,
         mlp_cfg: MLPConfig,
     ):
-        self.head1 =TransformerBlock(input_dim,msa_cfg, mlp_cfg)
-        self.head2 =TransformerBlock(input_dim,msa_cfg, mlp_cfg)
+        super().__init__()
+        self.head1 =TransformerBlock(input_dim_1,msa_cfg, mlp_cfg)
+        self.head2 =TransformerBlock(input_dim_2,msa_cfg, mlp_cfg)
 
     def forward(self, x1: torch.Tensor, x2: torch.Tensor):
             z1 =self.head1(x1)
@@ -106,50 +108,59 @@ class HierarchicalAttentionBlock(nn.Module):
 class FFN(nn.Module):
     def __init__(self,
         input_dim: int,
-        msa_cfg: MSAConfig,
+        output_dim: int,
         mlp_cfg: MLPConfig):
 
-        self.head = BasicMLP(
-                in_size=self.hidden_dim,
-                out_size=self.hidden_dim,
+        super().__init__()
+       
+        self.mlp = BasicMLP(
+                in_size=input_dim,
+                out_size=output_dim,
                 config=mlp_cfg,
             )
-        self.ln_head = nn.LayerNorm([self.hidden_dim])
-        self.ln_head = nn.LayerNorm([self.hidden_dim])
+        self.ln1 = nn.LayerNorm([input_dim])
+        self.ln2 = nn.LayerNorm([input_dim])
 
     def forward(self, x, z1):
             # https://arxiv.org/pdf/2002.04745.pdf
-            z1 = self.ln1(x)
-            s1 = x + z1.x  # sum_1
+            x = self.ln1(x)
+            s1 = x + z1  # sum_1
 
             z2 = self.ln2(s1)
             s2 = s1 + self.mlp(z2)  # sum_2
             return s2
 
 
-class CrossAttentionBlock(TransformerBlock):
+class CrossAttentionBlock(nn.Module):
     def __init__(self,
-        input_dim: int,
+        input_dim_1: int,
+        input_dim_2: int,
         msa_cfg: MSAConfig,
         mlp_cfg: MLPConfig):
 
-        self.msa = MSACrossAttention(input_dim, msa_cfg)
+        super().__init__()
+
+        ##TODO release cross-attention with different dims
+        assert input_dim_1==input_dim_2
+        self.hidden_dim = msa_cfg.hidden_dim
+
+        self.msa = MSACrossAttention(input_dim_1, msa_cfg)
         self.head1 = FFN(
-            in_size=self.hidden_dim,
-            out_size=self.hidden_dim,
-            config=mlp_cfg,
+            input_dim=self.hidden_dim,
+            output_dim=self.hidden_dim,
+            mlp_cfg=mlp_cfg,
         )
         self.head2 = FFN(
-            in_size=self.hidden_dim,
-            out_size=self.hidden_dim,
-            config=mlp_cfg,
+            input_dim=self.hidden_dim,
+            output_dim=self.hidden_dim,
+            mlp_cfg=mlp_cfg,
         )
         
 
     def forward(self, x1: torch.Tensor, x2: torch.Tensor): 
-         z1,z2 =self.msa(x1,x2)
-         z1= self.head1(x1,z1)
-         z2= self.head2(x2,z1)
+         out =self.msa(x1,x2)
+         z1= self.head1(x1,out.x1)
+         z2= self.head2(x2,out.x2)
          return torch.cat((z1, z2), dim=2)
       
 
@@ -161,25 +172,33 @@ class MultiModalTransformer(Transformer):
         num_nodes_1: int,  # used for concat pooling
         num_nodes_2: int,
         model_cfg: MultiModalTransformerConfig):
+        
+        assert num_nodes_1==num_nodes_2
 
         self.attn_type=model_cfg.attn_type
         self.make_projection =model_cfg.make_projection
 
-        transformer_hidden_dim = input_dim_1+input_dim_2
+        if self.attn_type in ["sum", "multiply"] and not self.make_projection:
+            assert input_dim_1==input_dim_2
 
-        if self.make_projection:
-            transformer_hidden_dim = model_cfg.hidden_dim
+        transformer_hidden_dim = model_cfg.hidden_dim
 
         if self.attn_type=="concat":
+            transformer_hidden_dim = model_cfg.hidden_dim if self.make_projection else input_dim_1+input_dim_2
             super().__init__(transformer_hidden_dim, num_nodes_1,model_cfg)
-        else:
+        elif self.attn_type in ["sum", "multiply"]:
+            transformer_hidden_dim = model_cfg.hidden_dim if self.make_projection else input_dim_1
+            super().__init__(transformer_hidden_dim, num_nodes_1,model_cfg)    
+        else:    
             super().__init__(transformer_hidden_dim, num_nodes_1,model_cfg)
 
         if self.make_projection:
             self.lin_proj1 = nn.Linear(input_dim_1, model_cfg.hidden_dim // 2)
-            self.lin_proj2 = nn.Linear(input_dim_2, model_cfg.hidden_dim // 2)    
+            self.lin_proj2 = nn.Linear(input_dim_2, model_cfg.hidden_dim // 2)
 
-        attn_block_params =[model_cfg.hidden_dim, self.build_msa_cfg(model_cfg), self.build_mlp_cfg(model_cfg)]
+            attn_block_params =[model_cfg.hidden_dim // 2 ,model_cfg.hidden_dim // 2, self.build_msa_attn_cfg(model_cfg), self.build_mlp_attn_cfg(model_cfg)]  
+        else:
+            attn_block_params =[input_dim_1,input_dim_2, self.build_msa_attn_cfg(model_cfg), self.build_mlp_attn_cfg(model_cfg)]
 
         if self.attn_type == "hierarchical":
             self.mm_block = HierarchicalAttentionBlock(*attn_block_params)
@@ -194,11 +213,39 @@ class MultiModalTransformer(Transformer):
 
         if self.attn_type=="concat":
             x =torch.cat((x_fmri, x_dti), dim=2)
+        elif self.attn_type=="sum":
+            x =x_fmri+x_dti
+        elif self.attn_type=="multiply":
+            x =x_fmri*x_dti    
         elif self.attn_type in ["hierarchical", "cross-attention"]:
             x =self.mm_block(x_fmri, x_dti)
         else:
             raise ValueError(f'Invalid attn_type')    
         return super().forward((x,y))
 
+
+    @staticmethod
+    def build_msa_attn_cfg(cfg: TransformerConfig):
+        return MSAConfig(
+            num_heads=cfg.num_heads,
+            hidden_dim=cfg.hidden_dim //2,
+            dropout=cfg.attn_dropout,
+            return_attn=cfg.return_attn,
+    )
+
+    @staticmethod
+    def build_mlp_attn_cfg(cfg: TransformerConfig):
+        # 2-layer MLP
+        return MLPConfig(
+            # no act func on the output of MLP
+            layers=[
+                MLPlayer(
+                    out_size=int((cfg.hidden_dim // 2) * cfg.mlp_hidden_multiplier),
+                    dropout=cfg.mlp_dropout,
+                    act_func=cfg.mlp_act_func,  # put class name here
+                    act_func_params=cfg.mlp_act_func_params,
+                ),
+            ],
+        )
 
 
