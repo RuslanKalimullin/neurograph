@@ -70,6 +70,7 @@ def main(cfg: Config):
         config=cfg_dict,  # type: ignore
         mode=cfg.log.wandb_mode,
         name=cfg.log.wandb_name,
+        entity=cfg.log.wandb_entity,
     )
     wandb.define_metric('train/*', step_metric='epoch')
     wandb.define_metric('valid/*', step_metric='epoch')

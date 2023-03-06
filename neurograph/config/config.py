@@ -187,12 +187,13 @@ class TransformerConfig(ModelConfig):
         ]
     ))
 
+
 @dataclass
 class MultiModalTransformerConfig(ModelConfig):
     # name is a class name; used for initializing a model
-    name: str  = 'MultiModalTransformer'  # TODO: remove, refactor ModelConfig class?
-    attn_type: str ='concat'
-    projection_dim: int  =64
+    name: str = 'MultiModalTransformer'  # TODO: remove, refactor ModelConfig class?
+    attn_type: str = 'concat'
+    projection_dim: int = 64
     n_classes: int = 2
     num_layers: int = 1
     hidden_dim: int = 32
@@ -218,6 +219,7 @@ class MultiModalTransformerConfig(ModelConfig):
             MLPlayer(out_size=4, dropout=0.5, act_func='GELU',),
         ]
     ))
+
 
 @dataclass
 class TrainConfig:
@@ -259,6 +261,7 @@ class LogConfig:
     # how often print training metrics
     test_step: int = 1
     wandb_project: str = 'mri_multimodal'
+    wandb_entity: Optional[str] = 'gnn-neuro'
     wandb_name: Optional[str] = None
     wandb_mode: Optional[str] = None  # 'disabled' for testing
 
