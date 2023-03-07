@@ -96,16 +96,14 @@ class standartGNNConfig(ModelConfig):
     data_type: str = 'graph'
     hidden_dim: int = 32  # TODO: support list
     use_abs_weight: bool = True
-    use_weighted_edges: bool =False
-    final_node_dim: int =32
-    pooling: str ='concat'
+    use_weighted_edges: bool = False
+    final_node_dim: int = 32
+    pooling: str = 'concat'
     # TODO: use it inside convolutions
     dropout: float = 0.3
     use_batchnorm: bool = True
     # gat spefic args
-    num_heads: int = 2
-    # TODO: add adding self-loops
-    # gcn spefic args
+    num_heads: Optional[int] = None
 
     mlp_config: MLPConfig = field(default_factory=MLPConfig)
 
@@ -150,6 +148,7 @@ class bgbGATConfig(ModelConfig):
     # TODO: use it inside convolutions
     dropout: float = 0.0
     use_batchnorm: bool = True
+
     # gat spefic args
     num_heads: int = 2
     # TODO: add adding self-loops
