@@ -541,6 +541,7 @@ class MutlimodalDense2Dataset(NeuroDenseDataset):
     def __getitem__(self, idx: int):
         return self.data_fmri[idx], self.data_dti[idx], self.y[idx]
 
+
 class ListDataset(InMemoryDataset):
     """ Basic dataset for ad-hoc experiments """
     def __init__(self, root, data_list: list[Data]):
