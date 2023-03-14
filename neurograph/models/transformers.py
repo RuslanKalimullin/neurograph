@@ -11,7 +11,6 @@ from neurograph.models.mlp import BasicMLP
 from neurograph.models.utils import concat_pool
 
 
-# TODO: move to config maybe?
 @dataclass
 class MSAConfig:
     num_heads: int
