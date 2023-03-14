@@ -1,14 +1,14 @@
+""" Module provides implementation of Vanilla Transformer """
+
 import math
+from dataclasses import dataclass
 from typing import Optional
 
 import torch
-import torch.nn as nn
-
-from dataclasses import dataclass, field
+from torch import nn
 
 from neurograph.config import MLPConfig, MLPlayer, TransformerConfig
 from neurograph.models.mlp import BasicMLP
-from neurograph.models.utils import concat_pool
 
 
 @dataclass
@@ -26,6 +26,7 @@ class MSAOutput:
 
 
 class MSA(nn.Module):
+    """ Multihead attention class """
     def __init__(
         self,
         input_dim: int,
@@ -50,7 +51,8 @@ class MSA(nn.Module):
         self.dropout = nn.Dropout(self.dropout_rate)
 
     def project_to_qkv(self, x: torch.Tensor):
-        b, n, d = x.shape
+        # (b, n, d)
+        b, n, _ = x.shape
         h = self.num_heads
         p = self.head_dim
 
@@ -61,8 +63,8 @@ class MSA(nn.Module):
         return q, k, v
 
     def forward(self, x: torch.Tensor) -> MSAOutput:
-        b, n, d = x.shape
-        h = self.num_heads
+        # (b, n, d)
+        b, n, _ = x.shape
 
         # project X to Q, K, V -> (b, n, h, p)
         q, k, v = self.project_to_qkv(x)
@@ -142,7 +144,11 @@ class Transformer(nn.Module):
             self.lin_proj = nn.Identity()
 
         self.blocks = nn.ModuleList([
-            TransformerBlock(model_cfg.hidden_dim, self.build_msa_cfg(model_cfg), self.build_mlp_cfg(model_cfg))
+            TransformerBlock(
+                model_cfg.hidden_dim,
+                self.build_msa_cfg(model_cfg),
+                self.build_mlp_cfg(model_cfg),
+            )
             for _ in range(model_cfg.num_layers)
         ])
 
@@ -155,13 +161,14 @@ class Transformer(nn.Module):
         self.fcn = BasicMLP(in_size=fcn_dim, out_size=num_classes, config=model_cfg.head_config)
 
     def forward(self, batch):
-        x, y = batch
-        # porject to hidden_dim
+        # x, y
+        x, _ = batch
+        # project to hidden_dim
         out = self.lin_proj(x)
 
         # go thru transformer layers
         for block in self.blocks:
-             out = block(out)
+            out = block(out)
 
         # pool
         if self.pooling == 'concat':

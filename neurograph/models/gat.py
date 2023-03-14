@@ -1,19 +1,40 @@
-from typing import Union, Tuple, Optional
+"""
+Adapted from https://github.com/HennyJie/BrainGB/blob/master/src/models/gat.py
+
+MIT License
+
+Copyright (c) 2021 Brain Network Research Group
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+
+
+from typing import Optional
 
 import torch
 from torch import nn
-from torch import Tensor
-from torch.nn import Parameter, Linear
 from torch.nn import functional as F
-from torch_geometric.typing import Size, OptTensor
-from torch_geometric.nn import global_add_pool, global_mean_pool, MessagePassing, GATConv
-from torch_sparse import SparseTensor, matmul, fill_diag, sum as sparsesum, mul
-from torch_geometric.nn.inits import glorot, zeros
+from torch_geometric.nn import global_add_pool, global_mean_pool, GATConv
 from torch_geometric.utils import softmax
 from torch_geometric.nn import Sequential as pygSequential
-import torch_geometric
 
-from neurograph.config import Config, ModelConfig, bgbGATConfig
+from neurograph.config import bgbGATConfig
 from neurograph.models.mlp import BasicMLP
 from neurograph.models.utils import concat_pool
 
@@ -35,6 +56,7 @@ class MPGATConv(GATConv):
         out_channels: int,
         heads: int = 1,
         # not used
+        # pylint: disable=unused-argument
         concat: bool = True,
         negative_slope: float = 0.2,
         # TODO: use dropout
@@ -61,7 +83,6 @@ class MPGATConv(GATConv):
         # edge_lin is mandatory
         self.edge_lin = torch.nn.Linear(input_dim, out_channels)
 
-    # define our message passage function
     def message(
         self,
         x_i, x_j,  # node embeddgins lifted to edges
@@ -71,13 +92,14 @@ class MPGATConv(GATConv):
         ptr,
         size_i,
     ):
+        """ Here we define our custom message passage function """
         # x_j: [num edges, num heads, num channels (out dim)]
 
         # copied from PyG
         alpha = alpha_j if alpha_i is None else alpha_j + alpha_i
         alpha = F.leaky_relu(alpha, self.negative_slope)
         alpha = softmax(alpha, index, ptr, size_i)
-        self._alpha = alpha
+        # self._alpha = alpha
         alpha = F.dropout(alpha, p=self.dropout, training=self.training)
 
         # add extra dim, so we get [m, 1, 1] shape where m = num of edges
@@ -93,16 +115,16 @@ class MPGATConv(GATConv):
             # (1) att: s^(l+1) = s^l * alpha
             msg = x_j * attention_score
             return msg
-        elif self.mp_type == "attention_edge_weighted":
+        if self.mp_type == "attention_edge_weighted":
             # (2) e-att: s^(l+1) = s^l * alpha * e
             msg = x_j * attention_score * edge_weights
             return msg
-        elif self.mp_type == "sum_attention_edge":
+        if self.mp_type == "sum_attention_edge":
             # (3) m-att-1: s^(l+1) = s^l * (alpha + e),
             # this one may not make sense cause it doesn't use attention score to control all
             msg = x_j * (attention_score + edge_weights)
             return msg
-        elif self.mp_type == "edge_node_concate":
+        if self.mp_type == "edge_node_concate":
             # (4) m-att-2: s^(l+1) = linear(concat(s^l, e) * alpha)
             msg = torch.cat(
                 [
@@ -116,7 +138,7 @@ class MPGATConv(GATConv):
             )
             msg = self.edge_lin(msg)
             return msg
-        elif self.mp_type == "node_concate":
+        if self.mp_type == "node_concate":
             # (4) m-att-2: s^(l+1) = linear(concat(s^l, e) * alpha)
             msg = torch.cat([x_i, x_j * attention_score], dim=-1)
             msg = self.edge_lin(msg)
@@ -128,8 +150,7 @@ class MPGATConv(GATConv):
         #     sum_node_edge = x_j + extended_edge
         #     msg = sum_node_edge * attention_score
         #     return msg
-        else:
-            raise ValueError(f'Invalid message passing variant {self.mp_type}')
+        raise ValueError(f'Invalid message passing variant {self.mp_type}')
 
 
 def build_gat_block(
@@ -200,7 +221,7 @@ class bgbGAT(nn.Module):
 
         # pack a bunch of convs into a ModuleList
         gat_input_dim = input_dim
-        for i in range(num_layers - 1):
+        for _ in range(num_layers - 1):
             conv = build_gat_block(
                 gat_input_dim,
                 hidden_dim,
@@ -238,7 +259,7 @@ class bgbGAT(nn.Module):
             )
 
             fcn_dim = model_cfg.final_node_dim * num_nodes
-        elif self.pooling == 'sum' or self.pooling == 'mean':
+        elif self.pooling in ('sum', 'mean'):
             conv = build_gat_block(
                 gat_input_dim,
                 hidden_dim,
@@ -262,7 +283,7 @@ class bgbGAT(nn.Module):
         z = x
 
         # apply conv layers
-        for i, conv in enumerate(self.convs):
+        for _, conv in enumerate(self.convs):
             # bz * nodes, hidden
             z = conv(z, edge_index, edge_attr)
 

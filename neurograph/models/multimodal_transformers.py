@@ -1,4 +1,4 @@
-""" Module provides implementation ofi Multimodal version of Vanilla Transformer
+""" Module provides implementation of Multimodal version of Vanilla Transformer
     with different cross-modality attention mechanisms
 """
 
