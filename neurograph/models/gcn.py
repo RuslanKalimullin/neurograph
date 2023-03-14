@@ -26,22 +26,16 @@ SOFTWARE.
 
 
 import math
-from typing import Any, Union, Tuple, Optional
+from typing import Any, Optional
 
 import torch
-from torch_geometric.nn import global_add_pool, global_mean_pool, MessagePassing
-from torch.nn import Parameter
-import numpy as np
-from torch.nn import functional as F
-from torch_geometric.nn.inits import glorot, zeros
-from typing import Tuple
-from torch import Tensor
+from torch_geometric.nn import global_add_pool, global_mean_pool
+from torch_geometric.nn.inits import zeros
 from torch_geometric.nn import GCNConv
 from torch_geometric.nn import Sequential as pygSequential
 from torch import nn
-import torch_geometric
 
-from neurograph.config import Config, ModelConfig, bgbGCNConfig
+from neurograph.config import bgbGCNConfig
 from neurograph.models.mlp import BasicMLP
 from neurograph.models.utils import concat_pool
 
@@ -91,7 +85,7 @@ class MPGCNConv(GCNConv):
         self._cached_adj_t = None
 
         input_dim = out_channels
-        if mp_type == "bin_concate" or mp_type == "edge_weight_concate":
+        if mp_type in ("bin_concate", "edge_weight_concate"):
             input_dim = out_channels + edge_emb_dim
         elif mp_type == "edge_node_concate":
             input_dim = out_channels * 2 + 1
@@ -146,6 +140,7 @@ class MPGCNConv(GCNConv):
         return msg
 
 
+# pylint: disable=too-many-arguments
 def build_gcn_block(
     input_dim: int,
     hidden_dim: int,
@@ -185,6 +180,7 @@ def build_gcn_block(
 
 
 class bgbGCN(torch.nn.Module):
+    # pylint: disable=too-many-locals
     def __init__(
         self,
         # determined by dataset
@@ -218,7 +214,7 @@ class bgbGCN(torch.nn.Module):
             dropout=dropout,
             use_abs_weight=use_abs_weight,
         )
-        for i in range(num_layers - 1):
+        for _ in range(num_layers - 1):
             conv = build_gcn_block(
                 gcn_input_dim,
                 hidden_dim,
@@ -249,7 +245,7 @@ class bgbGCN(torch.nn.Module):
             )
 
             fcn_dim = model_cfg.final_node_dim * num_nodes
-        elif self.pooling == 'sum' or self.pooling == 'mean':
+        elif self.pooling in ('sum', 'mean'):
             conv = build_gcn_block(
                 gcn_input_dim,
                 hidden_dim,
@@ -269,7 +265,7 @@ class bgbGCN(torch.nn.Module):
         x, edge_index, edge_attr, batch = data.x, data.edge_index, data.edge_attr, data.batch
         z = x
 
-        for i, conv in enumerate(self.convs):
+        for _, conv in enumerate(self.convs):
             # batch_size * num_nodes, hidden
             z = conv(z, edge_index, edge_attr)
 
