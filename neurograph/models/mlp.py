@@ -1,17 +1,13 @@
-import inspect
-from copy import deepcopy
-from dataclasses import dataclass
-from itertools import pairwise
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from typing import Optional
+""" Module offers basic MLP class that can be easily created from config """
+
+from torch import nn
 
 from neurograph.config import MLPConfig, MLPlayer
 from neurograph.models.available_modules import available_activations
 
 
 def build_mlp_layer(in_size: int, layer: MLPlayer) -> nn.Sequential:
+    """ Factory that returns nn.Sequential from input size and MLPlayer """
     act_params = layer.act_func_params if layer.act_func_params else {}
 
     lst: list[nn.Module] = [nn.Linear(in_size, layer.out_size)]
@@ -24,6 +20,7 @@ def build_mlp_layer(in_size: int, layer: MLPlayer) -> nn.Sequential:
 
 
 class BasicMLP(nn.Module):
+    """ Basic MLP class """
     def __init__(self, in_size: int, out_size: int, config: MLPConfig):
         super().__init__()
         self.in_size = in_size
@@ -49,7 +46,8 @@ class BasicMLP(nn.Module):
     def forward(self, x):
         return self.net(x)
 
-# TODO: fix so it works
+
+# IT DOESNT WORK NOW
 #def mirror_mlp_config(conf: MLPConfig) -> MLPConfig:
 #    sizes = []
 #    for l in reversed(conf.layers):
@@ -64,5 +62,3 @@ class BasicMLP(nn.Module):
 #        rlayers.append(new_cfg)
 #
 #    return MLPConfig(new_in_size, rlayers)
-
-

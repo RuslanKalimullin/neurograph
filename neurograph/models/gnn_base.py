@@ -1,14 +1,13 @@
-import math
-from typing import Any, Union, Tuple, Optional
+""" Module offers thin wrappers over standart GCN, GAT from pytorch geometric """
+
+from typing import Any, Optional
 
 import torch
 from torch_geometric.nn import global_add_pool, global_mean_pool
-import numpy as np
-from typing import Tuple
 from torch_geometric.nn import Sequential as pygSequential
 from torch import nn
 
-from neurograph.config import Config, ModelConfig, bgbGCNConfig,standartGNNConfig
+from neurograph.config import standartGNNConfig
 from neurograph.models.mlp import BasicMLP
 from neurograph.models.utils import concat_pool
 from neurograph.models.available_modules import available_pg_modules
@@ -38,7 +37,7 @@ def build_gnn_block(
                 nn.Dropout(p=dropout)
             ]
         )
-    elif layer_module == 'GATConv':
+    if layer_module == 'GATConv':
         conv = available_pg_modules[layer_module](
             input_dim,
             hidden_dim,
@@ -55,8 +54,7 @@ def build_gnn_block(
                 nn.Dropout(p=dropout)
             ]
         )
-    else:
-        raise ValueError('Unknown layer_module name')
+    raise ValueError('Unknown `layer_module` name')
 
 
 class baseGNN(torch.nn.Module):
@@ -87,7 +85,7 @@ class baseGNN(torch.nn.Module):
             dropout=dropout,
             num_heads=num_heads,
         )
-        for i in range(num_layers):
+        for _ in range(num_layers):
             conv = build_gnn_block(
                 gcn_input_dim,
                 hidden_dim,
@@ -101,9 +99,9 @@ class baseGNN(torch.nn.Module):
 
         fcn_dim = -1
 
-        if self.pooling == "concat":
+        if self.pooling == 'concat':
             fcn_dim = hidden_dim * num_nodes
-        elif self.pooling == 'sum' or self.pooling == 'mean':
+        elif self.pooling in ('sum', 'mean'):
             fcn_dim = hidden_dim
 
         self.fcn = BasicMLP(in_size=fcn_dim, out_size=num_classes, config=model_cfg.mlp_config)
@@ -114,7 +112,7 @@ class baseGNN(torch.nn.Module):
         if self.use_abs_weight:
             edge_attr = torch.abs(edge_attr)
 
-        for i, conv in enumerate(self.convs):
+        for _, conv in enumerate(self.convs):
             # batch_size * num_nodes, hidden
             if self.use_weighted_edges:
                 z = conv(z, edge_index, edge_attr)
