@@ -11,7 +11,6 @@ from neurograph.config import MLPConfig, MLPlayer
 from neurograph.models.available_modules import available_activations
 
 
-
 def build_mlp_layer(in_size: int, layer: MLPlayer) -> nn.Sequential:
     act_params = layer.act_func_params if layer.act_func_params else {}
 

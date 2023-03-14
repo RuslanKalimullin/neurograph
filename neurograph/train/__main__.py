@@ -16,12 +16,14 @@ from neurograph.data import available_datasets
 from neurograph.data import (
     graph_datasets,
     dense_datasets,
+    multimodal_dense_2,
     NeuroDenseDataset,
     NeuroGraphDataset,
 )
 from neurograph.train.train import train
 
 
+# TOOD: fix type hints
 def dataset_factory(ds_cfg: DatasetConfig) -> NeuroDenseDataset | NeuroGraphDataset:
     if ds_cfg.data_type == 'graph':
         return graph_datasets[ds_cfg.name](
@@ -40,8 +42,15 @@ def dataset_factory(ds_cfg: DatasetConfig) -> NeuroDenseDataset | NeuroGraphData
             feature_type=ds_cfg.feature_type,
             normalize=ds_cfg.normalize,
         )
+    elif ds_cfg.data_type == 'multimodal_dense_2':
+        return multimodal_dense_2[ds_cfg.name](
+            root=str(ds_cfg.data_path),
+            atlas=ds_cfg.atlas,
+            fmri_feature_type=ds_cfg.fmri_feature_type,
+            normalize=ds_cfg.normalize,
+        )
     else:
-        raise ValueError(f'Unknown dataset data_type! Options: dense, graph')
+        raise ValueError(f'Unknown dataset data_type! Options: dense, graph, multimodel_dense_2')
 
 
 @hydra.main(version_base=None, config_path='../config', config_name="config")
@@ -61,6 +70,7 @@ def main(cfg: Config):
         config=cfg_dict,  # type: ignore
         mode=cfg.log.wandb_mode,
         name=cfg.log.wandb_name,
+        entity=cfg.log.wandb_entity,
     )
     wandb.define_metric('train/*', step_metric='epoch')
     wandb.define_metric('valid/*', step_metric='epoch')

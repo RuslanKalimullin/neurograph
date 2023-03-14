@@ -13,9 +13,11 @@ from .utils import load_cms, prepare_graph
 class PPMITrait:
     """ Common fields and methods for all PPMI datasets """
     name = 'ppmi'
-    available_atlases = {'aal'}
+    available_atlases = {'aal', 'desikankilliany'}
     available_experiments = {'dti'}
-    splits_file = 'ppmi_splits.json'
+    # weird hack since we have different split for different atlases
+    splits_file_fstr = 'ppmi_splits_{atlas}.json'
+
     target_file = 'ppmi_baseline_simens_clean.csv'
     subj_id_col = 'Subject'
     image_id_col = 'Image Data ID'
@@ -83,6 +85,10 @@ class PPMITrait:
         target[self.target_col] = target[self.target_col].map(label2idx)
 
         return target, label2idx, idx2label
+
+    @property
+    def splits_file(self):
+        return self.splits_file_fstr.format(atlas=self.atlas)
 
 
 class PPMIGraphDataset(PPMITrait, NeuroGraphDataset):

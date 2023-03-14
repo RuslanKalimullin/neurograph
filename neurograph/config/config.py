@@ -5,24 +5,38 @@ from omegaconf import MISSING
 from hydra.core.config_store import ConfigStore
 from dataclasses import dataclass, field
 import neurograph
-from neurograph.data import available_datasets
+
+DEFAULT_DATA_PATH = Path(neurograph.__file__).resolve().parent.parent / 'datasets'
 
 
 @dataclass
 class DatasetConfig:
+    data_type: str
     name: str = 'cobre'
-    data_type: str = 'graph'  # or 'dense'
-    experiment_type: str = 'fmri' # TODO: support list for multimodal experiments
     atlas: str = 'aal'
-    data_path: Path = Path(neurograph.__file__).resolve().parent.parent / 'datasets'
+    # for DTI
+    normalize: Optional[str] = None
+
+    data_path: Path = DEFAULT_DATA_PATH
+
+
+@dataclass
+class UnimodalDatasetConfig(DatasetConfig):
+    data_type: str = 'graph'  # or 'dense'
+    experiment_type: str = 'fmri'
     # graph specific
     #init_node_features: str = 'conn_profile'  # TODO
     abs_thr: Optional[float] = None
     pt_thr: Optional[float] = None
     # dense specific
     feature_type: str = 'conn_profile'  #'timeseries'
-    # DTI specific
-    normalize: Optional[str] = None  # or global_max
+
+
+@dataclass
+class MultimodalDatasetConfig(DatasetConfig):
+    data_type: str = 'multimodal_dense_2'  # only option rn
+    fmri_feature_type: str = 'conn_profile'
+    normalize: Optional[str] = 'global_max'
 
 
 @dataclass
@@ -59,7 +73,19 @@ class ModelConfig:
 
     # required for correct init of models
     # see `train.train.init_model`
+
     data_type: str
+
+
+@dataclass
+class DummyMultimodalDense2Config:
+    name: str = 'DummyMultimodalDense2Model'
+    n_classes: int = 2
+    hidden: int = 8
+    dropout: float = 0.2
+    act_func: Optional[str] = 'ReLU'
+    act_func_params: Optional[dict] = None
+
 
 @dataclass
 class standartGNNConfig(ModelConfig):
@@ -70,18 +96,17 @@ class standartGNNConfig(ModelConfig):
     data_type: str = 'graph'
     hidden_dim: int = 32  # TODO: support list
     use_abs_weight: bool = True
-    use_weighted_edges: bool =False
-    final_node_dim: int =32
-    pooling: str ='mean'
+    use_weighted_edges: bool = False
+    final_node_dim: int = 32
+    pooling: str = 'concat'
     # TODO: use it inside convolutions
-    dropout: float = 0.5
+    dropout: float = 0.3
     use_batchnorm: bool = True
     # gat spefic args
-    num_heads: int = 2
-    # TODO: add adding self-loops
-    # gcn spefic args
+    num_heads: Optional[int] = None
 
     mlp_config: MLPConfig = field(default_factory=MLPConfig)
+
 
 @dataclass
 class bgbGCNConfig(ModelConfig):
@@ -121,8 +146,9 @@ class bgbGATConfig(ModelConfig):
     final_node_dim: int = 8  # final node_dim after prepool
     use_abs_weight: bool = True
     # TODO: use it inside convolutions
-    dropout: float = 0.3
+    dropout: float = 0.0
     use_batchnorm: bool = True
+
     # gat spefic args
     num_heads: int = 2
     # TODO: add adding self-loops
@@ -139,8 +165,8 @@ class TransformerConfig(ModelConfig):
     num_layers: int = 1
     hidden_dim: int = 116
     num_heads: int = 4
-    attn_dropout: float = 0.4
-    mlp_dropout: float = 0.4
+    attn_dropout: float = 0.5
+    mlp_dropout: float = 0.5
     # hidden layer in transformer block mlp
     mlp_hidden_multiplier: float = 0.2
 
@@ -154,7 +180,40 @@ class TransformerConfig(ModelConfig):
     pooling: str = 'concat'
 
     # final MLP layer config
-    head_config: MLPConfig = field(default_factory=lambda: MLPConfig(
+    head_config:  MLPConfig = field(default_factory=lambda: MLPConfig(
+        layers = [
+            MLPlayer(out_size=4, dropout=0.5, act_func='GELU',),
+        ]
+    ))
+
+
+@dataclass
+class MultiModalTransformerConfig(ModelConfig):
+    # name is a class name; used for initializing a model
+    name: str = 'MultiModalTransformer'  # TODO: remove, refactor ModelConfig class?
+    attn_type: str = 'concat'
+    projection_dim: int = 64
+    n_classes: int = 2
+    num_layers: int = 1
+    hidden_dim: int = 32
+    num_heads: int = 2
+    make_projection:  bool =False
+    attn_dropout: float = 0.5
+    mlp_dropout: float = 0.5
+    # hidden layer in transformer block mlp
+    mlp_hidden_multiplier: float = 0.2
+
+    data_type: str = 'dense'
+
+    return_attn: bool = False
+    # transformer block MLP parameters
+    mlp_act_func: Optional[str] = 'GELU'
+    mlp_act_func_params: Optional[dict] = None
+
+    pooling: str = 'concat'
+
+    # final MLP layer config
+    head_config:  MLPConfig = field(default_factory=lambda: MLPConfig(
         layers = [
             MLPlayer(out_size=4, dropout=0.5, act_func='GELU',),
         ]
@@ -163,7 +222,7 @@ class TransformerConfig(ModelConfig):
 
 @dataclass
 class TrainConfig:
-    device: str = 'cpu'
+    device: str = 'cuda:0'
     num_threads: Optional[int] = None
     epochs: int = 1
     batch_size: int = 8
@@ -172,7 +231,7 @@ class TrainConfig:
     optim_args: Optional[dict[str, Any]] = field(
         default_factory=lambda: {
             'lr': 1e-4,
-            'weight_decay': 1e-1,
+            'weight_decay': 1e-3,
         }
     )
     scheduler: Optional[str] = 'ReduceLROnPlateau'
@@ -186,7 +245,7 @@ class TrainConfig:
         }
     )
     # select best model on valid based on what metric
-    select_best_metric: str = 'acc'
+    select_best_metric: str = 'f1_macro'
     loss: str = 'CrossEntropyLoss'  #'BCEWithLogitsLoss'
     loss_args: Optional[dict[str, Any]] = field(
         # reduction sum is necessary here
@@ -200,7 +259,8 @@ class TrainConfig:
 class LogConfig:
     # how often print training metrics
     test_step: int = 1
-    wandb_project: str = 'mri_gnn'
+    wandb_project: str = 'mri_multimodal'
+    wandb_entity: Optional[str] = 'gnn-neuro'
     wandb_name: Optional[str] = None
     wandb_mode: Optional[str] = None  # 'disabled' for testing
 
@@ -210,7 +270,8 @@ class Config:
     ''' Config schema w/ default values (see dataclasses above) '''
     seed: int = 1380
     model: Any = MISSING
-    dataset: DatasetConfig = field(default_factory=DatasetConfig)
+#    dataset: DatasetConfig = field(default_factory=DatasetConfig)
+    dataset: Any = MISSING
     train: TrainConfig = field(default_factory=TrainConfig)
     log: LogConfig = field(default_factory=LogConfig)
 
@@ -225,7 +286,15 @@ def validate_config(cfg: Config):
 # register default config as `base_config`
 cs = ConfigStore.instance()
 cs.store(name='base_config', node=Config)
+
+# base dataset configs
+cs.store(group='dataset', name='base_dataset', node=UnimodalDatasetConfig)
+cs.store(group='dataset', name='base_multimodal_dataset', node=MultimodalDatasetConfig)
+
+# base model configs
 cs.store(group='model', name='bgbGAT', node=bgbGATConfig)
 cs.store(group='model', name='bgbGCN', node=bgbGCNConfig)
 cs.store(group='model', name='transformer', node=TransformerConfig)
 cs.store(group='model', name='baseGNN', node=standartGNNConfig)
+cs.store(group='model', name='dummy_mm2', node=DummyMultimodalDense2Config)
+cs.store(group='model', name='mm_transformer', node=MultiModalTransformerConfig)
