@@ -94,3 +94,7 @@ if IPython doesn't work in jupyter lab
 ## TODO
 - add dropout inside bgb GCN/GAT
 - control addining self-loops in GATs
+- add DataBatch class that generalizes DataBatch from PyG and Tensor for uni/multimodal cases
+    - define custom collate function so we have the same interface as PyG
+- create registry of model: dense/graph; uni/multimodal
+    - modify model factory

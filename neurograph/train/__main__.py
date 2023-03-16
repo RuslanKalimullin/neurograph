@@ -76,8 +76,8 @@ def main(cfg: Config):
     wandb.define_metric('train/*', step_metric='epoch')
     wandb.define_metric('valid/*', step_metric='epoch')
 
-    ds = dataset_factory(cfg.dataset)
-    metrics = train(ds, cfg)
+    dataset = dataset_factory(cfg.dataset)
+    metrics = train(dataset, cfg)
     wandb.finish()
 
     logging.info('Results saved in: %s', os.getcwd())

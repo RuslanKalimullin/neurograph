@@ -36,25 +36,25 @@ def get_log_msg(prefix, fold_i, epoch_i, metrics_dict) -> str:
     ])
 
 
-def train(ds: NeuroDataset, cfg: Config):
+def train(dataset: NeuroDataset, cfg: Config):
     ''' Run cross-validation, report metrics on valids and test '''
 
-    logging.info('Model architecture:\n %s', init_model(ds, cfg))
+    logging.info('Model architecture:\n %s', init_model(dataset, cfg))
 
     # get test loader beforehand
-    test_loader = ds.get_test_loader(cfg.train.valid_batch_size)
+    test_loader = dataset.get_test_loader(cfg.train.valid_batch_size)
 
     # final metrics per fold
     valid_folds_metrics: list[dict[str, float]] = []
     test_folds_metrics: list[dict[str, float]] = []
 
     # run training for each fold
-    loaders_iter = ds.get_cv_loaders(cfg.train.batch_size, cfg.train.valid_batch_size)
+    loaders_iter = dataset.get_cv_loaders(cfg.train.batch_size, cfg.train.valid_batch_size)
     for fold_i, loaders in enumerate(loaders_iter):
         logging.info('Run training on fold %s', fold_i)
 
         # create model, optim, loss etc.
-        model, optimizer, scheduler, loss_f = init_model_optim_loss(ds, cfg)
+        model, optimizer, scheduler, loss_f = init_model_optim_loss(dataset, cfg)
 
         # train and return valid metrics on last epoch
         valid_metrics, best_model = train_one_split(
@@ -99,10 +99,6 @@ def handle_batch(
         Also, it handles unimodal / multimodal cases
     """
 
-    # TODO: create DataDense dataclass (analogue of pyg.Data) and
-    # define custom collate_fn for DenseDataset DataLoaders
-    # so we have the same interface with PyG
-
     # it's ugly but it works
     if isinstance(batch, (list, tuple)):
         if len(batch) == 2:
@@ -110,9 +106,9 @@ def handle_batch(
             x, y = x.to(device), y.to(device)
             batch = (x, y)
         elif len(batch) == 3:
-            x1, x2, y = batch
-            x1, x2, y = x1.to(device), x2.to(device), y.to(device)
-            batch = (x1, x2, y)
+            x_1, x_2, y = batch
+            x_1, x_2, y = x_1.to(device), x_2.to(device), y.to(device)
+            batch = (x_1, x_2, y)
         else:
             raise ValueError('Unknown batch composition! expect len=2,3')
     else:
@@ -244,11 +240,11 @@ def evaluate(model, loader, loss_f, cfg: Config):
     return metrics_dict
 
 
-def init_model_optim_loss(ds: NeuroDataset, cfg: Config):
+def init_model_optim_loss(dataset: NeuroDataset, cfg: Config):
     """ Init model, optim, scheduler instances given dataset instance and global config """
 
     # create model instance
-    model = init_model(ds, cfg)
+    model = init_model(dataset, cfg)
     # set optimizer
     optimizer = available_optimizers[cfg.train.optim](
         model.parameters(),
@@ -285,11 +281,10 @@ def init_model(dataset: NeuroDataset, cfg: Config):
     model_cfg: ModelConfig = cfg.model
     available_models = dict(inspect.getmembers(neurograph.models))
 
-    ModelKlass = available_models[model_cfg.name]
+    model_class = available_models[model_cfg.name]
 
-    # TODO: add more checks for model types (uni, multi; graph, dense)
     if cfg.dataset.data_type.startswith('multimodal_'):
-        return ModelKlass(
+        return model_class(
             input_dim_1=dataset.num_fmri_features,
             input_dim_2=dataset.num_dti_features,
             num_nodes_1=dataset.num_fmri_nodes,
@@ -297,7 +292,7 @@ def init_model(dataset: NeuroDataset, cfg: Config):
             model_cfg=model_cfg,
         )
 
-    return ModelKlass(
+    return model_class(
         input_dim=dataset.num_features,
         num_nodes=dataset.num_nodes,
         model_cfg=model_cfg,
