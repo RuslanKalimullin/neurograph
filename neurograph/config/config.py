@@ -1,9 +1,12 @@
-import hydra
+""" Global config classes and some hydra stuff """
+
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional, Sequence
+from typing import Any, Optional
+
 from omegaconf import MISSING
 from hydra.core.config_store import ConfigStore
-from dataclasses import dataclass, field
+
 import neurograph
 
 DEFAULT_DATA_PATH = Path(neurograph.__file__).resolve().parent.parent / 'datasets'
@@ -11,6 +14,7 @@ DEFAULT_DATA_PATH = Path(neurograph.__file__).resolve().parent.parent / 'dataset
 
 @dataclass
 class DatasetConfig:
+    """ Base dataset config class """
     data_type: str
     name: str = 'cobre'
     atlas: str = 'aal'
@@ -25,7 +29,7 @@ class UnimodalDatasetConfig(DatasetConfig):
     data_type: str = 'graph'  # or 'dense'
     experiment_type: str = 'fmri'
     # graph specific
-    #init_node_features: str = 'conn_profile'  # TODO
+    #init_node_features: str = 'conn_profile'
     abs_thr: Optional[float] = None
     pt_thr: Optional[float] = None
     # dense specific
@@ -60,9 +64,13 @@ class MLPConfig:
     # act func for the last layer. None -> no activation function
     act_func: Optional[str] = None
     act_func_params: Optional[dict] = None
-    layers: list[MLPlayer] = field(default_factory=lambda : [
-        MLPlayer(out_size=32, dropout=0.6, act_func='LeakyReLU', act_func_params=dict(negative_slope=0.2)),
-        MLPlayer(out_size=32, dropout=0.6, act_func='LeakyReLU', act_func_params=dict(negative_slope=0.2)),
+    layers: list[MLPlayer] = field(default_factory=lambda: [
+        MLPlayer(
+            out_size=32, dropout=0.6, act_func='LeakyReLU', act_func_params=dict(negative_slope=0.2)
+        ),
+        MLPlayer(
+            out_size=32, dropout=0.6, act_func='LeakyReLU', act_func_params=dict(negative_slope=0.2)
+        ),
     ])
 
 
@@ -87,6 +95,7 @@ class DummyMultimodalDense2Config:
     act_func_params: Optional[dict] = None
 
 
+# pylint: disable=too-many-instance-attributes
 @dataclass
 class standartGNNConfig(ModelConfig):
     name: str = 'baseGNN'  # see neurograph.models/
@@ -94,12 +103,11 @@ class standartGNNConfig(ModelConfig):
     num_layers: int = 2
     layer_module: str = 'GCNConv'
     data_type: str = 'graph'
-    hidden_dim: int = 32  # TODO: support list
+    hidden_dim: int = 32
     use_abs_weight: bool = True
     use_weighted_edges: bool = False
     final_node_dim: int = 32
     pooling: str = 'concat'
-    # TODO: use it inside convolutions
     dropout: float = 0.3
     use_batchnorm: bool = True
     # gat spefic args
@@ -117,11 +125,10 @@ class bgbGCNConfig(ModelConfig):
     mp_type: str = 'node_concate'
     pooling: str = 'concat'
     num_layers: int = 1
-    hidden_dim: int = 16  # TODO: support list
+    hidden_dim: int = 16
     prepool_dim: int = 64  # input dim for prepool layer
     final_node_dim: int = 8  # final node_dim after prepool
     use_abs_weight: bool = True
-    # TODO: use it inside convolutions
     dropout: float = 0.3
     use_batchnorm: bool = True
 
@@ -141,17 +148,15 @@ class bgbGATConfig(ModelConfig):
     mp_type: str = 'node_concate'
     pooling: str = 'concat'
     num_layers: int = 1
-    hidden_dim: int = 16  # TODO: support list
+    hidden_dim: int = 16
     prepool_dim: int = 64  # input dim for prepool layer
     final_node_dim: int = 8  # final node_dim after prepool
     use_abs_weight: bool = True
-    # TODO: use it inside convolutions
     dropout: float = 0.0
     use_batchnorm: bool = True
 
     # gat spefic args
     num_heads: int = 2
-    # TODO: add adding self-loops
 
     mlp_config: MLPConfig = field(default_factory=MLPConfig)
 
@@ -159,7 +164,7 @@ class bgbGATConfig(ModelConfig):
 @dataclass
 class TransformerConfig(ModelConfig):
     # name is a class name; used for initializing a model
-    name: str  = 'Transformer'  # TODO: remove, refactor ModelConfig class?
+    name: str  = 'Transformer'
 
     n_classes: int = 2
     num_layers: int = 1
@@ -189,8 +194,9 @@ class TransformerConfig(ModelConfig):
 
 @dataclass
 class MultiModalTransformerConfig(ModelConfig):
+
     # name is a class name; used for initializing a model
-    name: str = 'MultiModalTransformer'  # TODO: remove, refactor ModelConfig class?
+    name: str = 'MultiModalTransformer'
     attn_type: str = 'concat'
     projection_dim: int = 64
     n_classes: int = 2
@@ -222,6 +228,8 @@ class MultiModalTransformerConfig(ModelConfig):
 
 @dataclass
 class TrainConfig:
+    """ Training config: device, num epochs, optim params etc. """
+
     device: str = 'cuda:0'
     num_threads: Optional[int] = None
     epochs: int = 1
@@ -257,6 +265,8 @@ class TrainConfig:
 
 @dataclass
 class LogConfig:
+    """ Basically, WandB config """
+
     # how often print training metrics
     test_step: int = 1
     wandb_project: str = 'mri_multimodal'
@@ -267,7 +277,8 @@ class LogConfig:
 
 @dataclass
 class Config:
-    ''' Config schema w/ default values (see dataclasses above) '''
+    """ Config dataclass w/ default values (see dataclasses above) """
+
     seed: int = 1380
     model: Any = MISSING
 #    dataset: DatasetConfig = field(default_factory=DatasetConfig)

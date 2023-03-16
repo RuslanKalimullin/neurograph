@@ -1,3 +1,5 @@
+""" Config module """
+
 from hydra import compose, initialize
 from omegaconf import OmegaConf
 from .config import (
@@ -20,6 +22,7 @@ from .config import (
 
 
 def get_config(name: str = 'config') -> Config:
+    """ Get config instance by its name (get default config if not specified """
     with initialize(version_base=None, config_path="."):
         cfg: Config = OmegaConf.structured(compose(name))
     return cfg

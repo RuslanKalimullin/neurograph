@@ -22,10 +22,15 @@ class MSACrossAttentionOutput:
     """ Dataclass that stores cross-attention
         operation output
     """
-    x1: torch.Tensor
-    x2: torch.Tensor
-    attn1: Optional[torch.Tensor] = None
-    attn2: Optional[torch.Tensor] = None
+    x_1: torch.Tensor
+    x_2: torch.Tensor
+    attn_1: Optional[torch.Tensor] = None
+    attn_2: Optional[torch.Tensor] = None
+
+
+def compute_raw_attn_scores(q: torch.Tensor, k: torch.Tensor) -> torch.Tensor:
+    """ Multiply Q and K for MSA """
+    return torch.einsum('bihp,bjhp->bhij', q, k)
 
 
 class MSACrossAttention(MSA):
@@ -64,47 +69,47 @@ class MSACrossAttention(MSA):
         return q, k, v
 
     # pylint: disable=too-many-locals
-    def forward(self, x1: torch.Tensor, x2: torch.Tensor) -> MSACrossAttentionOutput:
+    def forward(self, x_1: torch.Tensor, x_2: torch.Tensor) -> MSACrossAttentionOutput:
         # (b, n, d)
-        b, n, _ = x1.shape
+        b, n, _ = x_1.shape
         # h is self.num_heads
 
         # project X1 to Q1, K1, V1 -> (b, n, h, p)
-        q1, k1, v1 = self.project_to_qkv_head1(x1)
+        q_1, k_1, v_1 = self.project_to_qkv_head1(x_1)
 
         # project X2 to Q2, K2, V2 -> (b, n, h, p)
-        q2, k2, v2 = self.project_to_qkv_head2(x2)
+        q_2, k_2, v_2 = self.project_to_qkv_head2(x_2)
 
         # compute raw_scores for modality x1
-        raw_scores1 = torch.einsum('bihp,bjhp->bhij', q2, k1)
+        raw_scores_1 = compute_raw_attn_scores(q_2, k_1)
 
         # compute raw_scores for modality x2
-        raw_scores2 = torch.einsum('bihp,bjhp->bhij', q1, k2)
+        raw_scores_2 = compute_raw_attn_scores(q_1, k_2)
 
         # normalize each head output
-        scores1 = torch.softmax(raw_scores1 * self.factor, dim=-1)
-        scores2 = torch.softmax(raw_scores2 * self.factor, dim=-1)
+        scores_1 = torch.softmax(raw_scores_1 * self.factor, dim=-1)
+        scores_2 = torch.softmax(raw_scores_2 * self.factor, dim=-1)
 
         # save attention matrices for each head
-        saved_scores1, saved_scores2 = None, None
+        saved_scores_1, saved_scores_2 = None, None
         if self.return_attn:
-            saved_scores1 = scores1.clone()
-            saved_scores2 = scores2.clone()
+            saved_scores_1 = scores_1.clone()
+            saved_scores_2 = scores_2.clone()
 
         # apply dropout to attention matrix
-        scores1 = self.dropout(scores1)
-        scores2 = self.dropout2(scores2)
+        scores_1 = self.dropout(scores_1)
+        scores_2 = self.dropout2(scores_2)
 
         # compute final embeddings
-        out1 = torch.einsum('bhij,bjhp->bihp', scores1, v1)
-        out2 = torch.einsum('bhij,bjhp->bihp', scores2, v2)
+        out1 = torch.einsum('bhij,bjhp->bihp', scores_1, v_1)
+        out2 = torch.einsum('bhij,bjhp->bihp', scores_2, v_2)
 
         # 'concat' each head output
         return MSACrossAttentionOutput(
-            x1=out1.reshape(b, n, -1),
-            x2=out2.reshape(b, n, -1),
-            attn1=saved_scores1,
-            attn2=saved_scores2,
+            x_1=out1.reshape(b, n, -1),
+            x_2=out2.reshape(b, n, -1),
+            attn_1=saved_scores_1,
+            attn_2=saved_scores_2,
         )
 
 
@@ -145,17 +150,17 @@ class FFN(nn.Module):
             out_size=output_dim,
             config=mlp_cfg,
         )
-        self.ln1 = nn.LayerNorm([input_dim])
-        self.ln2 = nn.LayerNorm([input_dim])
+        self.ln_1 = nn.LayerNorm([input_dim])
+        self.ln_2 = nn.LayerNorm([input_dim])
 
-    def forward(self, x, z1):
+    def forward(self, x, z_1):
         # https://arxiv.org/pdf/2002.04745.pdf
-        x = self.ln1(x)
-        s1 = x + z1  # sum_1
+        x = self.ln_1(x)
+        s_1 = x + z_1  # sum_1
 
-        z2 = self.ln2(s1)
-        s2 = s1 + self.mlp(z2)  # sum_2
-        return s2
+        z_2 = self.ln_2(s_1)
+        s_2 = s_1 + self.mlp(z_2)  # sum_2
+        return s_2
 
 
 class CrossAttentionBlock(nn.Module):
@@ -183,11 +188,11 @@ class CrossAttentionBlock(nn.Module):
             mlp_cfg=mlp_cfg,
         )
 
-    def forward(self, x1: torch.Tensor, x2: torch.Tensor):
-        out = self.msa(x1, x2)
-        z1 = self.head1(x1, out.x1)
-        z2 = self.head2(x2, out.x2)
-        return torch.cat((z1, z2), dim=2)
+    def forward(self, x_1: torch.Tensor, x_2: torch.Tensor):
+        out = self.msa(x_1, x_2)
+        z_1 = self.head1(x_1, out.x1)
+        z_2 = self.head2(x_2, out.x2)
+        return torch.cat((z_1, z_2), dim=2)
 
 
 class MultiModalTransformer(Transformer):

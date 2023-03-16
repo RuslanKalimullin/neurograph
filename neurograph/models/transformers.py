@@ -114,12 +114,12 @@ class TransformerBlock(nn.Module):
 
     def forward(self, x):
         # https://arxiv.org/pdf/2002.04745.pdf
-        z1 = self.ln1(x)
-        s1 = x + self.msa(z1).x  # sum_1
+        z_1 = self.ln1(x)
+        s_1 = x + self.msa(z_1).x  # sum_1
 
-        z2 = self.ln2(s1)
-        s2 = s1 + self.mlp(z2)  # sum_2
-        return s2
+        z_2 = self.ln2(s_1)
+        s_2 = s_1 + self.mlp(z_2)  # sum_2
+        return s_2
 
 
 class Transformer(nn.Module):

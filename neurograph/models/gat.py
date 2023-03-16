@@ -101,6 +101,9 @@ class MPGATConv(GATConv):
         alpha = alpha_j if alpha_i is None else alpha_j + alpha_i
         alpha = F.leaky_relu(alpha, self.negative_slope)
         alpha = softmax(alpha, index, ptr, size_i)
+
+        # pylint: disable=attribute-defined-outside-init
+        # it's used inside base class
         self._alpha = alpha
         alpha = F.dropout(alpha, p=self.dropout, training=self.training)
 
