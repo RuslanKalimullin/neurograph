@@ -4,7 +4,7 @@ from torch_geometric.data import Data, Batch
 
 from neurograph.config import get_config, ModelConfig, bgbGATConfig
 from neurograph.models.gat import bgbGAT, MPGATConv
-from neurograph.data.utils import cm_to_edges
+from neurograph.data.utils import conn_matrix_to_edges
 from .utils import random_batch, random_graph
 
 

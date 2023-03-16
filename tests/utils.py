@@ -2,12 +2,12 @@ import numpy as np
 import torch
 from torch_geometric.data import Data, Batch
 from neurograph.models.gat import bgbGAT, MPGATConv
-from neurograph.data.utils import cm_to_edges
+from neurograph.data.utils import conn_matrix_to_edges
 
 
 def random_graph(n, f=13):
     w = np.random.randn(n, n)
-    edge_index, edge_attr = cm_to_edges(w)
+    edge_index, edge_attr = conn_matrix_to_edges(w)
 
     return Data(
         edge_index=edge_index,

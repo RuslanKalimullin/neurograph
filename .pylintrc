@@ -1,9 +1,9 @@
 [MESSAGES CONTROL]
 # in ML code we often use variable names like `x`, `y1`' etc.
-disable=C0103
+# disable=C0103
 
 [FORMAT]
-good-names=i,j,x,y,z
+good-names=x,y,z,b,n,p,h,q,k,v
 
 [TYPECHECK]
 # https://github.com/pytorch/pytorch/issues/701
