@@ -273,20 +273,21 @@ class bgbGAT(nn.Module):
                 use_abs_weight=use_abs_weight,
             )
             fcn_dim = model_cfg.final_node_dim
+        else:
+            ValueError('Unknown pooling type')
 
-        # add last layer and prepool projection
+        # add last conv layer
         self.convs.append(conv)
 
         self.fcn = BasicMLP(in_size=fcn_dim, out_size=num_classes, config=model_cfg.mlp_config)
 
     def forward(self, data):
-
         x, edge_index, edge_attr, batch = data.x, data.edge_index, data.edge_attr, data.batch
         z = x
 
         # apply conv layers
         for _, conv in enumerate(self.convs):
-            # bz * nodes, hidden
+            # batch_size * num_nodes, hidden
             z = conv(z, edge_index, edge_attr)
 
         # prepool dim reduction
@@ -299,9 +300,7 @@ class bgbGAT(nn.Module):
             z = global_add_pool(z,  batch)  # [N, F]
         elif self.pooling == 'mean':
             z = global_mean_pool(z, batch)  # [N, F]
-        else:
-            ValueError('Unknown concat type')
 
-        # FCN clf one graph embedding
+        # FCN clf on graph embedding
         out = self.fcn(z)
         return out

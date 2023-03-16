@@ -255,6 +255,8 @@ class bgbGCN(torch.nn.Module):
                 **common_args,
             )
             fcn_dim = model_cfg.final_node_dim
+        else:
+            ValueError('Unknown pooling type')
 
         # add last conv layer
         self.convs.append(conv)
@@ -265,6 +267,7 @@ class bgbGCN(torch.nn.Module):
         x, edge_index, edge_attr, batch = data.x, data.edge_index, data.edge_attr, data.batch
         z = x
 
+        # apply conv layers
         for _, conv in enumerate(self.convs):
             # batch_size * num_nodes, hidden
             z = conv(z, edge_index, edge_attr)
@@ -272,6 +275,7 @@ class bgbGCN(torch.nn.Module):
         # prepool dim reduction
         z = self.prepool(z)
 
+        # pooling
         if self.pooling == "concat":
             z = concat_pool(z, self.num_nodes)
         elif self.pooling == 'sum':
@@ -279,5 +283,6 @@ class bgbGCN(torch.nn.Module):
         elif self.pooling == 'mean':
             z = global_mean_pool(z, batch)  # [N, F]
 
+        # FCN clf on graph embedding
         out = self.fcn(z)
         return out
