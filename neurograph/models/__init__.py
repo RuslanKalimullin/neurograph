@@ -1,3 +1,5 @@
+""" Package w/ all model classes """
+
 from .gat import bgbGAT
 from .gcn import bgbGCN
 from .mlp import BasicMLP

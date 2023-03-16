@@ -1,11 +1,14 @@
+""" Simple model for testing Multimodal dense dataset """
+
 import torch
-import torch.nn as nn
+from torch import nn
 
 from neurograph.config.config import DummyMultimodalDense2Config
 from neurograph.models.available_modules import available_activations
 
 
 class DummyMultimodalDense2Model(nn.Module):
+    """ Simple model for testing Multimodal dense dataset """
     def __init__(
         self,
         # comes from dataset
@@ -17,7 +20,7 @@ class DummyMultimodalDense2Model(nn.Module):
     ):
         super().__init__()
         self.lin1 = nn.Linear(input_dim_1 * num_nodes_1, model_cfg.hidden)
-        self.lin2 = nn.Linear(input_dim_1 * num_nodes_1, model_cfg.hidden)
+        self.lin2 = nn.Linear(input_dim_2 * num_nodes_2, model_cfg.hidden)
         self.lin3 = nn.Linear(2 * model_cfg.hidden, model_cfg.n_classes)
 
 
@@ -30,8 +33,9 @@ class DummyMultimodalDense2Model(nn.Module):
 
         self.dropout = nn.Dropout(model_cfg.dropout)
 
+    # pylint: disable=missing-function-docstring
     def forward(self, batch):
-        x1, x2, y = batch
+        x1, x2, _ = batch
 
         inp1 = x1.reshape(x1.size(0), -1)
         inp2 = x2.reshape(x2.size(0), -1)
