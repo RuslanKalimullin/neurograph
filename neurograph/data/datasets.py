@@ -44,8 +44,9 @@ class NeuroDataset(ABC):
 
     def load_folds(self) -> tuple[dict, int]:
         """ Loads json w/ splits, returns a dict w/ splits and number of folds """
-        with open(osp.join(self.global_dir, self.splits_file), encoding='utf-8') as f:
-            _folds = json.load(f)
+
+        with open(osp.join(self.global_dir, self.splits_file), encoding='utf-8') as f_splits:
+            _folds = json.load(f_splits)
 
         # for cobre splits we have a weird format of splits
         # so we need some extra steps
@@ -84,8 +85,8 @@ class NeuroDataset(ABC):
                 folds['train'].append(one_fold)
         else:
             # special case of old splits for COBRE
-            for i in range(num_folds):
-                train_ids, valid_ids = id_folds[i]['train'], id_folds[i]['valid']
+            for fold_i in range(num_folds):
+                train_ids, valid_ids = id_folds[fold_i]['train'], id_folds[fold_i]['valid']
                 logging.debug('train_ids: %s', str(train_ids))
 
                 one_fold = {
@@ -235,8 +236,8 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
         torch.save((data, slices), self.processed_paths[0])
 
         # save subj_ids as a txt file
-        with open(self.processed_paths[1], 'w') as f:
-            f.write('\n'.join([str(x) for x in subj_ids]))
+        with open(self.processed_paths[1], 'w') as f_subjids:
+            f_subjids.write('\n'.join([str(x) for x in subj_ids]))
 
         # process folds (map subj_id to idx in datalist)
         folds = self.load_and_process_folds(subj_ids)
@@ -260,24 +261,24 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
 
         # subj_id -> CM, time series matrices, ROI names
         # (cms, ts, roi_map)
-        cms, ts, _ = self.load_cms(cm_path)
+        conn_matrices, time_series, _ = self.load_cms(cm_path)
 
         # filter by subj_ids from splits
         if subj_ids is not None:
-            cms = {subj_id: cms[subj_id] for subj_id in subj_ids}
+            conn_matrices = {subj_id: conn_matrices[subj_id] for subj_id in subj_ids}
             # for DTI data we don't have timeseries data
-            if ts:
-                ts = {subj_id: ts[subj_id] for subj_id in subj_ids}
+            if time_series:
+                time_series = {subj_id: time_series[subj_id] for subj_id in subj_ids}
 
         # prepare data list from cms and targets
         datalist = []
         subj_ids = []
-        for subj_id, cm in cms.items():
+        for subj_id, conn_matrix in conn_matrices.items():
             try:
                 # try to process a graph
                 datalist.append(
                     prepare_graph(
-                        cm,
+                        conn_matrix,
                         subj_id,
                         targets,
                         self.abs_thr,
@@ -286,12 +287,12 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
                     ),
                 )
                 subj_ids.append(subj_id)
-            except KeyError as e:
+            except KeyError as exc:
                 # ignore if subj_id is not in targets
                 if ignore_missing_subjects:
                     pass
                 else:
-                    raise KeyError('CM subj_id not present in loaded targets') from e
+                    raise KeyError('CM subj_id not present in loaded targets') from exc
 
         # select labels by subject ids
         y = targets.loc[subj_ids].copy()
@@ -406,14 +407,14 @@ class NeuroDenseDataset(thDataset, NeuroDataset):
                 tensor w/ labels,
                 list of subject ids
         """
-        cms, ts, _ = self.load_cms(self.cm_path)
+        conn_matrices, time_series, _ = self.load_cms(self.cm_path)
         targets, *_ = self.load_targets()
 
         if self.feature_type == 'timeseries':
             # prepare list of subj_ids and corresponding tensors
-            return self.prepare_data(ts, targets, self.normalize)
+            return self.prepare_data(time_series, targets, self.normalize)
         if self.feature_type == 'conn_profile':
-            return self.prepare_data(cms, targets, self.normalize)
+            return self.prepare_data(conn_matrices, targets, self.normalize)
         raise ValueError(f'Unknown feature_type: {self.feature_type}')
 
     def __len__(self):
@@ -438,7 +439,7 @@ class NeuroDenseDataset(thDataset, NeuroDataset):
 
         datalist = []
         subj_ids = []
-        for subj_id, m in matrix_dict.items():
+        for subj_id, matrix in matrix_dict.items():
             try:
                 # try to get a label for the subject
                 _ = targets.loc[subj_id]
@@ -447,8 +448,8 @@ class NeuroDenseDataset(thDataset, NeuroDataset):
                 continue
 
             # prepare connectivity_matrix
-            m = normalize_cm(m, normalize)
-            datalist.append(torch.FloatTensor(m).t().unsqueeze(0))
+            matrix = normalize_cm(matrix, normalize)
+            datalist.append(torch.FloatTensor(matrix).t().unsqueeze(0))
 
             # append to subj_ids
             subj_ids.append(subj_id)
@@ -553,13 +554,13 @@ class MutlimodalDense2Dataset(NeuroDenseDataset):
     ) -> tuple[torch.Tensor, list[str], torch.Tensor]:
         """ Load CMs and targets and pack into batch of tensors """
         # load_cms and load_target come from corresponding Trait
-        cms, ts, _ = self.load_cms(cm_path)
+        conn_matrices, time_series, _ = self.load_cms(cm_path)
         targets, *_ = self.load_targets()
 
         if feature_type == 'timeseries':
-            return self.prepare_tensors(ts, targets, subj_ids, self.normalize)
+            return self.prepare_tensors(time_series, targets, subj_ids, self.normalize)
         if feature_type == 'conn_profile':
-            return self.prepare_tensors(cms, targets, subj_ids, self.normalize)
+            return self.prepare_tensors(conn_matrices, targets, subj_ids, self.normalize)
         raise ValueError(f'Unknown fMRI feature_type: {self.fmri_feature_type}')
 
     @staticmethod
@@ -580,13 +581,13 @@ class MutlimodalDense2Dataset(NeuroDenseDataset):
         for subj_id in subj_ids:
             try:
                 # prepare connectivity_matrix
-                m = matrix_dict[subj_id]
-                m = normalize_cm(m, normalize)
+                matrix = matrix_dict[subj_id]
+                matrix = normalize_cm(matrix, normalize)
 
                 # convert matrix to tensor, append to datalist
-                datalist.append(torch.FloatTensor(m).t().unsqueeze(0))
-            except KeyError as e:
-                raise KeyError('CM subj_id not present in loaded targets') from e
+                datalist.append(torch.FloatTensor(matrix).t().unsqueeze(0))
+            except KeyError as exc:
+                raise KeyError('CM subj_id not present in loaded targets') from exc
 
         # NB: we use LongTensor here
         y = torch.LongTensor(targets.loc[subj_ids].copy().values)

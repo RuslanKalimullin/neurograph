@@ -10,39 +10,41 @@ from sklearn.model_selection import train_test_split, StratifiedKFold
 from torch_geometric.data import Data
 
 
-def square_check(f):
+def square_check(func):
     """ Checks that the first argument is a square 2D numpy array """
 
-    @wraps(f)
+    @wraps(func)
     def wrapper(*args, **kwargs):
-        m = args[0]
-        assert isinstance(m, np.ndarray), 'input matrix must be np.ndarray!'
-        assert m.ndim == 2, 'input matrix must be 2d array!'
-        assert m.shape[0] == m.shape[1], 'input matrix must be square!'
+        first_arg = args[0]
+        assert isinstance(first_arg, np.ndarray), 'input matrix must be np.ndarray!'
+        assert first_arg.ndim == 2, 'input matrix must be 2d array!'
+        assert first_arg.shape[0] == first_arg.shape[1], 'input matrix must be square!'
 
-        return f(*args, **kwargs)
+        return func(*args, **kwargs)
     return wrapper
 
 
-def normalize_cm(cm: np.ndarray, normalize_type: Optional[str] = None) -> np.ndarray:
+def normalize_cm(conn_matrix: np.ndarray, normalize_type: Optional[str] = None) -> np.ndarray:
     """ Normalize weighted adjacency matrix
         e.g. apply log or divide by global matrix max weight
     """
-    cm = cm.astype(np.float32)
+    conn_matrix = conn_matrix.astype(np.float32)
     if normalize_type:
         if normalize_type == 'global_max':
-            cm = cm / cm.max()
+            conn_matrix = conn_matrix / conn_matrix.max()
         elif normalize_type == 'log':
             # this line handles zeros in CM (set log(0) to 0)
-            cm = np.log(cm, where=0<cm, out=0.*cm)
+            conn_matrix = np.log(conn_matrix, where=0<conn_matrix, out=0.*conn_matrix)
         else:
             raise ValueError(f'Unknown `normalize` arg! Given {normalize_type}')
 
-    return cm
+    return conn_matrix
 
+
+# pylint: disable=too-many-arguments
 @square_check
 def prepare_graph(
-    cm: np.ndarray,
+    conn_matrix: np.ndarray,
     subj_id: str,
     targets: pd.DataFrame,
     abs_thr: Optional[float] = None,
@@ -52,20 +54,20 @@ def prepare_graph(
 
     """
     Args:
-        cm (np.ndarray): connectivity matrix
+        conn_matrix (np.ndarray): connectivity matrix
         subj_id (str): subject_id
         abs_thr (float, optional): Absolute threshold for sparsification
         pt_thr (float, optional): Proportional threshold for sparsification (pt_thr must be (0, 1)
         Combine CM, subj_id and target to a pyg.Data object
         `targets` must be indexed by subj_id
     """
-    cm = normalize_cm(cm, normalize)
+    conn_matrix = normalize_cm(conn_matrix, normalize)
 
     # convert CM edge_index, edge_attr (and sparsify if thr are given)
-    edge_index, edge_attr = cm_to_edges(cm, abs_thr=abs_thr, pt_thr=pt_thr)
+    edge_index, edge_attr = conn_matrix_to_edges(conn_matrix, abs_thr=abs_thr, pt_thr=pt_thr)
 
     # compute initial node embeddings -> just original weights
-    x = torch.from_numpy(cm).float()
+    x = torch.from_numpy(conn_matrix).float()
 
     # get labels from DF via subject_id
     y = torch.LongTensor(targets.loc[subj_id].values)
@@ -74,7 +76,7 @@ def prepare_graph(
         edge_index=edge_index,
         edge_attr=edge_attr,
         x=x,
-        num_nodes=cm.shape[0],
+        num_nodes=conn_matrix.shape[0],
         y=y,
         subj_id=subj_id,
     )
@@ -83,8 +85,8 @@ def prepare_graph(
 
 
 @square_check
-def cm_to_edges(
-    cm: np.ndarray,
+def conn_matrix_to_edges(
+    conn_matrix: np.ndarray,
     abs_thr: Optional[float] = None,
     pt_thr: Optional[float] = None,
 ) -> tuple[torch.Tensor, torch.Tensor]:
@@ -99,26 +101,26 @@ def cm_to_edges(
         raise ValueError('`abs_thr` and `pt_thr` are both not None! Choose one!')
 
     if abs_thr:
-        abs_cm = np.abs(cm)
+        abs_cm = np.abs(conn_matrix)
         idx = np.nonzero(abs_cm > abs_thr)
     elif pt_thr:
         assert 0 < pt_thr < 1, 'thr must be in range (0, 1)'
-        abs_cm = np.abs(cm)
+        abs_cm = np.abs(conn_matrix)
         vals = np.sort(abs_cm.flatten())[::-1]
-        top_k = int(pt_thr * cm.shape[0] ** 2)  # pt * num_nodes**2
+        top_k = int(pt_thr * conn_matrix.shape[0] ** 2)  # pt * num_nodes**2
         idx = np.nonzero(abs_cm > vals[top_k])
     else:
-        idx = (np.isnan(cm) == 0).nonzero()
+        idx = (np.isnan(conn_matrix) == 0).nonzero()
 
     edge_index = torch.LongTensor(np.stack(idx))
-    edge_weights = torch.FloatTensor(cm[idx])
+    edge_weights = torch.FloatTensor(conn_matrix[idx])
 
     return edge_index, edge_weights
 
 
 @square_check
 def find_thr(
-    cm: np.ndarray,
+    conn_matrix: np.ndarray,
     k: int = 5,
 ) -> float:
 
@@ -126,8 +128,8 @@ def find_thr(
         the new CM will have `k * num_nodes` edges
     """
 
-    n = cm.shape[0]
-    abs_cm = np.abs(cm)
+    n = conn_matrix.shape[0]
+    abs_cm = np.abs(conn_matrix)
 
     # find thr to get the desired k
     # = average number of edges for a node
@@ -154,9 +156,9 @@ def generate_splits(subj_ids: list | np.ndarray, y: np.ndarray, seed: int = 1380
     test, _ = subj_ids[test_idx], y[test_idx]
 
     # split train into cv folds
-    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=seed)
+    strat_cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=seed)
     folds: dict[str, list] = {'train': []}
-    for _, (train_fold, valid_fold) in enumerate(cv.split(train, y_train)):
+    for _, (train_fold, valid_fold) in enumerate(strat_cv.split(train, y_train)):
         folds['train'].append({
             'train': list(train[train_fold]),
             'valid': list(train[valid_fold]),
