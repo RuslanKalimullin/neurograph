@@ -313,6 +313,7 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
 
     @property
     def cm_path(self):
+        """ Path to a dir w/ CM files """
         # raw_dir specific to graph datasets :(
         return osp.join(self.raw_dir, self.atlas)
 
@@ -365,6 +366,8 @@ class NeuroGraphDataset(InMemoryDataset, NeuroDataset):
 
 
 class NeuroDenseDataset(thDataset, NeuroDataset):
+    """ Base class for dense datasets """
+
     data_type: str = 'dense'
 
     def __init__(
@@ -398,6 +401,11 @@ class NeuroDenseDataset(thDataset, NeuroDataset):
         self.num_nodes = self.data.shape[1]
 
     def load_data(self) -> tuple[torch.Tensor, list[str], torch.Tensor]:
+        """ Return:
+                tensor w/ matrices,
+                tensor w/ labels,
+                list of subject ids
+        """
         cms, ts, _ = self.load_cms(self.cm_path)
         targets, *_ = self.load_targets()
 
@@ -433,7 +441,7 @@ class NeuroDenseDataset(thDataset, NeuroDataset):
         for subj_id, m in matrix_dict.items():
             try:
                 # try to get a label for the subject
-                label = targets.loc[subj_id]
+                _ = targets.loc[subj_id]
             except KeyError:
                 # ignore if subj_id is not in targets
                 continue
