@@ -99,7 +99,7 @@ class MPGATConv(GATConv):
         alpha = alpha_j if alpha_i is None else alpha_j + alpha_i
         alpha = F.leaky_relu(alpha, self.negative_slope)
         alpha = softmax(alpha, index, ptr, size_i)
-        # self._alpha = alpha
+        self._alpha = alpha
         alpha = F.dropout(alpha, p=self.dropout, training=self.training)
 
         # add extra dim, so we get [m, 1, 1] shape where m = num of edges
