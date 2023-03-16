@@ -98,7 +98,7 @@ class DummyMultimodalDense2Config:
 # pylint: disable=too-many-instance-attributes
 @dataclass
 class StandartGNNConfig(ModelConfig):
-    name: str = 'baseGNN'  # see neurograph.models/
+    name: str = 'StandartGNN'  # see neurograph.models/
     n_classes: int = 2  # must match with loss
     num_layers: int = 2
     layer_module: str = 'GCNConv'
@@ -118,7 +118,7 @@ class StandartGNNConfig(ModelConfig):
 
 @dataclass
 class BrainGCNConfig(ModelConfig):
-    name: str = 'bgbGCN'  # see neurograph.models
+    name: str = 'BrainGCN'  # see neurograph.models
     n_classes: int = 2  # must match with loss
     data_type: str = 'graph'
 
@@ -141,7 +141,7 @@ class BrainGCNConfig(ModelConfig):
 
 @dataclass
 class BrainGATConfig(ModelConfig):
-    name: str = 'bgbGAT'  # see neurograph.models
+    name: str = 'BrainGAT'  # see neurograph.models
     n_classes: int = 2  # must match with loss
     data_type: str = 'graph'
 

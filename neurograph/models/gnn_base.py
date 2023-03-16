@@ -57,7 +57,7 @@ def build_gnn_block(
     raise ValueError('Unknown `layer_module` name')
 
 
-class baseGNN(torch.nn.Module):
+class StandartGNN(torch.nn.Module):
     def __init__(
         self,
         # determined by dataset

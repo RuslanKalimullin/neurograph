@@ -192,7 +192,7 @@ def build_gat_block(
     )
 
 
-class bgbGAT(nn.Module):
+class BrainGAT(nn.Module):
     def __init__(
         self,
         # determined by dataset

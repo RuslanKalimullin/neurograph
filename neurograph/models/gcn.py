@@ -179,7 +179,7 @@ def build_gcn_block(
     )
 
 
-class bgbGCN(torch.nn.Module):
+class BrainGCN(torch.nn.Module):
     # pylint: disable=too-many-locals
     def __init__(
         self,
