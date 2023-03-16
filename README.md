@@ -90,3 +90,7 @@ docker run --rm --network host --gpus=0,1 -v $(pwd):/app --env WANDB_API_KEY=<YO
 jupyter nbextension enable --py widgetsnbextension
 ```
 if IPython doesn't work in jupyter lab
+
+## TODO
+- add dropout inside bgb GCN/GAT
+- control addining self-loops in GATs
