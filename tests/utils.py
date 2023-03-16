@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from torch_geometric.data import Data, Batch
-from neurograph.models.gat import bgbGAT, MPGATConv
+from neurograph.models.gat import BrainGAT, MPGATConv
 from neurograph.data.utils import conn_matrix_to_edges
 
 
