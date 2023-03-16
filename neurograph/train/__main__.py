@@ -1,21 +1,20 @@
+""" Entrypoint for running training """
+
 import os
+import os.path as osp
 import json
 import logging
-import os.path as osp
-from typing import Any, Mapping
 
-import git
 import hydra
 import torch
-import wandb
 from omegaconf import OmegaConf
 from torch_geometric import seed_everything
+import wandb
 
 from neurograph.config import DatasetConfig, Config, validate_config
-from neurograph.data import available_datasets
 from neurograph.data import (
-    graph_datasets,
     dense_datasets,
+    graph_datasets,
     multimodal_dense_2,
     NeuroDenseDataset,
     NeuroGraphDataset,
@@ -23,8 +22,9 @@ from neurograph.data import (
 from neurograph.train.train import train
 
 
-# TOOD: fix type hints
 def dataset_factory(ds_cfg: DatasetConfig) -> NeuroDenseDataset | NeuroGraphDataset:
+    """ Factory func that returns dataset class instance based on dataset config """
+
     if ds_cfg.data_type == 'graph':
         return graph_datasets[ds_cfg.name](
             root=str(ds_cfg.data_path),
@@ -34,7 +34,7 @@ def dataset_factory(ds_cfg: DatasetConfig) -> NeuroDenseDataset | NeuroGraphData
             abs_thr=ds_cfg.abs_thr,
             normalize=ds_cfg.normalize,
         )
-    elif ds_cfg.data_type == 'dense':
+    if ds_cfg.data_type == 'dense':
         return dense_datasets[ds_cfg.name](
             root=str(ds_cfg.data_path),
             atlas=ds_cfg.atlas,
@@ -42,31 +42,32 @@ def dataset_factory(ds_cfg: DatasetConfig) -> NeuroDenseDataset | NeuroGraphData
             feature_type=ds_cfg.feature_type,
             normalize=ds_cfg.normalize,
         )
-    elif ds_cfg.data_type == 'multimodal_dense_2':
+    if ds_cfg.data_type == 'multimodal_dense_2':
         return multimodal_dense_2[ds_cfg.name](
             root=str(ds_cfg.data_path),
             atlas=ds_cfg.atlas,
             fmri_feature_type=ds_cfg.fmri_feature_type,
             normalize=ds_cfg.normalize,
         )
-    else:
-        raise ValueError(f'Unknown dataset data_type! Options: dense, graph, multimodel_dense_2')
+    raise ValueError('Unknown dataset data_type! Options: dense, graph, multimodel_dense_2')
 
 
 @hydra.main(version_base=None, config_path='../config', config_name="config")
 def main(cfg: Config):
+    """ Entrypoint function for running training from CLI """
+
     seed_everything(cfg.seed)
     if cfg.train.num_threads:
         torch.set_num_threads(cfg.train.num_threads)
 
     validate_config(cfg)
 
-    logging.info(f'Config: \n{OmegaConf.to_yaml(cfg)}')
+    logging.info('Config: \n%s', OmegaConf.to_yaml(cfg))
 
     cfg_dict = OmegaConf.to_container(cfg)
     wandb.init(
         project=cfg.log.wandb_project,
-        settings=wandb.Settings(start_method="thread"),
+        settings=wandb.Settings(start_method='thread'),
         config=cfg_dict,  # type: ignore
         mode=cfg.log.wandb_mode,
         name=cfg.log.wandb_name,
@@ -79,7 +80,7 @@ def main(cfg: Config):
     metrics = train(ds, cfg)
     wandb.finish()
 
-    logging.info(f'Results saved in: {os.getcwd()}')
+    logging.info('Results saved in: %s', os.getcwd())
 
     # save metrics and config
     with open(osp.join(os.getcwd(), 'metrics.json'), 'w') as f_metrics:
@@ -87,4 +88,5 @@ def main(cfg: Config):
 
     OmegaConf.save(cfg, osp.join(os.getcwd(), 'config.yaml'))
 
+# pylint: disable=no-value-for-parameter
 main()
