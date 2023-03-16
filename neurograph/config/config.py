@@ -97,7 +97,7 @@ class DummyMultimodalDense2Config:
 
 # pylint: disable=too-many-instance-attributes
 @dataclass
-class standartGNNConfig(ModelConfig):
+class StandartGNNConfig(ModelConfig):
     name: str = 'baseGNN'  # see neurograph.models/
     n_classes: int = 2  # must match with loss
     num_layers: int = 2
@@ -117,7 +117,7 @@ class standartGNNConfig(ModelConfig):
 
 
 @dataclass
-class bgbGCNConfig(ModelConfig):
+class BrainGCNConfig(ModelConfig):
     name: str = 'bgbGCN'  # see neurograph.models
     n_classes: int = 2  # must match with loss
     data_type: str = 'graph'
@@ -140,7 +140,7 @@ class bgbGCNConfig(ModelConfig):
 
 
 @dataclass
-class bgbGATConfig(ModelConfig):
+class BrainGATConfig(ModelConfig):
     name: str = 'bgbGAT'  # see neurograph.models
     n_classes: int = 2  # must match with loss
     data_type: str = 'graph'
@@ -303,9 +303,9 @@ cs.store(group='dataset', name='base_dataset', node=UnimodalDatasetConfig)
 cs.store(group='dataset', name='base_multimodal_dataset', node=MultimodalDatasetConfig)
 
 # base model configs
-cs.store(group='model', name='bgbGAT', node=bgbGATConfig)
-cs.store(group='model', name='bgbGCN', node=bgbGCNConfig)
+cs.store(group='model', name='bgbGAT', node=BrainGATConfig)
+cs.store(group='model', name='bgbGCN', node=BrainGCNConfig)
 cs.store(group='model', name='transformer', node=TransformerConfig)
-cs.store(group='model', name='baseGNN', node=standartGNNConfig)
+cs.store(group='model', name='baseGNN', node=StandartGNNConfig)
 cs.store(group='model', name='dummy_mm2', node=DummyMultimodalDense2Config)
 cs.store(group='model', name='mm_transformer', node=MultiModalTransformerConfig)

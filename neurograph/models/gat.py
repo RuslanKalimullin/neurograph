@@ -34,7 +34,7 @@ from torch_geometric.nn import global_add_pool, global_mean_pool, GATConv
 from torch_geometric.utils import softmax
 from torch_geometric.nn import Sequential as pygSequential
 
-from neurograph.config import bgbGATConfig
+from neurograph.config import BrainGATConfig
 from neurograph.models.mlp import BasicMLP
 from neurograph.models.utils import concat_pool
 
@@ -198,7 +198,7 @@ class bgbGAT(nn.Module):
         # determined by dataset
         input_dim: int,
         num_nodes: int,
-        model_cfg: bgbGATConfig, # ModelConfig,
+        model_cfg: BrainGATConfig, # ModelConfig,
     ):
         """
         Architecture:

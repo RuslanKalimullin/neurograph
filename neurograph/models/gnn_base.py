@@ -7,7 +7,7 @@ from torch_geometric.nn import global_add_pool, global_mean_pool
 from torch_geometric.nn import Sequential as pygSequential
 from torch import nn
 
-from neurograph.config import standartGNNConfig
+from neurograph.config import StandartGNNConfig
 from neurograph.models.mlp import BasicMLP
 from neurograph.models.utils import concat_pool
 from neurograph.models.available_modules import available_pg_modules
@@ -63,7 +63,7 @@ class baseGNN(torch.nn.Module):
         # determined by dataset
         input_dim: int,
         num_nodes: int,
-        model_cfg: standartGNNConfig,  # ModelConfig,
+        model_cfg: StandartGNNConfig,  # ModelConfig,
     ):
         super().__init__()
         self.convs = torch.nn.ModuleList()
