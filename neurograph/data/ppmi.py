@@ -37,7 +37,7 @@ class PPMITrait:
         path = Path(path)
 
         data = {}
-        ts: dict[str, np.ndarray] = {}
+        time_series: dict[str, np.ndarray] = {}
         # ROI names, extacted from CMs
         roi_map: dict[int, str] = {}
 
@@ -51,22 +51,22 @@ class PPMITrait:
             if not roi_map:
                 roi_map = {i: c.rstrip() for i, c in enumerate(x.columns)}
 
-        return data, ts, roi_map
+        return data, time_series, roi_map
 
     def load_targets(self) -> tuple[pd.DataFrame, dict[str, int], dict[int, str]]:
         """ Load and process targets """
 
         # load csv file w/ target, leave only subject ids and target columns
-        df = pd.read_csv(osp.join(self.global_dir, self.target_file))
+        raw_target = pd.read_csv(osp.join(self.global_dir, self.target_file))
 
         # since out `subj_id` is really a concat of subject_id and image_id
         # we must concat two columns
-        subj_id = df[self.subj_id_col].astype(str) + '_' + df[self.image_id_col]
+        subj_id = raw_target[self.subj_id_col].astype(str) + '_' + raw_target[self.image_id_col]
         # construct target w/ new subj_id
         target: pd.DataFrame = pd.DataFrame(
             {
                 self.subj_id_col: subj_id,
-                self.target_col: df[self.target_col]
+                self.target_col: raw_target[self.target_col]
             }
         )
 

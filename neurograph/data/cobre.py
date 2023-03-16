@@ -36,7 +36,7 @@ class CobreTrait:
         path = Path(path)
 
         data = {}
-        ts = {}
+        time_series = {}
         # ROI names, extacted from CMs
         roi_map: dict[int, str] = {}
 
@@ -46,13 +46,13 @@ class CobreTrait:
 
             values = x.values.astype(np.float32)
             if p.stem.endswith('_embed'):
-                ts[name] = values
+                time_series[name] = values
             else:
                 data[name] = values
                 if not roi_map:
                     roi_map = dict(enumerate(x.columns))
 
-        return data, ts, roi_map
+        return data, time_series, roi_map
 
     def load_targets(self) -> tuple[pd.DataFrame, dict[str, int], dict[int, str]]:
         """ Load and process *cobre* targets """

@@ -60,7 +60,7 @@ class ABIDETrait:
         path = Path(path)
 
         data = {}
-        ts = {}
+        time_series = {}
         # ROI names, extacted from CMs
         roi_map: dict[int, str] = {}
 
@@ -73,10 +73,10 @@ class ABIDETrait:
 
                 embed_name =list(p.glob(self.embed_sufix))[0]
                 values_embed = pd.read_csv(embed_name,delimiter="\t").astype(np.float32)
-                ts[name] = values_embed
+                time_series[name] = values_embed
                 data[name] = values
 
-        return data, ts, roi_map
+        return data, time_series, roi_map
 
 
 # NB: trait must go first
