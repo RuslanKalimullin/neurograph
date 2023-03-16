@@ -1,9 +1,10 @@
+""" Available dict w/ pointers to available Pytorch and Pytorch Geometric classes """
+
 import inspect
 from typing import Any, Type
-import torch.nn as nn
+from torch import nn, optim
+from torch.optim import lr_scheduler
 from torch_geometric import nn as tg_nn
-import torch.optim as optim
-import torch.optim.lr_scheduler as lr_scheduler
 
 # put different pytorch models into dicts for easier instantiation
 available_pg_modules: dict[str, Type[nn.Module]] = {

@@ -39,6 +39,8 @@ from neurograph.models.mlp import BasicMLP
 from neurograph.models.utils import concat_pool
 
 
+# pylint: disable=too-few-public-methods
+# we just override `message` and that is enough
 class MPGATConv(GATConv):
 
     # gat_mp_type choices:
