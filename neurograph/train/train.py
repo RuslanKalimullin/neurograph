@@ -27,19 +27,19 @@ from neurograph.models.available_modules import (
 )
 
 
-def get_log_msg(prefix, fold_i, epoch_i, metrics) -> str:
+def get_log_msg(prefix, fold_i, epoch_i, metrics_dict) -> str:
+    """ Form logging message w/ metrics, given epoch and subset (train, valid, test) """
     return ''.join([
         f'Fold={fold_i:02d}, ',
         f'Epoch={epoch_i:03d}, ' if epoch_i is not None else '',
-        ' | '.join(f'{prefix}/{name}={val:.3f}' for name, val in metrics.items()),
+        ' | '.join(f'{prefix}/{name}={val:.3f}' for name, val in metrics_dict.items()),
     ])
 
 
 def train(ds: NeuroDataset, cfg: Config):
     ''' Run cross-validation, report metrics on valids and test '''
 
-    # metrics  # TODO put into dataclass or dict
-    logging.info(f'Model architecture:\n{init_model(ds, cfg)})')
+    logging.info('Model architecture:\n %s', init_model(ds, cfg))
 
     # get test loader beforehand
     test_loader = ds.get_test_loader(cfg.train.valid_batch_size)
@@ -51,7 +51,7 @@ def train(ds: NeuroDataset, cfg: Config):
     # run training for each fold
     loaders_iter = ds.get_cv_loaders(cfg.train.batch_size, cfg.train.valid_batch_size)
     for fold_i, loaders in enumerate(loaders_iter):
-        logging.info(f'Run training on fold: {fold_i}')
+        logging.info('Run training on fold %s', fold_i)
 
         # create model, optim, loss etc.
         model, optimizer, scheduler, loss_f = init_model_optim_loss(ds, cfg)
@@ -84,8 +84,8 @@ def train(ds: NeuroDataset, cfg: Config):
 
     wandb.summary['final'] = {'valid': final_valid_metrics, 'test': final_test_metrics}
 
-    logging.info(f'Valid metrics over folds: {json.dumps(final_valid_metrics, indent=2)}')
-    logging.info(f'Test metrics over folds: {json.dumps(final_test_metrics, indent=2)}')
+    logging.info('Valid metrics over folds: %s', json.dumps(final_valid_metrics, indent=2))
+    logging.info('Test metrics over folds: %s', json.dumps(final_test_metrics, indent=2))
 
     return {'valid': final_valid_metrics, 'test': final_test_metrics}
 
@@ -94,12 +94,17 @@ def handle_batch(
     batch: pygData | pygBatch | list[torch.Tensor] | tuple[torch.Tensor],
     device: str,
 ):
+    """ handles diffrent batch types: DataBatch from pytorch geometric and
+        just ordinary torch batch that is tensor.
+        Also, it handles unimodal / multimodal cases
+    """
+
     # TODO: create DataDense dataclass (analogue of pyg.Data) and
     # define custom collate_fn for DenseDataset DataLoaders
     # so we have the same interface with PyG
 
     # it's ugly but it works
-    if isinstance(batch, list) or isinstance(batch, tuple):
+    if isinstance(batch, (list, tuple)):
         if len(batch) == 2:
             x, y = batch
             x, y = x.to(device), y.to(device)
@@ -173,7 +178,7 @@ def train_one_split(
         valid_epoch_metrics = evaluate(model, valid_loader, loss_f, cfg)
         logging.info(get_log_msg('valid', fold_i, epoch_i, valid_epoch_metrics))
 
-        # TODO: add link to cwn code
+        # taken from: https://github.com/twitter-research/cwn/blob/main/exp/run_exp.py#L347
         # decay learning rate
         if scheduler is not None:
             if cfg.train.scheduler == 'ReduceLROnPlateau':
@@ -240,6 +245,8 @@ def evaluate(model, loader, loss_f, cfg: Config):
 
 
 def init_model_optim_loss(ds: NeuroDataset, cfg: Config):
+    """ Init model, optim, scheduler instances given dataset instance and global config """
+
     # create model instance
     model = init_model(ds, cfg)
     # set optimizer
@@ -273,6 +280,8 @@ def init_model_optim_loss(ds: NeuroDataset, cfg: Config):
 
 
 def init_model(dataset: NeuroDataset, cfg: Config):
+    """ Init a model instance given dataset instance and global config """
+
     model_cfg: ModelConfig = cfg.model
     available_models = dict(inspect.getmembers(neurograph.models))
 
@@ -296,7 +305,7 @@ def init_model(dataset: NeuroDataset, cfg: Config):
 
 
 def process_bce_preds(trues_pt: torch.Tensor, y_pred: torch.Tensor, thr: float):
-    # compute probas, labels (using thr)
+    """ Given 1-class predictions (expected by BCE), compute probas, labels (using thr) """
     pred_labels = (torch.sigmoid(y_pred) > thr).long().detach().cpu().numpy()
     pred_proba = (torch.sigmoid(y_pred)).detach().cpu().numpy()
     trues = trues_pt.detach().long().cpu().numpy()
@@ -305,6 +314,7 @@ def process_bce_preds(trues_pt: torch.Tensor, y_pred: torch.Tensor, thr: float):
 
 
 def process_ce_preds(trues_pt: torch.Tensor, y_pred: torch.Tensor):
+    """ Given k-class predictions (expected by CE), compute probas, labels (by argmax) """
     pred_proba = (torch.softmax(y_pred, dim=1)).detach().cpu().numpy()
     pred_labels = pred_proba.argmax(axis=1)
     trues = trues_pt.detach().long().cpu().numpy()
@@ -317,6 +327,7 @@ metrics_resistry = {'acc': 'max', 'auc': 'max', 'f1_macro': 'max', 'loss': 'min'
 
 def compute_metrics(pred_labels: np.ndarray, pred_proba: np.ndarray, trues: np.ndarray):
     """ Compute metrics for binary classification """
+
     auc = metrics.roc_auc_score(trues, pred_proba)
     if np.isnan(auc):
         auc = 0.5
@@ -327,6 +338,7 @@ def compute_metrics(pred_labels: np.ndarray, pred_proba: np.ndarray, trues: np.n
 
 
 def agg_fold_metrics(lst: list[dict[str, float]]):
+    """ Compute mean, min, max, std from cross validation metrics """
     keys = lst[0].keys()
     res = {}
     for k in keys:
@@ -335,5 +347,6 @@ def agg_fold_metrics(lst: list[dict[str, float]]):
 
 
 def compute_stats(lst: list[float]) -> dict[str, np.ndarray]:
+    """ Compute some stats from a list of floats """
     arr = np.array(lst)
     return {'mean': arr.mean(), 'std': arr.std(), 'min': arr.min(), 'max': arr.max()}
