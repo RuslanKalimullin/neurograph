@@ -1,30 +1,30 @@
+""" Module w/ functions for running training """
+
 import inspect
 import json
 import logging
-from collections import defaultdict
 from copy import deepcopy
-from typing import Any, Type
+from typing import Any
 from operator import gt, lt
 
 import numpy as np
-import sklearn.metrics as metrics
+from sklearn import metrics
 import torch
-import torch.nn as nn
+from torch import nn
 from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss
 from torch.utils.data import DataLoader
 from torch_geometric.data import Batch as pygBatch, Data as pygData
 from torch_geometric.loader import DataLoader as pygDataLoader
 import wandb
 
-from neurograph.config import Config, ModelConfig, UnimodalDatasetConfig, MultimodalDatasetConfig
-from neurograph.data import NeuroDataset, NeuroGraphDataset
+from neurograph.config import Config, ModelConfig
+from neurograph.data import NeuroDataset
 import neurograph.models
 from neurograph.models.available_modules import (
     available_optimizers,
     available_losses,
     available_schedulers,
 )
-#from neurograph.models import graph_model_classes, dense_model_classes
 
 
 def get_log_msg(prefix, fold_i, epoch_i, metrics) -> str:
@@ -222,21 +222,21 @@ def evaluate(model, loader, loss_f, cfg: Config):
     trues = torch.cat(true_list, dim=0)
 
     # compute metrics based on loss_f
-    metrics = {}
+    metrics_dict = {}
     if isinstance(loss_f, BCEWithLogitsLoss):
         total_loss = loss_f(y_pred, trues.float().reshape(y_pred.shape)).item()
-        metrics = process_bce_preds(trues, y_pred, thr)
+        metrics_dict = process_bce_preds(trues, y_pred, thr)
     elif isinstance(loss_f, CrossEntropyLoss):
         total_loss = loss_f(y_pred, trues).item()
-        metrics = process_ce_preds(trues, y_pred)
+        metrics_dict = process_ce_preds(trues, y_pred)
     else:
         ValueError(f'{loss_f} this loss function is not supported')
 
     # compute loss per sample, add to final result
     loss = total_loss / len(loader.dataset)
-    metrics['loss'] = loss
+    metrics_dict['loss'] = loss
 
-    return metrics
+    return metrics_dict
 
 
 def init_model_optim_loss(ds: NeuroDataset, cfg: Config):
@@ -272,10 +272,9 @@ def init_model_optim_loss(ds: NeuroDataset, cfg: Config):
     return model, optimizer, scheduler, loss_f
 
 
-# TODO: dataset fix type hints
 def init_model(dataset: NeuroDataset, cfg: Config):
     model_cfg: ModelConfig = cfg.model
-    available_models = {name: obj for name, obj in inspect.getmembers(neurograph.models)}
+    available_models = dict(inspect.getmembers(neurograph.models))
 
     ModelKlass = available_models[model_cfg.name]
 
