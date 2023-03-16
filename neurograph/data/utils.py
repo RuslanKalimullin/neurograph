@@ -1,6 +1,7 @@
+""" Utils functions for converting CM to graphs; generating dataset splits etc. """
+
 from functools import wraps
 from typing import Optional
-from pathlib import Path
 
 import pandas as pd
 import numpy as np
@@ -10,7 +11,7 @@ from torch_geometric.data import Data
 
 
 def square_check(f):
-    # decotated function must take a np.ndarray as the first argument
+    """ Checks that the first argument is a square 2D numpy array """
 
     @wraps(f)
     def wrapper(*args, **kwargs):
@@ -23,50 +24,21 @@ def square_check(f):
     return wrapper
 
 
-def load_cms(
-    path: str | Path,
-) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray], dict[int, str]]:
-
-    """ Load connectivity matrices, fMRI time series
-        and mapping node idx -> ROI name.
-
-        Maps sibj_id to CM and ts
-    """
-
-    path = Path(path)
-
-    data = {}
-    ts = {}
-    # ROI names, extacted from CMs
-    roi_map: dict[int, str] = {}
-
-    for p in path.glob('*.csv'):
-        name = p.stem.split('_')[0].replace('sub-', '')
-        x = pd.read_csv(p).drop('Unnamed: 0', axis=1)
-
-        values = x.values.astype(np.float32)
-        if p.stem.endswith('_embed'):
-            ts[name] = values
-        else:
-            data[name] = values
-            if not roi_map:
-                roi_map = {i: c for i, c in enumerate(x.columns)}
-
-    return data, ts, roi_map
-
-
 def normalize_cm(cm: np.ndarray, normalize_type: Optional[str] = None) -> np.ndarray:
+    """ Normalize weighted adjacency matrix
+        e.g. apply log or divide by global matrix max weight
+    """
     cm = cm.astype(np.float32)
     if normalize_type:
         if normalize_type == 'global_max':
             cm = cm / cm.max()
         elif normalize_type == 'log':
+            # this line handles zeros in CM (set log(0) to 0)
             cm = np.log(cm, where=0<cm, out=0.*cm)
         else:
             raise ValueError(f'Unknown `normalize` arg! Given {normalize_type}')
 
     return cm
-
 
 @square_check
 def prepare_graph(
@@ -150,8 +122,9 @@ def find_thr(
     k: int = 5,
 ) -> float:
 
-    ''' For a given CM find a threshold so after sparsification
-    the new CM will have `k * num_nodes` edges '''
+    """ For a given CM find a threshold so after sparsification
+        the new CM will have `k * num_nodes` edges
+    """
 
     n = cm.shape[0]
     abs_cm = np.abs(cm)
@@ -166,18 +139,24 @@ def find_thr(
 
 
 def generate_splits(subj_ids: list | np.ndarray, y: np.ndarray, seed: int = 1380):
+    """ Generate dict with splits: first split to train/test, then
+        split train into 5 folds w/ train and valid
+    """
+
     # split into train/test
     subj_ids = np.array(subj_ids)
     idx = np.arange(len(subj_ids))
-    train_idx, test_idx = train_test_split(idx, test_size=0.2, stratify=y, shuffle=True, random_state=seed)
+    train_idx, test_idx = train_test_split(
+        idx, test_size=0.2, stratify=y, shuffle=True, random_state=seed,
+    )
 
     train, y_train = subj_ids[train_idx], y[train_idx]
-    test, y_test = subj_ids[test_idx], y[test_idx]
+    test, _ = subj_ids[test_idx], y[test_idx]
 
     # split train into cv folds
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=seed)
     folds: dict[str, list] = {'train': []}
-    for i, (train_fold, valid_fold) in enumerate(cv.split(train, y_train)):
+    for _, (train_fold, valid_fold) in enumerate(cv.split(train, y_train)):
         folds['train'].append({
             'train': list(train[train_fold]),
             'valid': list(train[valid_fold]),
@@ -188,6 +167,10 @@ def generate_splits(subj_ids: list | np.ndarray, y: np.ndarray, seed: int = 1380
 
 
 def get_subj_ids_from_folds(id_folds) -> list[str]:
+    """ Given a dict with splits (each subset is a list of subject ids),
+        collect all subject ids into one list
+    """
+
     subj_ids = []
 
     if set(id_folds.keys()) == set(['train', 'test']):

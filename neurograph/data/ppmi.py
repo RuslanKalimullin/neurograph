@@ -1,13 +1,12 @@
+""" PPMI dataset classes """
+
 import os.path as osp
-from typing import Generator, Optional
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from pathlib import Path
-from torch_geometric.data import Data
 
-from .datasets import NeuroDataset, NeuroGraphDataset, NeuroDenseDataset
-from .utils import load_cms, prepare_graph
+from .datasets import NeuroGraphDataset, NeuroDenseDataset
 
 
 class PPMITrait:
@@ -64,7 +63,12 @@ class PPMITrait:
         # we must concat two columns
         subj_id = df[self.subj_id_col].astype(str) + '_' + df[self.image_id_col]
         # construct target w/ new subj_id
-        target: pd.DataFrame = pd.DataFrame({self.subj_id_col: subj_id, self.target_col: df[self.target_col]})
+        target: pd.DataFrame = pd.DataFrame(
+            {
+                self.subj_id_col: subj_id,
+                self.target_col: df[self.target_col]
+            }
+        )
 
         # check that there are no different labels assigned to the same subject id
         max_labels_per_id = target.groupby(self.subj_id_col)[self.target_col].nunique().max()
@@ -88,12 +92,20 @@ class PPMITrait:
 
     @property
     def splits_file(self):
+        """ For PPMI we have (for now) different splits files for different atlases
+            because of some pecularities of preprocessing.
+            So we added the corresponding property to construct splits file name dynamically
+        """
+        # pylint: disable=no-member
+        # self.atlas is defined in the corresponding class
         return self.splits_file_fstr.format(atlas=self.atlas)
 
 
+# pylint: disable=too-many-ancestors
 class PPMIGraphDataset(PPMITrait, NeuroGraphDataset):
-    pass
+    """ Graph Dataset for PPMI dataset """
 
 
+# pylint: disable=too-many-ancestors
 class PPMIDenseDataset(PPMITrait, NeuroDenseDataset):
-    pass
+    """ Dense Dataset for PPMI dataset """

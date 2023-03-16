@@ -1,11 +1,13 @@
+""" COBRE dataset classes """
+
 import os.path as osp
-from typing import Generator, Optional
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from pathlib import Path
-from .datasets import NeuroDataset, NeuroGraphDataset, NeuroDenseDataset, MutlimodalDense2Dataset
-from .utils import load_cms, prepare_graph
+
+# load base class to modify them w/ trait
+from .datasets import NeuroGraphDataset, NeuroDenseDataset, MutlimodalDense2Dataset
 
 
 class CobreTrait:
@@ -48,7 +50,7 @@ class CobreTrait:
             else:
                 data[name] = values
                 if not roi_map:
-                    roi_map = {i: c for i, c in enumerate(x.columns)}
+                    roi_map = dict(enumerate(x.columns))
 
         return data, ts, roi_map
 
@@ -68,7 +70,9 @@ class CobreTrait:
         target.set_index(self.subj_id_col, inplace=True)
 
         # leave only Schizo and Control
-        target = target[target[self.target_col].isin(('No_Known_Disorder', 'Schizophrenia_Strict'))].copy()
+        target = target[
+            target[self.target_col].isin(('No_Known_Disorder', 'Schizophrenia_Strict'))
+        ].copy()
 
         # label encoding
         label2idx: dict[str, int] = {x: i for i, x in enumerate(target[self.target_col].unique())}
@@ -79,8 +83,9 @@ class CobreTrait:
 
 
 # NB: trait must go first
+# pylint: disable=too-many-ancestors
 class CobreGraphDataset(CobreTrait, NeuroGraphDataset):
-    pass
+    """ Graph dataset for COBRE dataset """
 
 
 #class CobreMultimodalGraphDataset(CobreTrait, NeuroGraphDataset):
@@ -88,8 +93,8 @@ class CobreGraphDataset(CobreTrait, NeuroGraphDataset):
 
 
 class CobreDenseDataset(CobreTrait, NeuroDenseDataset):
-    pass
+    """ Dense dataset for COBRE dataset """
 
 
 class CobreMultimodalDense2Dataset(CobreTrait, MutlimodalDense2Dataset):
-    pass
+    """ Multimodal dense dataset w/ 2 modalities for COBRE dataset """

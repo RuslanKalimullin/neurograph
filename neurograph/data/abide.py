@@ -1,17 +1,13 @@
-from abc import ABC
-from shutil import rmtree
+""" Dataset classes for ABIDE dataset """
+
 import os.path as osp
-import json
-from typing import Generator, Optional
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import torch
-from pathlib import Path
 from scipy.io import loadmat
 
-from .datasets import NeuroDataset, NeuroGraphDataset, NeuroDenseDataset
-from .utils import load_cms, prepare_graph
+from .datasets import NeuroGraphDataset, NeuroDenseDataset
 
 
 class ABIDETrait:
@@ -50,7 +46,10 @@ class ABIDETrait:
 
         return target, label2idx, idx2label
 
-    def load_cms(self, path: str | Path,) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray], dict[int, str]]:
+    def load_cms(
+        self,
+        path: str | Path,
+    ) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray], dict[int, str]]:
 
         """ Load connectivity matrices, fMRI time series
             and mapping node idx -> ROI name.
@@ -68,7 +67,10 @@ class ABIDETrait:
         for p in path.iterdir():
             if p.is_dir():
                 name = p.name
-                values = loadmat(p / f"{name}{self.con_matrix_suffix}")['connectivity'].astype(np.float32)
+
+                mat = loadmat(p / f"{name}{self.con_matrix_suffix}")
+                values = mat['connectivity'].astype(np.float32)
+
                 embed_name =list(p.glob(self.embed_sufix))[0]
                 values_embed = pd.read_csv(embed_name,delimiter="\t").astype(np.float32)
                 ts[name] = values_embed
@@ -78,9 +80,10 @@ class ABIDETrait:
 
 
 # NB: trait must go first
+# pylint: disable=too-many-ancestors
 class ABIDEGraphDataset(ABIDETrait, NeuroGraphDataset):
-    pass
+    """ Graph dataset for ABIDE dataset """
 
 
 class ABIDEDenseDataset(ABIDETrait, NeuroDenseDataset):
-    pass
+    """ Dense dataset for ABIDE dataset """

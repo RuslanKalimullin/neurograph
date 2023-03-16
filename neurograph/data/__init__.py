@@ -1,10 +1,10 @@
+""" Module that contains dataset classes """
+
 import inspect
 import logging
 from typing import Type
 
-import neurograph.data.abide as abide
-import neurograph.data.cobre as cobre
-import neurograph.data.ppmi as ppmi
+from neurograph.data import abide, cobre, ppmi
 from neurograph.data.datasets import (
     NeuroDataset,
     NeuroDenseDataset,
